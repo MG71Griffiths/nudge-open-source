@@ -1,0 +1,183 @@
+{
+  "name": "Nudge Positive Energy",
+  "version": "3.1.0",
+  "paletteStatus": "Approved by user for app-wide implementation, 4 October 2026",
+  "accessibilityRefinement": "Prototype light muted #68728A is darkened one RGB level to #677189 to clear 4.5:1 on canvas; this is not a new palette direction",
+  "scope": "All Nudge-owned screens, shared controls, sheets and states; preserve artwork, provider branding and semantic score/safety meanings",
+  "light": {
+    "canvas": "#F8F7F2",
+    "surface": "#FFFFFF",
+    "ink": "#253452",
+    "muted": "#677189",
+    "border": "#DFE4EF",
+    "accent": "#365ACB",
+    "selectedSurface": "#E8EEFF",
+    "primaryFill": "#F3C950",
+    "primaryText": "#26334E",
+    "primaryEdge": "#C79A2D",
+    "progressFill": "#5876CB",
+    "progressTrack": "#E6EAF5",
+    "plantSurface": "#E2F1E9",
+    "plantText": "#30634D",
+    "plantAccent": "#6EA487",
+    "successText": "#30634D",
+    "successSurface": "#E2F1E9",
+    "errorText": "#A33232",
+    "errorSurface": "#FFF2EF",
+    "warningText": "#6E4515",
+    "warningSurface": "#FFF1D8",
+    "strongBorder": "#7C879C",
+    "cameraOverlayText": "#FFFFFF"
+  },
+  "dark": {
+    "canvas": "#1B202A",
+    "surface": "#282F3D",
+    "ink": "#F0F3FC",
+    "muted": "#BAC4DB",
+    "border": "#414C63",
+    "accent": "#ACBEFF",
+    "selectedSurface": "#344568",
+    "primaryFill": "#F3CE68",
+    "primaryText": "#26334E",
+    "primaryEdge": "#C09A3E",
+    "progressFill": "#A6B8ED",
+    "progressTrack": "#3D4A66",
+    "plantSurface": "#2B443B",
+    "plantText": "#B5DFCA",
+    "plantAccent": "#92C9AD",
+    "successText": "#B5DFCA",
+    "successSurface": "#2B443B",
+    "errorText": "#F0A8A8",
+    "errorSurface": "#412E34",
+    "warningText": "#F0CB9A",
+    "warningSurface": "#493821",
+    "strongBorder": "#7D8BA9",
+    "cameraOverlayText": "#FFFFFF"
+  },
+  "roleRules": {
+    "primaryAction": "Yellow fill with dark primaryText in BOTH appearances; never white text",
+    "selected": "accent + selectedSurface + check + accessibility selected state",
+    "plants": "Use plantText for meaningful ring/tick contrast where plantAccent is too pale; plantAccent may be decorative",
+    "scores": "Nutrition number uses ink/accent. Final frequency uses independent green/amber/red labels; never use primaryFill as a score shortcut.",
+    "safety": "Use labelled/icon status treatment. successSurface is not evidence of allergen or recall safety",
+    "camera": "White overlay text requires a suitable dark scrim; do not tint food photos",
+    "borders": "border is quiet/decorative; use strongBorder or accent where a meaningful boundary needs stronger contrast"
+  },
+  "geometry": {
+    "controlRadius": 18,
+    "tagRadius": "capsule",
+    "cardRadius": 24,
+    "minTouchTarget": 44,
+    "buttonHeight": 56,
+    "mealButtonHeight": 60,
+    "stepperButtonHeight": 68,
+    "primaryEdge": 4,
+    "horizontalPadding": 20,
+    "controlGap": 10,
+    "groupGap": 22
+  },
+  "units": "Logical points for native implementation; CSS pixels in the web specimen",
+  "typography": "Use native semantic text styles with Dynamic Type; web specimen uses system fonts",
+  "nutritionScale": {
+    "modelVersion": "0.2",
+    "label": "Nudge nutrition score",
+    "scores": {
+      "A": 100,
+      "B": 75,
+      "C": 50,
+      "D": 25,
+      "E": 0
+    },
+    "baseFrequency": {
+      "A": "Daily",
+      "B": "Daily",
+      "C": "Weekly",
+      "D": "Monthly",
+      "E": "Monthly"
+    },
+    "numberRole": "ink",
+    "selectedGradeRole": "accent",
+    "rules": "Exactly five outputs; derive category-correct grade first; no interpolation or old continuous ranges; nutrition number independent of final portion frequency; unknown is not zero"
+  },
+  "frequencyDisplay": {
+    "source": "Proposed Nudge v0.2 planning policy; not validated safe-frequency limits",
+    "bands": [
+      {
+        "id": "monthly",
+        "label": "Monthly",
+        "meaning": "Up to 2 reference portions in rolling 28 days, shared within comparable Monthly choices",
+        "lightMark": "#D9363E",
+        "darkMark": "#FF747B",
+        "lightBadge": "#FFE6E7",
+        "lightText": "#A62530",
+        "darkBadge": "#5B2931",
+        "darkText": "#FFB6BE"
+      },
+      {
+        "id": "weekly",
+        "label": "Weekly",
+        "meaning": "Up to 2 reference portions in rolling 7 days, shared within comparable Weekly choices",
+        "lightMark": "#C47E00",
+        "darkMark": "#FFC247",
+        "lightBadge": "#FFE6A2",
+        "lightText": "#513400",
+        "darkBadge": "#FFC247",
+        "darkText": "#513400"
+      },
+      {
+        "id": "daily",
+        "label": "Daily",
+        "meaning": "Any day; appropriate portions and variety",
+        "lightMark": "#008D4A",
+        "darkMark": "#4BD98D",
+        "lightBadge": "#DDF5E8",
+        "lightText": "#12633A",
+        "darkBadge": "#1F4937",
+        "darkText": "#9DF0C5"
+      }
+    ],
+    "rules": "Final frequency comes from the model and selected occasion; use solid full-opacity named badges and always-visible key; safety overrides encouragement, not nutrition grade; incomplete checks cannot imply clearance"
+  },
+  "targetedTidy": {
+    "date": "2026-10-04",
+    "scope": "Approved component tidy-up; no score or target recalibration",
+    "metricRoles": {
+      "protein": "accent",
+      "energy": "primaryEdge / primaryFill",
+      "carbs": "errorText (metric identity, not a warning)",
+      "fibre": "warningText (metric identity, not a warning)",
+      "fat": "accent (metric identity)",
+      "plants": "plantText / plantAccent"
+    },
+    "dial": {
+      "light": [
+        "#E76F65",
+        "#F3C950",
+        "#82B951"
+      ],
+      "dark": [
+        "#EF837A",
+        "#FFD04C",
+        "#A4CC80"
+      ],
+      "order": [
+        "red",
+        "amber",
+        "green"
+      ],
+      "label": "Numeric score remains visible; these stronger arcs follow the supplied display reference"
+    }
+  },
+  "objectiveMetrics": {
+    "reference": "User-provided IMG_6100.HEIC, 4 October 2026. Applies to objective graphics, separately from food-score RAG and brand.",
+    "protein": "#9254E8",
+    "energy": "#FF6900",
+    "carbs": "#FFBE00",
+    "fibre": "#20CDBB",
+    "fat": "#365ACB",
+    "plants": "#A8DC00",
+    "darkOverrides": {
+      "fat": "#ACBEFF"
+    }
+  }
+}

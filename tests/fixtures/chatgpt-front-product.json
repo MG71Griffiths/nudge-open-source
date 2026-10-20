@@ -1,0 +1,29 @@
+{
+  "type": "product",
+  "metadata": null,
+  "meal": null,
+  "productName": "Synthetic pack",
+  "brand": null,
+  "photoConsistency": "sameProduct",
+  "servingSuggestion": null,
+  "categoryTag": null,
+  "retailer": null,
+  "labelKind": "unreadable",
+  "ingredients": null,
+  "basis": "unknown",
+  "energyKj": null,
+  "nutritionPreparation": "unknown",
+  "servingSize": null,
+  "needsClearerPhoto": true,
+  "message": "",
+  "nutrients": {
+    "energyKcal": null,
+    "protein": null,
+    "carbohydrate": null,
+    "sugars": null,
+    "fat": null,
+    "saturatedFat": null,
+    "fibre": null,
+    "salt": null
+  }
+}

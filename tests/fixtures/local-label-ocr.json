@@ -1,0 +1,575 @@
+{
+  "label" : {
+    "basis" : "per100g",
+    "evidence" : [
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "energyKcal",
+        "lineID" : "row0",
+        "lineIDs" : [
+          "row0"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "kcal",
+        "relation" : "=",
+        "text" : "Energy 200kcal"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "protein",
+        "lineID" : "row6",
+        "lineIDs" : [
+          "row6"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "Protein 6g"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "carbohydrate",
+        "lineID" : "row3",
+        "lineIDs" : [
+          "row3"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "Carbohydrate 20g"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "sugars",
+        "lineID" : "row4",
+        "lineIDs" : [
+          "row4"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "of which sugars 5g"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "fat",
+        "lineID" : "row1",
+        "lineIDs" : [
+          "row1"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "Fat 10g"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "saturatedFat",
+        "lineID" : "row2",
+        "lineIDs" : [
+          "row2"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "of which saturates 3g"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "fibre",
+        "lineID" : "row5",
+        "lineIDs" : [
+          "row5"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "Fibre 2g"
+      },
+      {
+        "basisHeader" : "Per 100g",
+        "basisLineIDs" : [
+          "basis"
+        ],
+        "field" : "salt",
+        "lineID" : "row7",
+        "lineIDs" : [
+          "row7"
+        ],
+        "photoID" : "synthetic-photo",
+        "photoIndex" : 1,
+        "printedUnit" : "g",
+        "relation" : "=",
+        "text" : "Salt 0.5g"
+      }
+    ],
+    "nutrients" : {
+      "carbohydrate" : {
+        "unit" : "g",
+        "value" : 20
+      },
+      "energyKcal" : {
+        "unit" : "kcal",
+        "value" : 200
+      },
+      "fat" : {
+        "unit" : "g",
+        "value" : 10
+      },
+      "fibre" : {
+        "unit" : "g",
+        "value" : 2
+      },
+      "protein" : {
+        "unit" : "g",
+        "value" : 6
+      },
+      "salt" : {
+        "unit" : "g",
+        "value" : 0.5
+      },
+      "saturatedFat" : {
+        "unit" : "g",
+        "value" : 3
+      },
+      "sugars" : {
+        "unit" : "g",
+        "value" : 5
+      }
+    },
+    "nutritionPreparation" : "as_sold",
+    "photoID" : "synthetic-photo",
+    "photoIndex" : 1,
+    "version" : "local-food-label-v1"
+  },
+  "pages" : [
+    {
+      "lines" : [
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.69999999999999996,
+            "x" : 0.080000000000000002,
+            "y" : 0.93999999999999995
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "heading",
+          "text" : "Nutrition information",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.29999999999999999,
+                "x" : 0.080000000000000002,
+                "y" : 0.93999999999999995
+              },
+              "length" : 9,
+              "start" : 0,
+              "text" : "Nutrition"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.36666666666666664,
+                "x" : 0.41333333333333333,
+                "y" : 0.93999999999999995
+              },
+              "length" : 11,
+              "start" : 10,
+              "text" : "information"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.14000000000000001,
+            "x" : 0.45999999999999996,
+            "y" : 0.88
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "basis",
+          "text" : "Per 100g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.052500000000000005,
+                "x" : 0.45999999999999996,
+                "y" : 0.88
+              },
+              "length" : 3,
+              "start" : 0,
+              "text" : "Per"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.070000000000000007,
+                "x" : 0.53000000000000003,
+                "y" : 0.88
+              },
+              "length" : 4,
+              "start" : 4,
+              "text" : "100g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.81999999999999995
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row0",
+          "text" : "Energy 200kcal",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.31,
+                "x" : 0.040000000000000001,
+                "y" : 0.81999999999999995
+              },
+              "length" : 6,
+              "start" : 0,
+              "text" : "Energy"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.81999999999999995
+              },
+              "length" : 7,
+              "start" : 7,
+              "text" : "200kcal"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.75499999999999989
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row1",
+          "text" : "Fat 10g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.31,
+                "x" : 0.040000000000000001,
+                "y" : 0.75499999999999989
+              },
+              "length" : 3,
+              "start" : 0,
+              "text" : "Fat"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.75499999999999989
+              },
+              "length" : 3,
+              "start" : 4,
+              "text" : "10g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.68999999999999995
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row2",
+          "text" : "of which saturates 3g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.034444444444444444,
+                "x" : 0.040000000000000001,
+                "y" : 0.68999999999999995
+              },
+              "length" : 2,
+              "start" : 0,
+              "text" : "of"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.08611111111111111,
+                "x" : 0.091666666666666674,
+                "y" : 0.68999999999999995
+              },
+              "length" : 5,
+              "start" : 3,
+              "text" : "which"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.155,
+                "x" : 0.19500000000000001,
+                "y" : 0.68999999999999995
+              },
+              "length" : 9,
+              "start" : 9,
+              "text" : "saturates"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.68999999999999995
+              },
+              "length" : 2,
+              "start" : 19,
+              "text" : "3g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.625
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row3",
+          "text" : "Carbohydrate 20g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.31,
+                "x" : 0.040000000000000001,
+                "y" : 0.625
+              },
+              "length" : 12,
+              "start" : 0,
+              "text" : "Carbohydrate"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.625
+              },
+              "length" : 3,
+              "start" : 13,
+              "text" : "20g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.55999999999999994
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row4",
+          "text" : "of which sugars 5g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.041333333333333333,
+                "x" : 0.040000000000000001,
+                "y" : 0.55999999999999994
+              },
+              "length" : 2,
+              "start" : 0,
+              "text" : "of"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.10333333333333333,
+                "x" : 0.10199999999999999,
+                "y" : 0.55999999999999994
+              },
+              "length" : 5,
+              "start" : 3,
+              "text" : "which"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.12399999999999999,
+                "x" : 0.22600000000000001,
+                "y" : 0.55999999999999994
+              },
+              "length" : 6,
+              "start" : 9,
+              "text" : "sugars"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.55999999999999994
+              },
+              "length" : 2,
+              "start" : 16,
+              "text" : "5g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.49499999999999994
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row5",
+          "text" : "Fibre 2g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.31,
+                "x" : 0.040000000000000001,
+                "y" : 0.49499999999999994
+              },
+              "length" : 5,
+              "start" : 0,
+              "text" : "Fibre"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.49499999999999994
+              },
+              "length" : 2,
+              "start" : 6,
+              "text" : "2g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.42999999999999994
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row6",
+          "text" : "Protein 6g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.31,
+                "x" : 0.040000000000000001,
+                "y" : 0.42999999999999994
+              },
+              "length" : 7,
+              "start" : 0,
+              "text" : "Protein"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.42999999999999994
+              },
+              "length" : 2,
+              "start" : 8,
+              "text" : "6g"
+            }
+          ]
+        },
+        {
+          "box" : {
+            "height" : 0.025000000000000001,
+            "width" : 0.52999999999999992,
+            "x" : 0.040000000000000001,
+            "y" : 0.36499999999999994
+          },
+          "confidence" : 0.98999999999999999,
+          "id" : "row7",
+          "text" : "Salt 0.5g",
+          "words" : [
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.31,
+                "x" : 0.040000000000000001,
+                "y" : 0.36499999999999994
+              },
+              "length" : 4,
+              "start" : 0,
+              "text" : "Salt"
+            },
+            {
+              "box" : {
+                "height" : 0.025000000000000001,
+                "width" : 0.080000000000000002,
+                "x" : 0.48999999999999999,
+                "y" : 0.36499999999999994
+              },
+              "length" : 4,
+              "start" : 5,
+              "text" : "0.5g"
+            }
+          ]
+        }
+      ],
+      "photoID" : "synthetic-photo",
+      "photoIndex" : 1
+    }
+  ]
+}

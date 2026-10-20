@@ -1,0 +1,65 @@
+/* Cycle support extends approved cards, choice chips and recipe rows. */
+.n-cycle{min-width:0;}
+.n-cycle .n-section-head{align-items:center;gap:12px;flex-wrap:wrap;}
+.n-cycle .n-section-head>.text-button{flex:0 0 auto;min-width:44px;white-space:nowrap;word-break:normal;overflow-wrap:normal;}
+.n-cycle .n-section-head h1{margin-bottom:0;}
+.n-cycle-panel,.n-cycle-stage{padding:18px;border:1px solid var(--n-line);border-radius:22px;background:var(--n-paper);margin:18px 0;min-width:0;}
+.n-cycle-panel h2,.n-cycle-stage h2,.n-cycle>section>h2{font-size:1.0625rem;line-height:1.3;margin:0 0 10px;}
+.n-cycle-panel p,.n-cycle-stage p{font-size:.875rem;line-height:1.5;overflow-wrap:break-word;}
+.n-cycle-panel p:last-child,.n-cycle-stage p:last-child{margin-bottom:0;}
+.n-cycle-stage{background:var(--n-lilac);border-color:transparent;}
+.n-cycle-search-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;}
+.n-cycle-search-actions .button,.n-cycle-search-actions .text-button{min-height:44px;max-width:100%;white-space:normal;overflow-wrap:break-word;}
+.ns-cycle-context h2{font-size:1.125rem;}
+.n-cycle-day{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.n-cycle-day strong{font-size:2rem;line-height:1.2;white-space:nowrap;}
+.n-cycle-day span{font-size:.8125rem;}
+.n-cycle-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:15px 0;}
+.n-cycle-strip span{height:6px;border-radius:8px;background:var(--n-line);}
+.n-cycle-strip .active{background:var(--n-accent);}
+.n-cycle-phases{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0;}
+.n-cycle .button{white-space:normal;overflow-wrap:normal;word-break:normal;min-height:48px;min-width:0;line-height:1.3;}
+.n-cycle-phases .button[aria-pressed="true"],.n-cycle .nc-tag-group .button[aria-pressed="true"]{background:var(--n-lilac);border-color:var(--n-accent);box-shadow:inset 0 0 0 1px var(--n-accent);}
+.n-cycle-entry{width:100%;display:grid;grid-template-columns:40px minmax(0,1fr) 14px;align-items:center;gap:10px;padding:16px 0;min-height:64px;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--n-line);color:var(--n-ink);}
+.n-cycle-entry strong,.n-cycle-food strong{display:block;font-size:.875rem;line-height:1.4;}
+.n-cycle-entry small,.n-cycle-food small{display:block;color:var(--n-muted);font-size:.75rem;line-height:1.5;margin-top:4px;}
+.n-cycle-entry-icon{display:grid;place-items:center;color:var(--n-accent);}
+.n-cycle-entry-icon svg{width:26px;height:26px;}
+.n-cycle-food{display:grid;grid-template-columns:56px minmax(0,1fr) 14px;gap:12px;align-items:center;width:100%;padding:14px 0;min-height:76px;border:0;border-bottom:1px solid var(--n-line);background:transparent;text-align:left;color:var(--n-ink);}
+.n-cycle-food img{width:56px;height:56px;object-fit:cover;border-radius:16px;}
+.n-cycle-food+button.button{margin-top:14px;}
+.n-cycle-nutrient{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.875rem;margin:12px 0;}
+.n-cycle-nutrient strong{white-space:nowrap;font-variant-numeric:tabular-nums;}
+.n-cycle-panel summary{font-size:1rem;font-weight:650;line-height:1.4;cursor:pointer;min-height:28px;}
+.n-cycle-toggle{display:flex;justify-content:space-between;align-items:center;gap:16px;margin:20px 0;}
+.n-cycle-toggle strong,.n-cycle-toggle small{display:block;line-height:1.4;}
+.n-cycle-toggle small{color:var(--n-muted);font-size:.8125rem;margin-top:5px;}
+.n-cycle-toggle input{width:28px;height:28px;flex-shrink:0;accent-color:var(--n-accent);}
+.n-cycle .field{min-width:0;max-width:100%;box-sizing:border-box;}
+.n-cycle .form-label:not(:first-child){margin-top:16px;}
+.n-cycle .nc-choice-group{display:flex;flex-wrap:wrap;gap:8px;}
+.n-cycle .nc-choice{flex:1 1 110px;min-width:0;white-space:normal;overflow-wrap:normal;word-break:normal;}
+.n-cycle .nc-choice span:last-child{min-width:0;overflow-wrap:normal;word-break:normal;}
+.n-cycle .nc-tag-group{display:flex;flex-wrap:wrap;gap:8px;}
+.n-cycle-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:10px;margin:18px 0;}
+.n-cycle-check-history{padding:0;list-style:none;}
+.n-cycle-check-history li{padding:10px 0;border-top:1px solid var(--n-line);font-size:.8125rem;line-height:1.5;}
+.n-cycle-check-history strong,.n-cycle-check-history span{display:block;}
+.n-cycle-check-history span{color:var(--n-muted);margin-top:4px;}
+.n-cycle-recipe-filter{padding:14px 0;border-block:1px solid var(--n-line);margin:14px 0;}
+.n-cycle-recipe-filter summary{font-weight:650;min-height:32px;cursor:pointer;}
+.n-cycle-recipe-filter .recipe-filters{display:flex;flex-wrap:wrap;gap:8px;overflow:visible;}
+.n-cycle-recipe-filter .recipe-filters button{min-height:44px;white-space:normal;word-break:normal;}
+/* Keep the approved serving control as − / count / +, with a real text column. */
+.food-section-heading:has(.recipe-servings){display:block;}
+.recipe-servings{width:100%;max-width:360px;margin:14px 0;grid-template-columns:minmax(48px,1fr) minmax(110px,2fr) minmax(48px,1fr);}
+.recipe-servings .nc-stepper-value{min-width:0;white-space:nowrap;word-break:normal;overflow-wrap:normal;}
+.recipe-servings .nc-choice{white-space:nowrap;word-break:normal;overflow-wrap:normal;font-size:1.5rem;min-height:52px;}
+@media(max-width:360px){.n-cycle-panel,.n-cycle-stage{padding:14px;}.recipe-servings{grid-template-columns:minmax(44px,1fr) minmax(100px,2fr) minmax(44px,1fr);}.n-cycle-phases .button{padding-inline:8px;}}
+@media(min-width:0px){.n-cycle .button:focus-visible,.n-cycle-entry:focus-visible,.n-cycle-food:focus-visible{outline:3px solid var(--n-accent);outline-offset:3px;}}
+/* Symbol-only serving buttons stay beside the count even at large text sizes. */
+html .nc-stepper.recipe-servings,html.n-large-text .nc-stepper.recipe-servings{grid-template-columns:52px minmax(0,1fr) 52px;gap:8px;}
+html .nc-stepper.recipe-servings>.nc-stepper-value,html.n-large-text .nc-stepper.recipe-servings>.nc-stepper-value{grid-column:2;grid-row:1;display:flex;align-items:baseline;justify-content:center;gap:5px;}
+html .nc-stepper.recipe-servings>.nc-stepper-value>span{margin:0;}
+html .nc-stepper.recipe-servings>button:first-child,html.n-large-text .nc-stepper.recipe-servings>button:first-child{grid-column:1;grid-row:1;}
+html .nc-stepper.recipe-servings>button:last-child,html.n-large-text .nc-stepper.recipe-servings>button:last-child{grid-column:3;grid-row:1;}

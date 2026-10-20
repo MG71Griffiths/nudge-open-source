@@ -1,0 +1,126 @@
+/* Shared control contract on the existing app routes. Values come from approved.css. */
+button,input,select,textarea{font-family:inherit}
+button{touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid var(--n-focus);outline-offset:3px}
+button:disabled{opacity:1;cursor:not-allowed}
+:where(.button,.n-wide-button,.nf-primary,.nf-secondary,.nc-choice,.nc-stepper button){min-height:var(--n-control-height);border-radius:var(--n-control-radius);white-space:normal;overflow-wrap:anywhere;line-height:1.35;padding:12px 16px}
+.button,.approved-screen .n-wide-button,.nf-detail .nf-primary,.nf-detail .nf-secondary{min-height:var(--n-control-height);border-radius:var(--n-control-radius);font-size:1rem;line-height:1.35}
+.button.secondary,.approved-screen .n-wide-button,.nf-detail .nf-secondary{border:1px solid var(--n-strong-border);background:var(--n-surface);color:var(--n-accent);box-shadow:none}
+.button.primary,.approved-screen .n-wide-button.n-primary,.nf-detail .nf-primary{background:var(--n-primary-fill);color:var(--n-primary-text);border:1px solid var(--n-primary-edge);box-shadow:0 4px 0 var(--n-primary-edge);font-weight:700;transition:transform .12s ease,box-shadow .12s ease}
+.button.primary:not(:disabled):active,.approved-screen .n-wide-button.n-primary:not(:disabled):active,.nf-detail .nf-primary:not(:disabled):active{transform:translateY(3px);box-shadow:0 1px 0 var(--n-primary-edge)}
+.button:disabled,.approved-screen .n-wide-button:disabled,.nf-detail .nf-primary:disabled,.nf-detail .nf-secondary:disabled,.nc-choice:disabled,.nc-stepper button:disabled,.n-meal-stepper button:disabled,.scan-stepper button:disabled{background:var(--n-disabled-fill);color:var(--n-disabled-ink);border-color:var(--n-border);box-shadow:none;opacity:1}
+.nc-choice-group{display:flex;gap:var(--n-control-gap);flex-wrap:wrap;min-width:0;margin:12px 0 18px}
+.nc-choice-group.nc-meals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.nc-choice-group .nc-choice{flex:1 1 100px}
+.nc-choice,.nc-tag{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:56px;padding:12px 14px;border:1px solid var(--n-strong-border);border-radius:18px;color:var(--n-accent);background:var(--n-surface);font-size:1rem;font-weight:650;line-height:1.35;text-align:center;white-space:normal;overflow-wrap:anywhere}
+.nc-meals .nc-choice{min-height:60px}
+.nc-choice[aria-pressed="true"],.nc-tag:has(input:checked){background:var(--n-selected-surface);border:2px solid var(--n-accent);color:var(--n-accent);padding:11px 13px}
+.nc-check{font-size:1em;font-weight:750;line-height:1;flex-shrink:0;color:var(--n-accent)}
+.nc-tag-group{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0 18px;min-width:0}
+.nc-tag{border-radius:999px;min-height:44px;padding:9px 13px;font-size:.9375rem;justify-content:flex-start;cursor:pointer}
+.nc-tag:has(input:checked){padding:8px 12px}.nc-tag input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--n-accent);margin:0}
+.nc-tag:has(input:focus-visible){outline:3px solid var(--n-focus);outline-offset:3px}.nc-tag:has(input:disabled){background:var(--n-disabled-fill);color:var(--n-disabled-ink);cursor:not-allowed}
+.nc-stepper{display:grid;grid-template-columns:minmax(70px,1fr) minmax(70px,1.4fr) minmax(70px,1fr);align-items:center;gap:10px;margin:14px 0 18px;min-width:0}
+.nc-stepper button,.n-meal-stepper button,.scan-stepper button{min-height:68px;padding:12px 10px;background:var(--n-surface);color:var(--n-accent);border:1px solid var(--n-strong-border);border-radius:18px;font-size:1.125rem;line-height:1.35;font-weight:700;white-space:normal;overflow-wrap:anywhere}
+.nc-stepper-value,.nc-number-display{display:block;text-align:center;font-size:1.375rem;line-height:1.3;font-variant-numeric:tabular-nums;min-width:0;color:var(--n-ink)}
+.nc-stepper-value small{display:block;font-size:.9375rem;font-weight:500;color:var(--n-muted);margin-top:3px}
+.nc-action-row,.n-meal-review-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px;align-items:stretch;margin-top:16px}
+.nc-action-row>.button,.nc-action-row>.nf-primary,.nc-action-row>.nf-secondary,.nc-action-row>.n-wide-button{width:100%;margin:0}
+.nc-number-field{min-width:0;margin:16px 0}.nc-number-field>.nc-number-display{font-size:1.75rem}
+.nc-exact{border:1px solid var(--n-strong-border);background:var(--n-surface);color:var(--n-ink);border-radius:24px;padding:20px;max-width:min(480px,calc(100% - 32px))}
+.nc-exact input{min-height:56px;font-size:1.125rem;color:var(--n-ink);background:var(--n-surface);border:1px solid var(--n-strong-border);border-radius:16px;padding:12px;width:100%}
+.nc-exact input[aria-invalid=true]{border:2px solid var(--n-error-text)}
+.nc-choice-sheet{max-height:70dvh;overflow-y:auto;padding:4px}.nc-choice-sheet .nc-choice{width:100%;margin:5px 0;justify-content:space-between}
+/* Every visible selection has a check as well as colour. Shared controls render a real check. */
+:is(.segmented,.n-segments,.recipe-filters,.fit-chips,.portion-options,.scan-presets,.n-diet-period) button{min-height:44px;min-width:44px;border:1px solid var(--n-strong-border);color:var(--n-accent);background:var(--n-surface);line-height:1.35}
+:is(.segmented,.n-segments,.recipe-filters,.fit-chips,.portion-options,.scan-presets,.n-diet-period) button[aria-pressed=true]{border:2px solid var(--n-accent);background:var(--n-selected-surface);color:var(--n-accent);box-shadow:none}
+:is(.segmented,.n-segments,.recipe-filters,.fit-chips,.portion-options,.scan-presets,.n-diet-period) button[aria-pressed=true]:not(.nc-choice)::before{content:'✓';display:inline-block;margin-right:.35em;font-weight:750}
+.bottom-nav .nav-plus,.bottom-nav .nav-add>span{background:var(--n-primary-fill);color:var(--n-primary-text)}
+.bottom-nav .nav-add,.bottom-nav button[aria-current="page"]{color:var(--n-accent)}
+.app-header{background:var(--n-canvas)}
+.app-header .n-icon-button,.approved-screen .n-icon-button{border-color:var(--n-strong-border)}
+.text-button,.n-link,.approved-screen .n-target-link,.profile-section-heading .text-button,.small-add,.food-date-nav button{min-height:44px;min-width:44px}
+.approved-screen .n-target.n-plant-target{background:var(--n-plant-surface);color:var(--n-plant-text);border-color:var(--n-plant-surface)}
+.approved-screen .n-plant-target .n-target-goal,.approved-screen .n-plant-target .n-target-head svg{color:var(--n-plant-text)}
+.approved-screen .n-track,.nf-detail .nf-track{background:var(--n-progress-track)}
+.approved-screen .n-track>span,.nf-detail .nf-track .nf-base{background:var(--n-progress-fill)}
+.approved-screen .n-plant-target .n-track{background:var(--n-plant-track)}
+.approved-screen .n-plant-target .n-track>span{background:var(--n-plant-text)}
+.approved-screen .n-day-mark.n-done{background:var(--n-plant-text);color:var(--n-plant-surface)}
+.target-purple,.target-peach,.profile-goal{background:var(--n-surface);color:var(--n-ink);--bar:var(--n-progress-fill);--track:var(--n-progress-track)}
+.target-label,.goal-icon,.goal-content p,.goal-content small{color:var(--n-ink)}
+.goal-icon{background:var(--n-selected-surface);color:var(--n-accent)}
+.nf-detail .nf-band-daily,.n-photo-review .nf-band-daily{color:var(--n-score-green-text)}
+.nf-detail .nf-band-weekly,.n-photo-review .nf-band-weekly{color:var(--n-score-amber-text)}
+.nf-detail .nf-band-monthly,.n-photo-review .nf-band-monthly{color:var(--n-score-red-text)}
+.nf-detail .nf-alternative-card.nf-band-daily .nf-alternative-value{background:var(--n-score-green-surface);color:var(--n-score-green-text)}
+.nf-detail .nf-alternative-card.nf-band-weekly .nf-alternative-value{background:var(--n-score-amber-surface);color:var(--n-score-amber-text)}
+.history-destructive,.approved-screen .n-history-delete{background:var(--n-destructive-fill);color:var(--n-destructive-ink);border-color:var(--n-destructive-fill)}
+.notice,.nf-allergy,.nf-recall{background:var(--n-warning-surface);color:var(--n-warning-text);border-color:var(--n-warning-text)}
+.notice::before{content:'⚠';margin-right:.4em;font-weight:750}
+[role=alert]{color:var(--n-error-text)}
+.toast{background:var(--n-toast-surface);color:var(--n-toast-ink)}
+.field,input:not([type=checkbox]):not([type=radio]),select,textarea{background-color:var(--n-surface);color:var(--n-ink);border-color:var(--n-strong-border)}
+input::placeholder,textarea::placeholder{color:var(--n-muted);opacity:1}
+.n-photo-analysis-panel{background:linear-gradient(0deg,var(--n-surface) 65%,transparent)}
+html.n-large-text .nc-choice-group.nc-meals,html.n-large-text .nc-action-row,html.n-large-text .n-meal-review-actions{grid-template-columns:1fr}
+html.n-large-text .nc-choice{flex-basis:100%}html.n-large-text .nc-stepper{grid-template-columns:minmax(60px,1fr) minmax(60px,1fr) minmax(60px,1fr);gap:6px}
+html.n-large-text .nc-stepper button{padding:12px 5px;font-size:1rem}html.n-large-text .nc-tag{max-width:100%}
+@media(max-width:359px){.nc-choice-group,.nc-tag-group{gap:8px}.nc-choice{padding:12px 8px}.nc-choice[aria-pressed=true]{padding:11px 7px}.nc-stepper{gap:8px;grid-template-columns:minmax(64px,1fr) minmax(70px,1.1fr) minmax(64px,1fr)}}
+@media(prefers-contrast:more){.nc-choice,.nc-tag,.button.secondary,.nc-stepper button{border-width:2px}.nc-choice[aria-pressed=true],.nc-tag:has(input:checked){outline:2px solid var(--n-accent);outline-offset:2px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+.nc-choice-field,.nc-tag-field{border:0;padding:0;margin:14px 0 20px;min-width:0}
+.nc-choice-field>legend,.nc-tag-field>legend{font-size:1rem;line-height:1.4;font-weight:650;padding:0;color:var(--n-ink);max-width:100%}
+.nf-detail .nc-stepper.nf-stepper{display:grid;grid-template-columns:minmax(64px,1fr) minmax(76px,1.4fr) minmax(64px,1fr);width:100%;padding:0;border:0;background:transparent;gap:10px}
+.nf-detail .nc-stepper.nf-stepper button,.nf-detail .nf-portion-fields .nc-stepper.nf-stepper button{width:100%;height:auto;min-height:68px;border:1px solid var(--n-strong-border);border-radius:18px;background:var(--n-surface);color:var(--n-accent);padding:12px 6px;font-size:1rem}
+.nf-detail .nc-stepper.nf-stepper button:disabled{background:var(--n-disabled-fill);color:var(--n-disabled-ink);border-color:var(--n-border);opacity:1}
+.nf-detail .nf-portion-fields:has(.nc-stepper){grid-template-columns:1fr}
+.nc-exact input[type=range]{min-height:44px;padding:0;accent-color:var(--n-accent);border:0;background:transparent}
+.nc-exact .form-label{margin-top:18px}
+/* Grouped legacy card rules also included a plant card. Restrict mint to actual plant content. */
+.card,.mission,.food-next,.profile-hero,.wmd-guide,.connection-card,.food-empty,.week-celebration{background:var(--n-surface);color:var(--n-ink)}
+.plant-collection{background:var(--n-plant-surface);color:var(--n-plant-text)}
+.food-data-label{background:var(--n-canvas);color:var(--n-muted)}
+.nc-choice .nc-check{visibility:hidden}.nc-choice[aria-pressed=true] .nc-check{visibility:visible}
+.nc-tag .nc-check{display:none} /* The native checkbox supplies the visible and announced selected mark. */
+.nc-number-display{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;margin-top:8px}
+.nc-number-display output{min-width:0;overflow-wrap:anywhere}.nc-number-display .button{width:auto;min-width:75px;margin:0;flex-shrink:0}
+.nc-stepper-value>span{display:block;font-size:.9375rem;line-height:1.35;margin-top:3px;color:var(--n-muted)}
+summary{min-height:44px}.approved-screen .n-heart{min-width:44px}
+:root{--n-disabled-ink:var(--n-ink)}
+.tag-explainer>b,.rhythm-badge,.week-day.done .day-circle,.step-number{background:var(--n-selected-surface);color:var(--n-accent)}
+.portion-options button[aria-pressed=true] small{color:var(--n-accent)}
+html.n-large-text .food-metrics,html.n-large-text .rhythm-trio,html.n-large-text .week-counts,html.n-large-text .macro-grid,html.n-large-text .meal-assumptions{display:grid;grid-template-columns:1fr}
+html.n-large-text .food-metrics button{min-height:100px}
+html.n-large-text .food-metrics button>span,html.n-large-text .food-metrics button>small{overflow-wrap:anywhere}
+html.n-large-text .collection-top,html.n-large-text .collection-footer{flex-wrap:wrap;gap:14px}
+html.n-large-text .collection-number{margin-left:0}.collection-footer .text-button{white-space:normal}
+/* Secondary copy on selected/tinted panels needs stronger ink than canvas-muted. */
+:root{--n-neutral:var(--n-canvas);--n-tinted-muted:color-mix(in srgb,var(--n-ink) 30%,var(--n-muted))}
+:is(.nf-verdict,.nf-portion-start,.nf-start,.nf-unknown){--nf-muted:var(--n-tinted-muted)}
+.n-diet-trend p,.n-diet-note p,.n-diet-recipes small,.n-diet-food-image>svg,.n-rating .n-caption{color:var(--n-tinted-muted)}
+.approved-screen .nc-choice:not(:disabled),.nf-detail .nc-choice:not(:disabled){color:var(--n-accent)}
+/* Legacy secondary routes keep the same accessible hit regions and progress semantics. */
+.food-date-label input,.consent-line{min-height:44px}
+:root{--n-on-accent:var(--n-surface)}
+.path-done .path-node,.pill.dark{color:var(--n-on-accent)}
+.food-quick button,.food-quick button:nth-child(2){background:var(--n-surface);color:var(--n-accent);border:1px solid var(--n-strong-border);box-shadow:none}
+.collection-hero progress::-webkit-progress-value,.plant-collection progress::-webkit-progress-value{background:var(--n-plant-text)}
+.collection-hero progress::-moz-progress-bar,.plant-collection progress::-moz-progress-bar{background:var(--n-plant-text)}
+.food-trend-track>span{background:var(--n-plant-text)}
+.focus-button[aria-pressed=true]::after{content:'✓';display:inline-block;margin-left:.4em;color:var(--n-accent);font-weight:750}
+/* Keep amounts intact. At narrow widths or large type, give the value its own row. */
+.nc-stepper-value>strong{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.food-form-grid>.nc-number-field:has(.nc-stepper){grid-column:1/-1}
+html.n-large-text .nc-stepper,html.n-large-text .nf-detail .nc-stepper.nf-stepper{grid-template-columns:repeat(2,minmax(0,1fr))}
+html.n-large-text .nc-stepper>.nc-stepper-value{grid-column:1/-1;grid-row:1}
+html.n-large-text .nc-stepper>button:first-child{grid-column:1;grid-row:2}
+html.n-large-text .nc-stepper>button:last-child{grid-column:2;grid-row:2}
+@media(max-width:359px){
+  .nc-stepper,.nf-detail .nc-stepper.nf-stepper{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .nc-stepper>.nc-stepper-value{grid-column:1/-1;grid-row:1}
+  .nc-stepper>button:first-child{grid-column:1;grid-row:2}
+  .nc-stepper>button:last-child{grid-column:2;grid-row:2}
+}
+/* Existing irreversible reset confirmation stays distinct from yellow Add/Save. */
+.button[data-action="reset"],.button[data-action="reset"]:active{background:var(--n-destructive-fill);color:var(--n-destructive-ink);border-color:var(--n-destructive-fill);box-shadow:none}

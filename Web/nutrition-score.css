@@ -1,0 +1,16 @@
+/* The owner-approved result layout is the semicircular gauge, not grade tiles.
+   Arc color describes low-to-high nutrition quality; final frequency is separate. */
+:is(.nf-detail,.n-photo-review) .nf-arc-low{stroke:var(--n-score-red-graphic)}
+:is(.nf-detail,.n-photo-review) .nf-arc-medium{stroke:var(--n-score-amber-graphic)}
+:is(.nf-detail,.n-photo-review) .nf-arc-high{stroke:var(--n-score-green-graphic)}
+:is(.nf-detail,.n-photo-review) .nf-dial-marker{fill:var(--n-canvas)}
+:is(.nf-detail,.n-photo-review) .nf-dial-value{white-space:nowrap}
+:is(.nf-detail,.n-photo-review) .nf-dial-value>*{flex-shrink:0}
+html.n-large-text :is(.nf-detail,.n-photo-review) .nf-score-dial{width:min(300px,100%);grid-template-areas:"dial" "value";row-gap:10px}
+html.n-large-text :is(.nf-detail,.n-photo-review) .nf-dial-value{grid-area:value;padding-top:0}
+.nf-frequency{margin-top:12px;text-align:left}.nf-frequency-label{display:block;font-weight:700;margin:6px 0}.nf-frequency-badge{display:inline-block;padding:10px 16px;border-radius:14px;opacity:1}.nf-frequency-daily{background:var(--n-frequency-daily-badge);color:var(--n-frequency-daily-text)}.nf-frequency-weekly{background:var(--n-frequency-weekly-badge);color:var(--n-frequency-weekly-text)}.nf-frequency-monthly{background:var(--n-frequency-monthly-badge);color:var(--n-frequency-monthly-text)}.nf-frequency-unknown{background:var(--n-surface);color:var(--n-muted);border:1px solid var(--n-border)}.nf-frequency p,.nf-frequency-key,.nf-policy-note,.nf-historical{font-size:.85rem;line-height:1.5;overflow-wrap:anywhere}.nf-frequency-key{padding-left:20px;margin:14px 0 8px}.nf-frequency-key li{margin:7px 0}.nf-policy-note,.nf-historical{color:var(--n-muted)}.nf-historical{border-left:3px solid var(--n-accent);padding:8px 12px}.n-score{min-width:60px;white-space:normal}.n-score small{display:block}.n-history-item .n-score{align-self:center}.nf-score-name{font-weight:800}
+@media(prefers-contrast:more){.nf-frequency-badge{border:2px solid currentColor}}
+
+.nf-frequency-key strong{white-space:nowrap}
+
+.nc-choice-group.nc-presets,.nc-choice-group.scan-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.approved-screen .n-history-item .n-score-red,.n-diet .n-score-red{background:var(--n-frequency-monthly-badge);color:var(--n-frequency-monthly-text)}.approved-screen .n-history-item .n-score-amber,.n-diet .n-score-amber{background:var(--n-frequency-weekly-badge);color:var(--n-frequency-weekly-text)}.approved-screen .n-history-item .n-score-green,.n-diet .n-score-green{background:var(--n-frequency-daily-badge);color:var(--n-frequency-daily-text)}.approved-screen .n-history-item .n-score small{white-space:normal;overflow-wrap:normal}.nf-frequency-key{list-style:none;padding-left:0}.nf-frequency-key li{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:9px}.nf-frequency-key strong{text-align:center;border-radius:10px;padding:3px 6px;height:fit-content}.nf-frequency-key li:nth-child(1) strong{background:var(--n-frequency-daily-badge);color:var(--n-frequency-daily-text)}.nf-frequency-key li:nth-child(2) strong{background:var(--n-frequency-weekly-badge);color:var(--n-frequency-weekly-text)}.nf-frequency-key li:nth-child(3) strong{background:var(--n-frequency-monthly-badge);color:var(--n-frequency-monthly-text)}

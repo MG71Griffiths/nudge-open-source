@@ -1,0 +1,1 @@
+Read README.md for independent setup, LICENSE for original code terms, THIRD_PARTY_NOTICES.md for separate data/icon rights, and RELEASE-VERIFICATION.md for completed checks. This export has no credentials or working service configuration. Do not install a development fork over another Nudge installation.

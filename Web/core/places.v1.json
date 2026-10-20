@@ -1,0 +1,1587 @@
+{
+  "version": "uk-places-2026-10-09-v1",
+  "schemaVersion": 1,
+  "market": "unitedKingdom",
+  "places": [
+    {
+      "id": "subway",
+      "title": "Subway",
+      "groups": [
+        "cafe",
+        "restaurant"
+      ],
+      "aliases": [
+        "Subway"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Subway"
+        ],
+        "retailerAliases": [
+          "Subway"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "greggs",
+      "title": "Greggs",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Greggs"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Greggs",
+          "Greggs Bake At Home",
+          "Greggs (Iceland)"
+        ],
+        "retailerAliases": [
+          "Greggs"
+        ],
+        "titleAliases": [
+          "Greggs"
+        ]
+      }
+    },
+    {
+      "id": "costa",
+      "title": "Costa Coffee",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Costa Coffee",
+        "Costa"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Costa Coffee",
+          "Costa",
+          "Costa UK",
+          "Costa Express",
+          "Costa - Barista Creations",
+          "Costa coffee barista creations",
+          "Costa Dolce Gusto"
+        ],
+        "retailerAliases": [
+          "Costa Coffee",
+          "Costa"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "starbucks",
+      "title": "Starbucks",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Starbucks",
+        "Starbucks Coffee"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Starbucks",
+          "Starbucks Coffee"
+        ],
+        "retailerAliases": [
+          "Starbucks",
+          "Starbucks Coffee"
+        ],
+        "titleAliases": [
+          "Starbucks",
+          "Starbucks Coffee"
+        ]
+      }
+    },
+    {
+      "id": "caffenero",
+      "title": "Caffè Nero",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Caffè Nero",
+        "Caffe Nero",
+        "Café Nero"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Caffè Nero",
+          "Caffe Nero",
+          "Café Nero"
+        ],
+        "retailerAliases": [
+          "Caffè Nero",
+          "Caffe Nero",
+          "Café Nero"
+        ],
+        "titleAliases": [
+          "Caffè Nero",
+          "Caffe Nero",
+          "Café Nero"
+        ]
+      }
+    },
+    {
+      "id": "pret",
+      "title": "Pret A Manger",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Pret A Manger",
+        "Pret"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Pret A Manger",
+          "Pret",
+          "Pret a Manger UK",
+          "Pret UK"
+        ],
+        "retailerAliases": [
+          "Pret A Manger",
+          "Pret"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "gails",
+      "title": "Gail’s Bakery",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Gail's Bakery",
+        "Gail’s Bakery",
+        "Gails Bakery",
+        "Gail's",
+        "Gails"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Gail's Bakery",
+          "Gail’s Bakery",
+          "Gails Bakery",
+          "Gail's",
+          "Gails"
+        ],
+        "retailerAliases": [
+          "Gail's Bakery",
+          "Gail’s Bakery",
+          "Gails Bakery",
+          "Gail's",
+          "Gails"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "leon",
+      "title": "Leon",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Leon"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Leon"
+        ],
+        "retailerAliases": [
+          "Leon"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "blankstreet",
+      "title": "Blank Street Coffee",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Blank Street Coffee",
+        "Blank Street"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Blank Street Coffee",
+          "Blank Street"
+        ],
+        "retailerAliases": [
+          "Blank Street Coffee",
+          "Blank Street"
+        ],
+        "titleAliases": [
+          "Blank Street Coffee",
+          "Blank Street"
+        ]
+      }
+    },
+    {
+      "id": "cookscoffee",
+      "title": "Cooks Coffee (Esquires)",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Cooks Coffee",
+        "Esquires Coffee",
+        "Esquires"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Cooks Coffee",
+          "Esquires Coffee",
+          "Esquires"
+        ],
+        "retailerAliases": [
+          "Cooks Coffee",
+          "Esquires Coffee",
+          "Esquires"
+        ],
+        "titleAliases": [
+          "Cooks Coffee",
+          "Esquires Coffee",
+          "Esquires"
+        ]
+      }
+    },
+    {
+      "id": "coffee1",
+      "title": "Coffee#1",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Coffee#1",
+        "Coffee 1"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Coffee#1",
+          "Coffee 1"
+        ],
+        "retailerAliases": [
+          "Coffee#1",
+          "Coffee 1"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "blacksheep",
+      "title": "Black Sheep Coffee",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Black Sheep Coffee"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Black Sheep Coffee"
+        ],
+        "retailerAliases": [
+          "Black Sheep Coffee"
+        ],
+        "titleAliases": [
+          "Black Sheep Coffee"
+        ]
+      }
+    },
+    {
+      "id": "timhortons",
+      "title": "Tim Hortons",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Tim Hortons",
+        "Tim Horton's"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Tim Hortons",
+          "Tim Horton's"
+        ],
+        "retailerAliases": [
+          "Tim Hortons",
+          "Tim Horton's"
+        ],
+        "titleAliases": [
+          "Tim Hortons",
+          "Tim Horton's"
+        ]
+      }
+    },
+    {
+      "id": "joeandthejuice",
+      "title": "Joe & The Juice",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Joe & The Juice",
+        "Joe and the Juice"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Joe & The Juice",
+          "Joe and the Juice"
+        ],
+        "retailerAliases": [
+          "Joe & The Juice",
+          "Joe and the Juice"
+        ],
+        "titleAliases": [
+          "Joe & The Juice",
+          "Joe and the Juice"
+        ]
+      }
+    },
+    {
+      "id": "bostonteaparty",
+      "title": "Boston Tea Party",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Boston Tea Party"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Boston Tea Party"
+        ],
+        "retailerAliases": [
+          "Boston Tea Party"
+        ],
+        "titleAliases": [
+          "Boston Tea Party"
+        ]
+      }
+    },
+    {
+      "id": "coffeerepublic",
+      "title": "Coffee Republic",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Coffee Republic"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Coffee Republic"
+        ],
+        "retailerAliases": [
+          "Coffee Republic"
+        ],
+        "titleAliases": [
+          "Coffee Republic"
+        ]
+      }
+    },
+    {
+      "id": "sohocoffee",
+      "title": "Soho Coffee Co.",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Soho Coffee Co.",
+        "Soho Coffee"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Soho Coffee Co.",
+          "Soho Coffee"
+        ],
+        "retailerAliases": [
+          "Soho Coffee Co.",
+          "Soho Coffee"
+        ],
+        "titleAliases": [
+          "Soho Coffee Co.",
+          "Soho Coffee"
+        ]
+      }
+    },
+    {
+      "id": "bear",
+      "title": "Bear",
+      "groups": [
+        "cafe"
+      ],
+      "aliases": [
+        "Bear",
+        "Bear Coffee",
+        "BEAR Coffee Company"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Bear Coffee",
+          "BEAR Coffee Company"
+        ],
+        "retailerAliases": [
+          "Bear Coffee",
+          "BEAR Coffee Company"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "mcdonalds",
+      "title": "McDonald’s",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "McDonald's",
+        "McDonalds",
+        "McDonald’s"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "McDonald's",
+          "McDonalds",
+          "McDonald’s"
+        ],
+        "retailerAliases": [
+          "McDonald's",
+          "McDonalds",
+          "McDonald’s"
+        ],
+        "titleAliases": [
+          "McDonald's",
+          "McDonalds",
+          "McDonald’s"
+        ]
+      }
+    },
+    {
+      "id": "dominos",
+      "title": "Domino’s Pizza",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Domino's Pizza",
+        "Dominos Pizza",
+        "Domino's",
+        "Dominos"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Domino's Pizza",
+          "Dominos Pizza",
+          "Domino's",
+          "Dominos"
+        ],
+        "retailerAliases": [
+          "Domino's Pizza",
+          "Dominos Pizza",
+          "Domino's",
+          "Dominos"
+        ],
+        "titleAliases": [
+          "Domino's Pizza",
+          "Dominos Pizza",
+          "Domino's",
+          "Dominos"
+        ]
+      }
+    },
+    {
+      "id": "kfc",
+      "title": "KFC",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "KFC",
+        "Kentucky Fried Chicken"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "KFC",
+          "Kentucky Fried Chicken"
+        ],
+        "retailerAliases": [
+          "KFC",
+          "Kentucky Fried Chicken"
+        ],
+        "titleAliases": [
+          "KFC",
+          "Kentucky Fried Chicken"
+        ]
+      }
+    },
+    {
+      "id": "wetherspoon",
+      "title": "JD Wetherspoon",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "JD Wetherspoon",
+        "J D Wetherspoon",
+        "Wetherspoon",
+        "Wetherspoons"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "JD Wetherspoon",
+          "J D Wetherspoon",
+          "Wetherspoon",
+          "Wetherspoons"
+        ],
+        "retailerAliases": [
+          "JD Wetherspoon",
+          "J D Wetherspoon",
+          "Wetherspoon",
+          "Wetherspoons"
+        ],
+        "titleAliases": [
+          "JD Wetherspoon",
+          "J D Wetherspoon",
+          "Wetherspoon",
+          "Wetherspoons"
+        ]
+      }
+    },
+    {
+      "id": "burgerking",
+      "title": "Burger King",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Burger King"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Burger King"
+        ],
+        "retailerAliases": [
+          "Burger King"
+        ],
+        "titleAliases": [
+          "Burger King"
+        ]
+      }
+    },
+    {
+      "id": "pizzahut",
+      "title": "Pizza Hut",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Pizza Hut"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Pizza Hut"
+        ],
+        "retailerAliases": [
+          "Pizza Hut"
+        ],
+        "titleAliases": [
+          "Pizza Hut"
+        ]
+      }
+    },
+    {
+      "id": "nandos",
+      "title": "Nando’s",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Nando's",
+        "Nandos",
+        "Nando’s"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Nando's",
+          "Nandos",
+          "Nando’s"
+        ],
+        "retailerAliases": [
+          "Nando's",
+          "Nandos",
+          "Nando’s"
+        ],
+        "titleAliases": [
+          "Nando's",
+          "Nandos",
+          "Nando’s"
+        ]
+      }
+    },
+    {
+      "id": "pizzaexpress",
+      "title": "PizzaExpress",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "PizzaExpress",
+        "Pizza Express"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "PizzaExpress",
+          "Pizza Express"
+        ],
+        "retailerAliases": [
+          "PizzaExpress",
+          "Pizza Express"
+        ],
+        "titleAliases": [
+          "PizzaExpress",
+          "Pizza Express"
+        ]
+      }
+    },
+    {
+      "id": "wagamama",
+      "title": "Wagamama",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Wagamama"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Wagamama"
+        ],
+        "retailerAliases": [
+          "Wagamama"
+        ],
+        "titleAliases": [
+          "Wagamama"
+        ]
+      }
+    },
+    {
+      "id": "harvester",
+      "title": "Harvester",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Harvester",
+        "Harvester Restaurants"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Harvester",
+          "Harvester Restaurants"
+        ],
+        "retailerAliases": [
+          "Harvester",
+          "Harvester Restaurants"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "tobycarvery",
+      "title": "Toby Carvery",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Toby Carvery"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Toby Carvery"
+        ],
+        "retailerAliases": [
+          "Toby Carvery"
+        ],
+        "titleAliases": [
+          "Toby Carvery"
+        ]
+      }
+    },
+    {
+      "id": "hungryhorse",
+      "title": "Hungry Horse",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Hungry Horse"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Hungry Horse"
+        ],
+        "retailerAliases": [
+          "Hungry Horse"
+        ],
+        "titleAliases": [
+          "Hungry Horse"
+        ]
+      }
+    },
+    {
+      "id": "loungers",
+      "title": "Loungers (Cosy Club / Lounge)",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Loungers",
+        "Cosy Club"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Loungers",
+          "Cosy Club"
+        ],
+        "retailerAliases": [
+          "Loungers",
+          "Cosy Club"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "bellaitalia",
+      "title": "Bella Italia",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Bella Italia"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Bella Italia"
+        ],
+        "retailerAliases": [
+          "Bella Italia"
+        ],
+        "titleAliases": [
+          "Bella Italia"
+        ]
+      }
+    },
+    {
+      "id": "zizzi",
+      "title": "Zizzi",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Zizzi"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Zizzi"
+        ],
+        "retailerAliases": [
+          "Zizzi"
+        ],
+        "titleAliases": [
+          "Zizzi"
+        ]
+      }
+    },
+    {
+      "id": "prezzo",
+      "title": "Prezzo",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Prezzo"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Prezzo"
+        ],
+        "retailerAliases": [
+          "Prezzo"
+        ],
+        "titleAliases": [
+          "Prezzo"
+        ]
+      }
+    },
+    {
+      "id": "askitalian",
+      "title": "ASK Italian",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "ASK Italian"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "ASK Italian"
+        ],
+        "retailerAliases": [
+          "ASK Italian"
+        ],
+        "titleAliases": [
+          "ASK Italian"
+        ]
+      }
+    },
+    {
+      "id": "fiveguys",
+      "title": "Five Guys",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Five Guys"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Five Guys"
+        ],
+        "retailerAliases": [
+          "Five Guys"
+        ],
+        "titleAliases": [
+          "Five Guys"
+        ]
+      }
+    },
+    {
+      "id": "francomanca",
+      "title": "Franco Manca",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Franco Manca"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Franco Manca"
+        ],
+        "retailerAliases": [
+          "Franco Manca"
+        ],
+        "titleAliases": [
+          "Franco Manca"
+        ]
+      }
+    },
+    {
+      "id": "cote",
+      "title": "Côte Brasserie",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Côte Brasserie",
+        "Cote Brasserie",
+        "Côte",
+        "Cote"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Côte Brasserie",
+          "Cote Brasserie"
+        ],
+        "retailerAliases": [
+          "Côte Brasserie",
+          "Cote Brasserie"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "bills",
+      "title": "Bill’s",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Bill's",
+        "Bills",
+        "Bill’s",
+        "Bill's Restaurant",
+        "Bills Restaurant"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Bill's Restaurant",
+          "Bills Restaurant"
+        ],
+        "retailerAliases": [
+          "Bill's Restaurant",
+          "Bills Restaurant"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "gdk",
+      "title": "German Doner Kebab (GDK)",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "German Doner Kebab",
+        "GDK"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "German Doner Kebab",
+          "GDK"
+        ],
+        "retailerAliases": [
+          "German Doner Kebab",
+          "GDK"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "turtlebay",
+      "title": "Turtle Bay",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Turtle Bay"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Turtle Bay"
+        ],
+        "retailerAliases": [
+          "Turtle Bay"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "pepes",
+      "title": "Pepe’s Piri Piri",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Pepe's Piri Piri",
+        "Pepes Piri Piri",
+        "Pepe’s Piri Piri"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Pepe's Piri Piri",
+          "Pepes Piri Piri",
+          "Pepe’s Piri Piri"
+        ],
+        "retailerAliases": [
+          "Pepe's Piri Piri",
+          "Pepes Piri Piri",
+          "Pepe’s Piri Piri"
+        ],
+        "titleAliases": [
+          "Pepe's Piri Piri",
+          "Pepes Piri Piri",
+          "Pepe’s Piri Piri"
+        ]
+      }
+    },
+    {
+      "id": "papajohns",
+      "title": "Papa John’s",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Papa John's",
+        "Papa Johns",
+        "Papa John’s"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Papa John's",
+          "Papa Johns",
+          "Papa John’s"
+        ],
+        "retailerAliases": [
+          "Papa John's",
+          "Papa Johns",
+          "Papa John’s"
+        ],
+        "titleAliases": [
+          "Papa John's",
+          "Papa Johns",
+          "Papa John’s"
+        ]
+      }
+    },
+    {
+      "id": "popeyes",
+      "title": "Popeyes Louisiana Chicken",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Popeyes Louisiana Chicken",
+        "Popeyes"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Popeyes Louisiana Chicken",
+          "Popeyes"
+        ],
+        "retailerAliases": [
+          "Popeyes Louisiana Chicken",
+          "Popeyes"
+        ],
+        "titleAliases": [
+          "Popeyes Louisiana Chicken",
+          "Popeyes"
+        ]
+      }
+    },
+    {
+      "id": "tacobell",
+      "title": "Taco Bell",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Taco Bell"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Taco Bell"
+        ],
+        "retailerAliases": [
+          "Taco Bell"
+        ],
+        "titleAliases": [
+          "Taco Bell"
+        ]
+      }
+    },
+    {
+      "id": "wingstop",
+      "title": "Wingstop",
+      "groups": [
+        "restaurant"
+      ],
+      "aliases": [
+        "Wingstop"
+      ],
+      "store": null,
+      "matching": {
+        "brandAliases": [
+          "Wingstop"
+        ],
+        "retailerAliases": [
+          "Wingstop"
+        ],
+        "titleAliases": [
+          "Wingstop"
+        ]
+      }
+    },
+    {
+      "id": "tesco",
+      "title": "Tesco",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Tesco"
+      ],
+      "store": "tesco",
+      "matching": {
+        "brandAliases": [
+          "Tesco"
+        ],
+        "retailerAliases": [
+          "Tesco"
+        ],
+        "titleAliases": [
+          "Tesco"
+        ]
+      }
+    },
+    {
+      "id": "sainsburys",
+      "title": "Sainsbury’s",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Sainsbury's",
+        "Sainsburys",
+        "Sainsbury"
+      ],
+      "store": "sainsburys",
+      "matching": {
+        "brandAliases": [
+          "Sainsbury's",
+          "Sainsburys",
+          "Sainsbury"
+        ],
+        "retailerAliases": [
+          "Sainsbury's",
+          "Sainsburys",
+          "Sainsbury"
+        ],
+        "titleAliases": [
+          "Sainsbury's",
+          "Sainsburys",
+          "Sainsbury"
+        ]
+      }
+    },
+    {
+      "id": "asda",
+      "title": "Asda",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Asda"
+      ],
+      "store": "asda",
+      "matching": {
+        "brandAliases": [
+          "Asda"
+        ],
+        "retailerAliases": [
+          "Asda"
+        ],
+        "titleAliases": [
+          "Asda"
+        ]
+      }
+    },
+    {
+      "id": "aldi",
+      "title": "Aldi",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Aldi"
+      ],
+      "store": "aldi",
+      "matching": {
+        "brandAliases": [
+          "Aldi"
+        ],
+        "retailerAliases": [
+          "Aldi"
+        ],
+        "titleAliases": [
+          "Aldi"
+        ]
+      }
+    },
+    {
+      "id": "morrisons",
+      "title": "Morrisons",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Morrisons",
+        "Morrison"
+      ],
+      "store": "morrisons",
+      "matching": {
+        "brandAliases": [
+          "Morrisons",
+          "Morrison"
+        ],
+        "retailerAliases": [
+          "Morrisons",
+          "Morrison"
+        ],
+        "titleAliases": [
+          "Morrisons",
+          "Morrison"
+        ]
+      }
+    },
+    {
+      "id": "lidl",
+      "title": "Lidl",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Lidl"
+      ],
+      "store": "lidl",
+      "matching": {
+        "brandAliases": [
+          "Lidl"
+        ],
+        "retailerAliases": [
+          "Lidl"
+        ],
+        "titleAliases": [
+          "Lidl"
+        ]
+      }
+    },
+    {
+      "id": "coOp",
+      "title": "Co-op Food",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Co-op Food",
+        "Co-op",
+        "Coop",
+        "Co-operative",
+        "The Co-operative",
+        "Cooperative"
+      ],
+      "store": "coOp",
+      "matching": {
+        "brandAliases": [
+          "Co-op Food",
+          "Co-op",
+          "Coop",
+          "Co-operative",
+          "The Co-operative",
+          "Cooperative"
+        ],
+        "retailerAliases": [
+          "Co-op Food",
+          "Co-op",
+          "Coop",
+          "Co-operative",
+          "The Co-operative",
+          "Cooperative"
+        ],
+        "titleAliases": [
+          "Co-op Food",
+          "Co-op",
+          "Coop",
+          "Co-operative",
+          "The Co-operative",
+          "Cooperative"
+        ]
+      }
+    },
+    {
+      "id": "waitrose",
+      "title": "Waitrose & Partners",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Waitrose & Partners",
+        "Waitrose and Partners",
+        "Waitrose"
+      ],
+      "store": "waitrose",
+      "matching": {
+        "brandAliases": [
+          "Waitrose & Partners",
+          "Waitrose and Partners",
+          "Waitrose"
+        ],
+        "retailerAliases": [
+          "Waitrose & Partners",
+          "Waitrose and Partners",
+          "Waitrose"
+        ],
+        "titleAliases": [
+          "Waitrose & Partners",
+          "Waitrose and Partners",
+          "Waitrose"
+        ]
+      }
+    },
+    {
+      "id": "mands",
+      "title": "M&S Food",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Marks & Spencer",
+        "Marks and Spencer",
+        "M&S Food",
+        "M&S",
+        "Marks Spencer"
+      ],
+      "store": "marksAndSpencer",
+      "matching": {
+        "brandAliases": [
+          "Marks & Spencer",
+          "Marks and Spencer",
+          "M&S Food",
+          "M&S",
+          "Marks Spencer"
+        ],
+        "retailerAliases": [
+          "Marks & Spencer",
+          "Marks and Spencer",
+          "M&S Food",
+          "M&S",
+          "Marks Spencer"
+        ],
+        "titleAliases": [
+          "Marks & Spencer",
+          "Marks and Spencer",
+          "M&S Food",
+          "M&S",
+          "Marks Spencer"
+        ]
+      }
+    },
+    {
+      "id": "iceland",
+      "title": "Iceland",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Iceland",
+        "Iceland Foods"
+      ],
+      "store": "iceland",
+      "matching": {
+        "brandAliases": [
+          "Iceland",
+          "Iceland Foods"
+        ],
+        "retailerAliases": [
+          "Iceland",
+          "Iceland Foods"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "ocado",
+      "title": "Ocado",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Ocado"
+      ],
+      "store": "ocado",
+      "matching": {
+        "brandAliases": [
+          "Ocado"
+        ],
+        "retailerAliases": [
+          "Ocado"
+        ],
+        "titleAliases": [
+          "Ocado"
+        ]
+      }
+    },
+    {
+      "id": "farmfoods",
+      "title": "Farmfoods",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Farmfoods",
+        "Farm Foods"
+      ],
+      "store": "farmfoods",
+      "matching": {
+        "brandAliases": [
+          "Farmfoods",
+          "Farm Foods"
+        ],
+        "retailerAliases": [
+          "Farmfoods",
+          "Farm Foods"
+        ],
+        "titleAliases": [
+          "Farmfoods",
+          "Farm Foods"
+        ]
+      }
+    },
+    {
+      "id": "heronfoods",
+      "title": "Heron Foods",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Heron Foods"
+      ],
+      "store": "heronFoods",
+      "matching": {
+        "brandAliases": [
+          "Heron Foods"
+        ],
+        "retailerAliases": [
+          "Heron Foods"
+        ],
+        "titleAliases": [
+          "Heron Foods"
+        ]
+      }
+    },
+    {
+      "id": "booths",
+      "title": "Booths",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Booths",
+        "Booths Supermarkets"
+      ],
+      "store": "booths",
+      "matching": {
+        "brandAliases": [
+          "Booths",
+          "Booths Supermarkets"
+        ],
+        "retailerAliases": [
+          "Booths",
+          "Booths Supermarkets"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "budgens",
+      "title": "Budgens",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Budgens"
+      ],
+      "store": "budgens",
+      "matching": {
+        "brandAliases": [
+          "Budgens"
+        ],
+        "retailerAliases": [
+          "Budgens"
+        ],
+        "titleAliases": [
+          "Budgens"
+        ]
+      }
+    },
+    {
+      "id": "spar",
+      "title": "Spar",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Spar"
+      ],
+      "store": "spar",
+      "matching": {
+        "brandAliases": [
+          "Spar"
+        ],
+        "retailerAliases": [
+          "Spar"
+        ],
+        "titleAliases": []
+      }
+    },
+    {
+      "id": "boots",
+      "title": "Boots",
+      "groups": [
+        "supermarket"
+      ],
+      "aliases": [
+        "Boots",
+        "Boots UK"
+      ],
+      "store": "boots",
+      "matching": {
+        "brandAliases": [
+          "Boots",
+          "Boots UK"
+        ],
+        "retailerAliases": [
+          "Boots",
+          "Boots UK"
+        ],
+        "titleAliases": []
+      }
+    }
+  ]
+}

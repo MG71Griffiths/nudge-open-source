@@ -1,0 +1,65 @@
+/* Confirmed intake, using Nudge's existing palette and shared score dial. */
+.approved-screen .n-history-tabs button{min-height:44px;min-width:0;}
+.approved-screen .n-diet{color:var(--n-ink);min-width:0;}
+.n-diet h2{font-size:1.625rem;letter-spacing:-.5px;margin:24px 0 18px;}
+.n-diet h3{font-size:1.125rem;line-height:1.3;margin:0 0 14px;}
+.n-diet .n-diet-day{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.n-diet-day strong{font-size:1.1875rem;display:block;}
+.n-diet-day small{display:block;color:var(--n-muted);font-size:.75rem;margin-top:5px;}
+.n-diet-day-buttons{display:flex;gap:8px;flex-shrink:0;}
+.n-diet-day-buttons button{width:44px;min-height:44px;border:0;border-radius:50%;background:var(--n-neutral);color:var(--n-ink);font-size:1.75rem;line-height:1;}
+.n-diet-day-buttons button:disabled{opacity:.3;}
+.n-diet .n-diet-score{padding:27px 0 20px;text-align:center;}
+.n-diet-score h3{font-size:.875rem;margin:12px 0 5px;}
+.n-diet-score p{font-size:.6875rem;color:var(--n-muted);line-height:1.5;margin:5px auto;max-width:330px;}
+.n-diet .nf-score-dial{display:grid;grid-template-areas:"dial";width:min(330px,100%);margin:0 auto;}
+.n-diet .nf-score-dial svg{grid-area:dial;width:100%;height:auto;overflow:visible;}
+.n-diet .nf-score-dial path{fill:none;stroke-width:8;stroke-linecap:round;}
+.n-diet .nf-arc-monthly{stroke:var(--n-score-red-graphic);}.n-diet .nf-arc-weekly{stroke:var(--n-score-amber-graphic);}.n-diet .nf-arc-daily{stroke:var(--n-score-green-graphic);}
+.n-diet .nf-dial-marker{fill:var(--n-bg);stroke:var(--n-ink);stroke-width:3;}
+.n-diet .nf-dial-value{grid-area:dial;align-self:end;padding-top:60px;display:flex;align-items:baseline;justify-content:center;gap:3px;color:var(--n-ink);}
+.n-diet .nf-dial-value strong{font-size:4.25rem;line-height:1;letter-spacing:-2px;font-weight:800;font-variant-numeric:tabular-nums;}
+.n-diet .nf-dial-value>span{font-size:1.25rem;font-weight:650;}
+.n-diet-note{display:flex;align-items:center;gap:14px;padding:18px;border-radius:22px;background:var(--n-lilac);color:var(--n-ink);}
+.n-diet-note>span{width:34px;flex-shrink:0;color:var(--n-purple);}
+.n-diet-note svg{width:30px;height:30px;}.n-diet-note p{margin:0;font-size:.8125rem;line-height:1.5;}
+.n-diet-section{margin-top:27px;min-width:0;}
+.n-diet-foods{display:flex;gap:12px;overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x proximity;padding:0 1px 8px;scroll-padding:1px;}
+.n-diet .n-diet-food{flex:0 0 158px;min-width:0;padding:0;border:1px solid var(--n-line);border-radius:20px;background:var(--n-paper);color:var(--n-ink);text-align:left;scroll-snap-align:start;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;}
+.n-diet-food-image{display:grid;place-items:center;position:relative;height:150px;background:var(--n-lilac);color:var(--n-purple);overflow:hidden;}
+.n-diet-food-image>img{width:100%;height:100%;object-fit:cover;}.n-diet-food-image>svg{width:42px;height:42px;}
+.n-diet .n-diet-food-image .n-score{position:absolute;right:9px;bottom:9px;width:46px;min-height:46px;border-radius:15px;font-size:1.125rem;box-shadow:0 2px 5px var(--n-shadow);}
+.n-diet .n-score-red{background:var(--n-score-red-surface);color:var(--n-score-red-text);}.n-diet .n-score-amber{background:var(--n-amber-bg);color:var(--n-amber);}.n-diet .n-score-green{background:var(--n-good-bg);color:var(--n-good);}.n-diet .n-score-unknown{background:var(--n-neutral);color:var(--n-muted);}
+.n-diet-logged{position:absolute;right:9px;top:9px;width:24px;height:24px;display:grid;place-items:center;border-radius:50%;background:var(--n-paper);color:var(--n-purple);}
+.n-diet-logged svg{width:16px;height:16px;}
+.n-diet-food-copy{padding:12px;display:grid;gap:6px;overflow-wrap:anywhere;}
+.n-diet-food-copy strong{font-size:.8125rem;line-height:1.4;}.n-diet-food-copy small{font-size:.625rem;line-height:1.4;color:var(--n-muted);}
+.n-diet-quality-row{display:grid;grid-template-columns:29px minmax(0,1fr) auto;gap:12px;align-items:center;padding:18px 16px;margin:9px 0;border-radius:20px;background:var(--n-paper);border:1px solid var(--n-line);font-size:1rem;}
+.n-diet-quality-icon{color:var(--n-purple);}.n-diet-quality-icon svg{width:25px;height:25px;}
+.n-diet-quality-row strong{font-size:1.125rem;font-variant-numeric:tabular-nums;}
+.n-diet-quality-row small{display:block;color:var(--n-muted);font-size:.6875rem;margin-top:5px;line-height:1.4;}
+.n-diet .n-diet-details{margin:10px 0;border-radius:17px;border:1px solid var(--n-line);background:var(--n-paper);padding:0 15px;min-width:0;}
+.n-diet-details summary{cursor:pointer;min-height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.8125rem;font-weight:650;list-style:none;}
+.n-diet-details summary::-webkit-details-marker{display:none;}.n-diet-details summary::after{content:'+';color:var(--n-purple);font-size:1.125rem;}.n-diet-details[open]>summary::after{content:'−';}
+.n-diet-details p{font-size:.75rem;line-height:1.6;color:var(--n-muted);overflow-wrap:anywhere;margin:0 0 13px;}
+.n-diet-trend-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px;}.n-diet-trend-heading h3{margin:0;}
+.n-diet-period{display:flex;gap:3px;padding:3px;border-radius:13px;background:var(--n-neutral);}
+.n-diet-period button{border:0;padding:8px 11px;min-height:44px;border-radius:10px;background:transparent;font-size:.6875rem;color:var(--n-muted);font-weight:650;}
+.n-diet-period button[aria-pressed="true"]{background:var(--n-paper);color:var(--n-purple);}
+.n-diet-trend{padding:20px 16px 15px;border:1px solid var(--n-line);border-radius:23px;background:var(--n-lilac);}
+.n-diet-trend-label{display:block;font-size:.8125rem;font-weight:650;}.n-diet-trend-value{display:block;margin-top:10px;font-size:2.75rem;line-height:1.1;font-variant-numeric:tabular-nums;}.n-diet-trend-value small{font-size:1rem;font-weight:500;margin-left:3px;}
+.n-diet-trend p{font-size:.6875rem;line-height:1.5;color:var(--n-muted);margin:7px 0 0;}
+.n-diet-chart{width:100%;height:auto;margin-top:21px;overflow:visible;}.n-diet-chart line{stroke:var(--n-muted);stroke-width:.6;opacity:.5;}.n-diet-chart .n-diet-chart-guide{stroke-dasharray:3 4;opacity:.25;}.n-diet-chart text{font-family:inherit;fill:var(--n-ink);font-size:8px;}
+.n-diet-chart-red{fill:var(--n-score-red-graphic);}.n-diet-chart-amber{fill:var(--n-score-amber-graphic);}.n-diet-chart-green{fill:var(--n-score-green-graphic);}
+.n-diet-chart-dates{display:flex;justify-content:space-between;color:var(--n-muted);font-size:.625rem;}.n-diet-trend .n-diet-trend-coverage{margin-top:15px;}
+.n-diet-daily-scores{display:grid;padding-bottom:7px;}.n-diet-daily-scores button{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;padding:8px 0;border:0;border-top:1px solid var(--n-line);border-radius:0;background:transparent;text-align:left;color:var(--n-ink);font-size:.8125rem;}.n-diet-daily-scores small{display:block;color:var(--n-muted);font-size:.6875rem;margin-top:3px;}
+.n-diet-caption{font-size:.6875rem;color:var(--n-muted);line-height:1.5;margin:-7px 0 14px;}
+.n-diet-recipes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}.n-diet-recipes button{border:1px solid var(--n-line);padding:0;border-radius:20px;overflow:hidden;background:var(--n-lilac);color:var(--n-ink);text-align:left;display:flex;flex-direction:column;justify-content:space-between;min-width:0;}.n-diet-recipes button>span{padding:16px 12px;display:grid;gap:8px;}.n-diet-recipes small{font-size:.625rem;color:var(--n-muted);}.n-diet-recipes strong{font-size:.875rem;line-height:1.4;}.n-diet-recipes img{width:100%;height:100px;object-fit:cover;}
+.n-diet-metric{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:15px 17px;margin:8px 0;background:var(--n-neutral);border-radius:17px;font-size:.9375rem;}
+.n-diet-metric strong{font-size:1.0625rem;font-weight:650;white-space:nowrap;font-variant-numeric:tabular-nums;}.n-diet-metric strong small{font-size:.75rem;font-weight:400;color:var(--n-muted);}.n-diet-metric>span>small{display:block;font-size:.625rem;color:var(--n-muted);line-height:1.4;margin-top:4px;}
+.n-diet .n-diet-method{margin-top:27px;}.n-diet-empty{padding:20px;border-radius:22px;background:var(--n-paper);border:1px solid var(--n-line);}.n-diet-empty p{font-size:.8125rem;color:var(--n-muted);margin:0 0 16px;}
+.n-diet button:focus-visible,.n-diet summary:focus-visible{outline:3px solid var(--n-purple);outline-offset:2px;}
+html.n-large-text .n-diet-food{flex-basis:210px;}html.n-large-text .n-diet-metric{flex-wrap:wrap;}html.n-large-text .n-diet-quality-row{grid-template-columns:25px minmax(0,1fr);gap:9px;}html.n-large-text .n-diet-quality-row>strong{grid-column:2;}html.n-large-text .n-diet-day{flex-wrap:wrap;}
+html.n-large-text .n-diet-recipes{grid-template-columns:1fr;}
+@media(max-width:360px){.n-diet .nf-dial-value strong{font-size:3.5rem;}.n-diet .nf-dial-value{padding-top:52px;}.n-diet-trend{padding:17px 12px;}.n-diet-quality-row{padding:16px 13px;gap:9px;}}
+@media(prefers-color-scheme:dark){.n-diet .n-score-red{background:var(--n-score-red-surface);color:var(--n-score-red-text);}}

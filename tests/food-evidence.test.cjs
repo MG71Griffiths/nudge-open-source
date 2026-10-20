@@ -1,0 +1,33 @@
+const assert=require('node:assert/strict');
+const {assessRecalls,registry}=require('../Web/food-evidence.js');
+const {notice}=require('./fixtures/fsa-prin-45-2026.json');
+const feed={status:'available',checkedAt:'2026-10-03',notices:[notice]},p={name:'Waitrose Essential Unsweetened Oat Drink',brand:'Waitrose',packSize:'1 litre',bestBefore:'2026-10-15',purchaseDate:'2026-09-10'};
+assert.equal(assessRecalls(p,feed).status,'matched');
+assert.equal(assessRecalls({...p,purchaseDate:null},feed).status,'potential_match');
+assert.match(assessRecalls({...p,purchaseDate:null},feed).matches[0].pending.join(' '),/purchase date/);
+assert.equal(assessRecalls({...p,purchaseDate:'2026-09-22'},feed).status,'no_matching_notice_found');
+assert.equal(assessRecalls({...p,bestBefore:'2026-10-30'},feed).status,'no_matching_notice_found');
+assert.equal(assessRecalls({...p,packSize:'500ml'},feed).status,'no_matching_notice_found');
+assert.equal(assessRecalls(p,{status:'check_unavailable'}).status,'check_unavailable');
+assert.equal(assessRecalls({name:'Meal photo'},feed).status,'no_matching_notice_found');
+const changed={...notice,notation:notice.notation+'-update-1',modified:'2026-10-03',consumerAdvice:'Updated official advice'};
+const result=assessRecalls(p,{...feed,notices:[notice,changed]});assert.equal(result.matches.length,1);assert.equal(result.matches[0].advice,'Updated official advice');
+assert.equal(registry.find(x=>x.id==='adult-fibre').reference,30);
+assert.match(registry.find(x=>x.id==='aspartame').claim,/cannot calculate/);
+// Equivalent units have no whitespace requirement. Unparsed packaging conditions are potential matches.
+for(const packSize of ['1L','1 l','1000ml','1000 ml','100 cl','1 litre ℮'])assert.equal(assessRecalls({...p,packSize},feed).status,'matched',packSize);
+const withPack=packSizeDescription=>({...feed,notices:[{...notice,productDetails:[{...notice.productDetails[0],packSizeDescription}]}]});
+assert.equal(assessRecalls({...p,packSize:'1.5L'},withPack('1500ml')).status,'matched');
+assert.equal(assessRecalls({...p,packSize:'0,5kg'},withPack('500 grams')).status,'matched');
+for(const packSizeDescription of ['All sizes','500ml and 1 litre','Approx. 1 litre','6 x 1 litre'])assert.equal(assessRecalls(p,withPack(packSizeDescription)).status,'potential_match',packSizeDescription);
+assert.equal(assessRecalls({...p,packSize:'Unknown carton'},feed).status,'potential_match');
+assert.equal(assessRecalls({...p,packSize:'2 litres'},feed).status,'no_matching_notice_found','Known incompatible pack amount is excluded');
+// Exact active statuses only; substring matches must not revive withdrawn notices.
+for(const status of ['Inactive','Unpublished','Withdrawn','Not active',{label:'Inactive','@id':'http://data.food.gov.uk/codes/alerts/def/status/published'}])assert.equal(assessRecalls(p,{...feed,notices:[{...notice,status}]}).status,'no_matching_notice_found');
+for(const status of ['Published','Active','Updated','http://data.food.gov.uk/codes/alerts/def/status/published',{'@id':'http://data.food.gov.uk/codes/alerts/def/status/published'}])assert.equal(assessRecalls(p,{...feed,notices:[{...notice,status}]}).status,'matched');
+const withDates=bestBeforeDescription=>({...feed,notices:[{...notice,productDetails:[{...notice.productDetails[0],batchDescription:[{bestBeforeDescription}]}]}]});
+assert.equal(assessRecalls({...p,purchaseDate:null},withDates('All dates between 14 August and 29 October 2026, bought between 2 September and 21 September 2026')).status,'potential_match');
+assert.equal(assessRecalls(p,withDates('All dates between 14 August and 29 October 2026, bought between 2 September and 21 September 2026')).status,'matched');
+for(const tail of [' except batch A123',' only purchased at selected stores',' or a separate date shown on pack'])assert.equal(assessRecalls(p,withDates('All dates between 14 August and 29 October 2026'+tail)).status,'potential_match',tail);
+assert.equal(assessRecalls({...p,bestBefore:'2026-09-31'},withDates('All dates between 14 August and 29 October 2026')).status,'potential_match','Impossible actual date stays unknown');
+console.log('Recall date conjunctions and unparsed conditions, equivalent/unknown pack sizes, exact active status, conservative unknowns, updates and evidence registry pass.');

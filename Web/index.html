@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#F8F7F2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1B202A" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Nudge: understand food, track your daily goals and build healthier habits.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Nudge">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Today · Nudge</title>
+  <link rel="stylesheet" href="/native.css">
+  <link rel="icon" type="image/png" href="/assets/app-icon.png">
+  <link rel="apple-touch-icon" href="/assets/app-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/style.css?v=10">
+  <link rel="stylesheet" href="/journey.css?v=10">
+  <link rel="stylesheet" href="/scan-demo.css?v=10">
+  <link rel="stylesheet" href="/meal-loop.css?v=10">
+  <link rel="stylesheet" href="/streaks.css?v=10">
+  <link rel="stylesheet" href="/food-patterns.css?v=10">
+  <script src="/diagnostics.js?v=1" defer></script>
+  <script src="/storage.js?v=1" defer></script>
+  <script src="/core/diary.js?v=1" defer></script>
+  <script src="/shared-controls.js?v=1" defer></script>
+  <script src="/meal-reference.js?v=10" defer></script>
+  <script src="/meal-loop.js?v=10" defer></script>
+  <script src="/scan-demo.js?v=10" defer></script>
+  <script src="/journey.js?v=10" defer></script>
+  <script src="/streaks.js?v=10" defer></script>
+  <script src="/recipe-catalogue-data.js?v=1" defer></script>
+  <script src="/recipe-catalogue.js?v=1" defer></script>
+  <script src="/core/food-log.js?v=1" defer></script>
+  <script src="/food-patterns.js?v=10" defer></script>
+  <link rel="stylesheet" href="/nudge-ui.css?v=10">
+  <link rel="stylesheet" href="/nudge-play.css?v=10">
+  <script src="/nudge-icons.js?v=10" defer></script>
+  <script src="/nudge-play.js?v=10" defer></script>
+  <script src="/nudge-ui.js?v=10" defer></script>
+  <link rel="stylesheet" href="/nudge-fit.css?v=11">
+  <script src="/core/nutrition-profile.js?v=1" defer></script>
+  <script src="/nudge-fit.js?v=10" defer></script>
+  <link rel="stylesheet" href="/approved.css?v=1">
+  <link rel="stylesheet" href="/food-detail.css?v=1">
+  <link rel="stylesheet" href="/diet.css?v=1">
+  <script src="/today-goals.js?v=2" defer></script>
+  <script src="/diet.js?v=1" defer></script>
+  <script src="/scan-history.js?v=1" defer></script>
+  <script src="/core/product-evidence.js?v=1" defer></script>
+  <script src="/scan-results.js?v=1" defer></script>
+  <script src="/core/nudge-score.js?v=1" defer></script>
+  <script src="/core/food-composition.js?v=1" defer></script>
+  <script src="/core/meal-recovery-data.js?v=1" defer></script>
+  <script src="/core/meal-recovery.js?v=1" defer></script>
+  <script src="/core/recipe-composition.js?v=1" defer></script>
+  <script src="/core/meal-score.js?v=1" defer></script>
+  <script src="/food-detail-model.js?v=1" defer></script>
+  <script src="/food-catalogue.js?v=1" defer></script>
+  <script src="/core/frequency-policy.js?v=1" defer></script>
+  <script src="/food-detail-screen.js?v=1" defer></script>
+  <script src="/barcode.js?v=13" defer></script>
+  <script src="/core/analysis-result.js?v=1" defer></script>
+  <script src="/nutrition-label.js?v=14" defer></script>
+  <script src="/account.js?v=1" defer></script>
+  <script src="/food-evidence.js?v=1" defer></script>
+  <script src="/analysis-crew.js?v=1" defer></script>
+
+  <link rel="stylesheet" href="analysis-crew.css">
+  <link rel="stylesheet" href="/meal-photo-review.css">
+  <link rel="stylesheet" href="/shared-controls.css?v=1">
+  <link rel="stylesheet" href="/profile-goals.css?v=1">
+  <link rel="stylesheet" href="/nutrition-score.css?v=1">
+  <link rel="stylesheet" href="/metric-progress.css?v=2">
+  <link rel="stylesheet" href="/cycle-support.css?v=1">
+  <script src="/cycle-support.js?v=1" defer></script>
+  <link rel="stylesheet" href="/search.css?v=1">
+  <script src="/search-model.js?v=1" defer></script>
+  <script src="/search.js?v=1" defer></script>
+  <script src="/native-search.js?v=1" defer></script>
+  <script src="/repertoire.js?v=1" defer></script>
+  <script src="/app.js?v=16" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header"><a href="#today" class="brand" aria-label="Nudge home">nudge<span class="brand-spark"><svg class="nudge-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3" />
+  <path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4" />
+  <path d="M5 21h14" />
+</svg>
+</span></a><div class="header-tools"><button class="result-favourite n-icon-button" data-action="product-favourite" aria-label="Save favourite" aria-pressed="false" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg></button><button class="result-close n-icon-button" data-action="result-close" aria-label="Close result" hidden><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></header>
+    <main id="app"><section class="screen"><p class="eyebrow">SMALL STEPS COUNT</p><h1>Welcome to Nudge</h1><p>Your daily nudge is loading.</p><noscript>Enable JavaScript to use the diary and habit tracker. Your diary is saved on this device.</noscript></section></main>
+    <nav class="bottom-nav" aria-label="Main navigation"><button data-action="navigate" data-value="today" aria-current="page"><svg class="nudge-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8" />
+  <path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+</svg>
+Today</button><button data-action="navigate" data-value="history"><svg class="nudge-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M3 11a9 9 0 1 1 2.6 7M3 4v7h7M12 7v5l3 2"/>
+</svg>
+History</button><button class="nav-add" data-action="add-menu" aria-label="Open camera"><span class="nav-plus"><svg class="nudge-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="M5 12h14" />
+  <path d="M12 5v14" />
+</svg>
+</span>Camera</button><button data-action="navigate" data-value="search"><svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <path d="m21 21-4.34-4.34" />
+  <circle cx="11" cy="11" r="8" />
+</svg>
+Search</button><button data-action="navigate" data-value="you"><svg class="nudge-icon" aria-hidden="true" focusable="false"
+  xmlns="http://www.w3.org/2000/svg"
+  width="24"
+  height="24"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+  stroke-width="2"
+  stroke-linecap="round"
+  stroke-linejoin="round"
+>
+  <circle cx="12" cy="8" r="5" />
+  <path d="M20 21a8 8 0 0 0-16 0" />
+</svg>
+You</button></nav>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <dialog id="app-dialog" aria-labelledby="dialog-title"><div id="dialog-content"></div><button class="button secondary" data-action="close-dialog">Got it</button></dialog>
+</body>
+</html>

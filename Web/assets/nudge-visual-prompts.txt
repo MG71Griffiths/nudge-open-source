@@ -1,0 +1,20 @@
+Built-in image_gen, single parallel batch, one call per asset, no variants or retries.
+
+nudge-celebrate.png
+Use case: identity-preserve
+Asset type: transparent celebration mascot for Nudge health-habit web app, rendered at 170px on mobile and on milestone screens.
+Input image 1: edit target and strict character identity reference.
+Primary request: Edit the reference mascot into a celebration pose. Preserve its unmistakable identity: same vivid violet round body, giant glossy dark purple eyes with white sclera and highlights, dark-purple outline, lime-green sprout atop the head, orange feet, friendly face, cheek blush, and smooth chunky proportions. Both arms raised triumphantly, delighted small open smile. Keep two prominent lime-green sprout leaves, following the reference silhouette.
+Style/medium: polished playful chunky 3D illustration, smooth highlight and shading treatment matching reference.
+Composition/framing: square canvas; one full-body character centered, entirely visible, modest clear surrounding whitespace; leaves, hands, and feet uncropped. Crisp clean silhouette suitable for a small mobile asset.
+Scene/backdrop: truly transparent alpha background.
+Constraints: change pose and mouth expression only; preserve character identity, colors, eye appearance, and materials. No objects, props, text, badge, confetti, background, floor, watermark, or shadow rectangle.
+
+nudge-garden-stage.png
+Use case: stylized-concept
+Asset type: illustrated garden-stage background for responsive Nudge health-habit web app hero, roughly 550x400 on mobile.
+Primary request: New premium playful stylized 3D illustration of a cheerful garden stage, landscape 3:2 framing. Rich sky blue above with a gentle sunlit gradient. A small lush rolling green island occupies the lower-right and bottom half. A few oversized friendly rounded leaves and sprouts frame the edges. Soft cream across the bottom.
+Composition/framing: landscape 3:2; keep center area clear for a separately composited mascot in HTML, and leave ample clear sky in the upper-left for a short heading. Broad simple forms should remain legible when cropped responsively and viewed on mobile.
+Style/medium: polished chunky 3D illustration, smooth friendly surfaces and soft dimensional shading, matching a round violet mascot with lime-green sprout and orange feet.
+Color palette: saturated but restrained sky cyan, spring green, soft lavender accents, warm cream.
+Constraints: background illustration only. No character, creatures, text, lettering, icons, score, interface, buildings, or watermark.

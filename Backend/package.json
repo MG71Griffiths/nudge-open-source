@@ -1,0 +1,21 @@
+{
+  "name": "nudge-nutrition-label-api",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "dev": "wrangler dev",
+    "check": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
+    "deploy": "wrangler deploy",
+    "check:runtime": "node scripts/check-runtime.mjs",
+    "check:score-runtime": "node scripts/check-score-runtime.mjs",
+    "check:catalogue-runtime": "node scripts/check-catalogue-runtime.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.43.0"
+  },
+  "packageManager": "pnpm@11.25.0"
+}

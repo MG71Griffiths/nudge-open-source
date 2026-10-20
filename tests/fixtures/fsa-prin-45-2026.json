@@ -1,0 +1,37 @@
+{
+  "source": "https://data.food.gov.uk/food-alerts/id?_limit=100&_sort=-created&_view=full",
+  "retrievedAt": "2026-10-03",
+  "fixtureOnly": true,
+  "notice": {
+    "notation": "FSA-PRIN-45-2026",
+    "title": "Waitrose recalls Waitrose Essential Unsweetened Oat Drink because of poor temperature control",
+    "description": "Waitrose is recalling Waitrose Essential Unsweetened Oat Drink due to the risk of microbiological contamination and spoilage because there has been a breakdown in temperature control which may make these products unsafe to drink.",
+    "created": "2026-09-22",
+    "modified": "2026-09-22T19:55:28.156Z",
+    "alertURL": "https://alerts.food.gov.uk/news-alerts/alert/fsa-prin-45-2026",
+    "consumerAdvice": "If you have bought any of the above product, do not eat it. Instead, return it to the store from where it was bought for a full refund.",
+    "problem": [
+      {
+        "@id": "http://data.food.gov.uk/food-alerts/id/FSA-PRIN-45-2026/problem/0",
+        "riskStatement": "Waitrose recalls Waitrose Essential Unsweetened Oat Drink due to the risk of microbiological contamination and spoilage."
+      }
+    ],
+    "productDetails": [
+      {
+        "@id": "http://data.food.gov.uk/food-alerts/id/FSA-PRIN-45-2026/productDetails/0",
+        "productName": "Waitrose Essential Unsweetened Oat Drink",
+        "packSizeDescription": "1 litre",
+        "batchDescription": [
+          {
+            "@id": "http://data.food.gov.uk/food-alerts/id/FSA-PRIN-45-2026/productDetails/0/batch/0",
+            "bestBeforeDescription": "All dates between 14 August and 29 October 2026 purchased between 2 September and 21 September 2026"
+          }
+        ]
+      }
+    ],
+    "status": {
+      "@id": "http://data.food.gov.uk/codes/alerts/def/status/published",
+      "label": "Published"
+    }
+  }
+}

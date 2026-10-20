@@ -1,0 +1,118 @@
+/* Objective colours from the user's IMG_6100 reference. Food-score RAG tokens are separate. */
+.n-metric-protein{--n-metric:var(--n-metric-protein)}.n-metric-energy{--n-metric:var(--n-metric-energy)}.n-metric-carbs{--n-metric:var(--n-metric-carbs)}.n-metric-fibre{--n-metric:var(--n-metric-fibre)}.n-metric-fat{--n-metric:var(--n-metric-fat)}.n-metric-plants{--n-metric:var(--n-metric-plants)}
+.approved-screen .n-target{border-top:4px solid var(--n-metric);padding:16px}
+.approved-screen .n-target .n-target-head svg{color:var(--n-metric);flex:none}
+.approved-screen .n-target .n-track>span{background:var(--n-metric)}
+.approved-screen .n-target-number{overflow-wrap:normal;word-break:normal;display:flex;flex-wrap:wrap;align-items:baseline;gap:3px}
+.approved-screen .n-target-number small{margin:0;white-space:nowrap}
+.approved-screen .n-target-goal{line-height:1.5}
+.n-plants-below{margin-top:12px}.approved-screen .n-plants-below .n-target{display:grid;grid-template-columns:1fr auto;gap:4px 12px;border-top-color:var(--n-metric)}
+.n-plants-below .n-target-head{margin:0}.n-plants-below .n-target-goal{margin:0}.n-plants-below .n-track{grid-column:1/-1;margin-top:8px}
+.n-week-title{margin-top:28px}.n-week-graphics{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.approved-screen .n-week-graphic{margin:0;padding:18px;background:color-mix(in srgb,var(--n-metric) 8%,var(--n-surface));color:var(--n-ink);border:1px solid var(--n-border);min-width:0}
+.approved-screen .n-week-graphic .n-week-head{margin-bottom:12px;gap:10px;flex-wrap:wrap}.n-week-head h3{margin:0;font-size:1.125rem}
+.approved-screen .n-week-graphic .n-week-body{grid-template-columns:108px minmax(0,1fr);gap:18px}
+.approved-screen .n-week-graphic .n-week-ring{width:108px;height:108px;padding:7px;background:conic-gradient(var(--n-metric) calc(var(--n-progress)*1%),color-mix(in srgb,var(--n-metric) 18%,var(--n-surface)) 0)}
+.n-week-ring-inner{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;background:var(--n-surface);color:var(--n-metric)}
+.n-week-ring-inner svg{width:38px;height:38px}.n-week-value{min-width:0}.approved-screen .n-week-graphic .n-week-number{font-size:1.75rem;line-height:1.25;overflow-wrap:normal;font-variant-numeric:tabular-nums}.approved-screen .n-week-graphic .n-week-number small{font-size:.875rem;white-space:nowrap}.approved-screen .n-week-graphic .n-week-note{font-size:.8125rem;line-height:1.4;color:var(--n-muted);margin-top:6px}
+.approved-screen .n-week-graphic .n-mascot{width:94px;height:94px;padding:4px;background:var(--n-surface);border-radius:50%}.approved-screen .n-week-graphic .n-mascot img{width:100%;height:100%;object-fit:contain}
+.approved-screen .n-week-graphic .n-week-message{font-size:1rem;line-height:1.4}
+.approved-screen .n-progress-days{gap:4px}.approved-screen .n-progress-days .n-day{font-size:.75rem;min-width:0}.approved-screen .n-progress-days .n-day-mark{width:32px;height:32px;border:1px solid var(--n-strong-border);background:var(--n-surface);color:var(--n-ink)}
+.approved-screen .n-progress-days .n-day-reached{background:var(--n-metric);border-color:var(--n-metric);color:var(--n-surface)}
+.approved-screen .n-progress-days .n-day-recorded{border:2px solid var(--n-metric)}.approved-screen .n-progress-days .n-day-partial{border:2px dashed var(--n-metric)}
+.approved-screen .n-progress-days .n-day-upcoming{border-style:dotted;color:var(--n-muted)}.approved-screen .n-progress-days .n-day-unlogged{border-style:dashed;color:var(--n-muted)}
+.n-progress-key{line-height:1.65!important}.n-week-about{margin:12px 0 24px}.n-week-about p{font-size:.875rem;line-height:1.6}
+.n-eaten-badge{display:inline-flex;align-items:center;border-radius:20px;padding:3px 8px;margin-top:6px;background:var(--n-success-surface);color:var(--n-success-text);font-size:.6875rem;font-weight:650;white-space:nowrap}
+.n-type{flex-wrap:wrap}.approved-screen .n-history-item{min-width:0}.approved-screen .n-segments button{overflow-wrap:normal;word-break:normal}
+@media(min-width:650px){.n-week-graphics{grid-template-columns:repeat(2,minmax(0,1fr))}.n-week-plants{grid-column:1/-1}}
+html.n-large-text .approved-screen .n-targets{grid-template-columns:minmax(0,1fr)}
+html.n-large-text .approved-screen .n-week-graphic .n-week-body{grid-template-columns:minmax(0,1fr)}
+html.n-large-text .approved-screen .n-progress-days .n-day-mark{width:28px;height:28px;font-size:1rem}
+html.n-large-text .approved-screen .n-progress-days .n-day{font-size:.6875rem}
+html.n-large-text .approved-screen .n-segments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+html.n-large-text .n-plants-below .n-target{grid-template-columns:minmax(0,1fr)}
+@media(prefers-contrast:more){.approved-screen .n-week-graphic,.approved-screen .n-target{border:2px solid var(--n-strong-border)}.approved-screen .n-week-ring{outline:1px solid var(--n-ink)}}
+
+.approved-screen .n-metric-energy .n-day-reached{color:var(--n-ink)}
+
+/* Fitness-style rings sit inside the existing Nudge cards and theme. */
+.approved-screen .n-fitness-overview{margin:0 0 20px;padding:18px;border:1px solid var(--n-border);border-radius:24px;background:var(--n-surface);min-width:0}
+.n-fitness-summary{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:center;margin:20px 0}
+.n-fitness-rings,.n-fitness-mini-rings{display:block;width:100%;height:auto;overflow:visible;aspect-ratio:1}
+.n-fitness-rings{max-width:280px;justify-self:center}
+.n-fitness-ring-track{opacity:1}
+.n-fitness-ring.n-day-unlogged .n-fitness-ring-track{stroke:var(--n-muted);stroke-opacity:.32;stroke-dasharray:9 13}
+.n-fitness-ring.n-day-upcoming .n-fitness-ring-track{stroke:var(--n-muted);stroke-opacity:.15;stroke-dasharray:3 13}
+.n-fitness-ring.n-day-unknown .n-fitness-ring-track{stroke:var(--n-muted);stroke-opacity:.45;stroke-dasharray:3 7}
+.n-fitness-ring.n-day-partial .n-fitness-ring-track{stroke-opacity:.3;stroke-dasharray:6 8}
+.n-fitness-ring-fill{stroke-linecap:round}
+.n-fitness-ring-tip{stroke:var(--n-surface);stroke-width:1.5;paint-order:stroke}
+.n-fitness-legend{list-style:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:0;padding:0;min-width:0}
+.n-fitness-legend-item{position:relative;padding-left:13px;min-width:0;font-size:.8125rem;line-height:1.4}
+.n-fitness-legend-item::before{content:"";position:absolute;top:.4em;left:0;width:7px;height:7px;border-radius:50%;background:var(--n-metric)}
+.n-fitness-legend strong,.n-fitness-legend b{display:block;font-variant-numeric:tabular-nums;font-size:.9375rem;line-height:1.3;overflow-wrap:normal}
+.n-fitness-legend small{display:block;font-size:.6875rem;color:var(--n-muted);line-height:1.4;margin-top:2px}
+.n-fitness-legend-label{font-weight:600}
+.n-fitness-legend-total{display:block;font-size:.75rem;font-variant-numeric:tabular-nums;color:var(--n-muted)}
+.n-fitness-legend .n-fitness-percent{font-size:1.25rem;margin:3px 0}
+.n-fitness-percent{font-variant-numeric:tabular-nums;font-size:.8125rem;font-weight:650;line-height:1.4;color:var(--n-ink)}
+.n-fitness-week-nav,.n-fitness-calendar-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.n-fitness-week-nav button,.n-fitness-calendar-head button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;min-width:44px;padding:7px 10px;border:1px solid var(--n-border);border-radius:14px;background:var(--n-canvas);color:var(--n-ink);font-size:.8125rem;font-weight:600}
+.n-fitness-week-nav button svg,.n-fitness-calendar-head button svg{width:18px;height:18px;flex:none}
+.n-fitness-week-nav button>span[aria-hidden],.n-fitness-calendar-head button>span[aria-hidden]{font-size:1.75rem;line-height:1}
+.n-fitness-week-nav button:disabled,.n-fitness-calendar-head button:disabled{opacity:.35}
+.n-fitness-week-nav>span,.n-fitness-calendar-head>span,.n-fitness-calendar-head strong,.n-fitness-calendar-head h2{font-size:.875rem;font-weight:600;line-height:1.4;text-align:center;flex:1;min-width:0;margin:0}
+.n-fitness-week-nav>[data-action="tracking-calendar"]{flex:1;min-width:0;font-size:.75rem}
+.n-fitness-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px;margin-top:12px}
+.approved-screen .n-fitness-day,.approved-screen .n-fitness-calendar-day{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-width:0;min-height:60px;border:1px solid transparent;border-radius:12px;background:transparent;padding:5px 2px;color:var(--n-muted);font-size:.75rem;line-height:1.2}
+.n-fitness-day .n-fitness-mini-rings{max-width:42px}
+.approved-screen .n-fitness-day.is-selected,.approved-screen .n-fitness-calendar-day.is-selected{border-color:var(--n-accent);background:var(--n-selected-surface);color:var(--n-ink);font-weight:700}
+.approved-screen .n-fitness-day.is-future,.approved-screen .n-fitness-calendar-day.is-future{opacity:.4}
+.n-fitness-day>span,.n-fitness-calendar-day>span{line-height:1.25}
+.n-fitness-calendar{margin:16px 0;padding:16px 0;border-block:1px solid var(--n-border)}
+.n-fitness-calendar-weekdays,.n-fitness-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.n-fitness-calendar-weekdays{margin:14px 0 6px;text-align:center;font-size:.6875rem;color:var(--n-muted)}
+.n-fitness-calendar-day .n-fitness-mini-rings{width:100%;max-width:38px}
+.n-fitness-calendar-grid .n-fitness-calendar-day{min-height:66px}
+.n-fitness-overview>.n-caption{margin:12px 0 0}
+.approved-screen .n-target{background:linear-gradient(145deg,color-mix(in srgb,var(--n-metric) 12%,var(--n-surface)),var(--n-surface) 70%)}
+.approved-screen .n-target .n-track,.approved-screen .n-target.n-plant-target .n-track{background:color-mix(in srgb,var(--n-metric) 18%,var(--n-surface))}
+.approved-screen .n-target.n-plant-target .n-track>span{background:var(--n-metric)}
+.approved-screen .n-target.n-plant-target .n-target-head svg{color:var(--n-metric)}
+.n-target-head .n-fitness-percent{margin-left:auto;font-size:.75rem}
+.approved-screen .n-week-graphic .n-week-ring{position:relative;padding:0;background:none}
+.n-week-ring>.n-fitness-rings{position:absolute;inset:0;width:100%;height:100%}
+.n-week-ring>.n-week-ring-inner,.n-week-ring>.n-mascot{width:76%;height:76%;z-index:1;background:transparent!important}
+.approved-screen .n-week-graphic .n-mascot{width:76%;height:76%;padding:4px}
+.approved-screen .n-progress-days{gap:3px}
+.approved-screen .n-fitness-metric-day{border:0;background:none;min-width:0;min-height:56px;padding:4px 0;color:var(--n-muted);border-radius:9px}
+.approved-screen .n-fitness-metric-day:focus-visible,.approved-screen .n-fitness-day:focus-visible,.approved-screen .n-fitness-calendar-day:focus-visible{outline:2px solid var(--n-accent);outline-offset:2px}
+.n-fitness-week-center{white-space:nowrap;overflow-wrap:normal;word-break:normal;position:absolute;left:12%;top:12%;display:grid;place-items:center;font-size:1.125rem;font-weight:700;color:var(--n-ink)}
+.approved-screen .n-progress-days .n-day-mark{width:34px;height:34px;border:0!important;position:relative;background:none!important;color:var(--n-ink)!important}
+.approved-screen .n-progress-days .n-day-mark>.n-fitness-mini-rings{position:absolute;inset:0;width:100%;height:100%}
+.n-day-mark>span,.n-day-mark>svg:not(.n-fitness-mini-rings){position:relative;z-index:1}
+.approved-screen .n-progress-days .n-day-mark>svg:not(.n-fitness-mini-rings){width:12px;height:12px}
+.n-week-graphic .n-fitness-percent{margin-top:6px}
+.n-progress-key{margin-top:16px}
+@media(max-width:360px){
+  .approved-screen .n-fitness-overview{padding:12px}
+  .n-fitness-summary{gap:16px}
+  .n-fitness-legend{gap:9px}
+  .n-fitness-week-nav{gap:4px}
+  .n-fitness-week-nav button{padding:6px}
+}
+@media(min-width:650px){.n-fitness-summary{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px}.n-fitness-legend{grid-template-columns:minmax(0,1fr);gap:18px}}
+html.n-large-text .n-fitness-summary{grid-template-columns:minmax(0,1fr);gap:20px}
+html.n-large-text .n-fitness-rings{max-width:260px}
+/* Enlarge the compact graphic with Dynamic Type so percentage labels stay readable. */
+html.n-large-text .approved-screen .n-week-graphic .n-week-ring{width:min(100%,6.75rem);height:auto;aspect-ratio:1}
+html.n-large-text .n-fitness-legend{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:16px}
+html.n-large-text .n-fitness-week-nav{justify-content:center}
+html.n-large-text .n-fitness-week-nav>span{flex-basis:100%;order:-1}
+html.n-large-text .n-fitness-calendar-head{justify-content:center}
+html.n-large-text .n-fitness-calendar-head>span,html.n-large-text .n-fitness-calendar-head strong,html.n-large-text .n-fitness-calendar-head h2{flex-basis:100%;order:-1}
+html.n-large-text .n-fitness-day,html.n-large-text .n-fitness-calendar-day{font-size:.6rem;padding:5px 1px}
+html.n-large-text .n-fitness-calendar-weekdays{font-size:.6rem}
+html.n-large-text .approved-screen .n-progress-days .n-day-mark{width:30px;height:30px;font-size:.6rem}
+@media(prefers-contrast:more){.n-fitness-ring-track{stroke-opacity:.4}.approved-screen .n-fitness-overview{border:2px solid var(--n-strong-border)}.n-fitness-ring-fill{filter:drop-shadow(0 0 .5px var(--n-ink))}}
+@media(prefers-reduced-motion:reduce){.n-fitness-rings *,.n-fitness-mini-rings *{animation:none!important;transition:none!important}}

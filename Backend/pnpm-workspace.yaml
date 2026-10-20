@@ -1,0 +1,4 @@
+# Wrangler uses these local platform binaries to bundle and validate Workers.
+allowBuilds:
+  esbuild: true
+  workerd: true

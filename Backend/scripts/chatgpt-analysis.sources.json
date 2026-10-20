@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "bundle": "Web/core/chatgpt-analysis.js",
+  "sha256": "a48001543fc2ab8f7e64c43659e971feacc2c213d7c032380f28af79708a8aed",
+  "sources": {
+    "Backend/data/cofid-2021.json": "4dd1315de788172a31cf797c8eb8e066657269276debd0b14c17baa5b4319934",
+    "Backend/data/usda-meal-fallbacks.json": "5ae304d5459466d1b0b96ab141cecb294c75b4248b70d25969af73a5091d77fd",
+    "Backend/data/usda-recipe-measures.json": "3b6a8e121f64544900af5c34a84ce78ad2e2d87b91c03502a7ade297bc40e668",
+    "Backend/scripts/build-chatgpt-analysis.mjs": "6224a629f12a1a42b9cb0956db0d0917f673214ac2db40d55652d8b1701b8daf",
+    "Backend/scripts/chatgpt-browser-runtime.js": "b48ec72a9cb619b28b04d31106f05830a6f800b31868447f0cb711f214805507",
+    "Backend/src/capture-policy.js": "4dfacec1906677de4f11ca7b4be38deaa03828f6b56f348bde7c7f8661b31fb8",
+    "Backend/src/chatgpt-analysis.js": "989b973c2cb45aec7a1ca041cce15289a65fd626aa66b971cdd648ed81add603",
+    "Backend/src/compact-photo-contract.js": "e75890ad19e75e3e2d55188a50ac9e1055ce004060a1b65acdd19b97e374bb90",
+    "Backend/src/composition.js": "e31333b29f851decab4d531fbcb0184429972f688b2721056ae3fcd14b8ef75d",
+    "Backend/src/meal-hints.js": "31448c5c51cc469a5ef16a8419fc3608554f59211fc27572e19ad3e32d3f06e3",
+    "Backend/src/photo-analysis-contract.js": "f88745dc59fceb0b12117477f2efe633cd5c58170c471fa32e9e5378d9bf3fe2",
+    "Backend/src/photo-evidence.js": "723af1a3bcecbea0e9686dd492e9a1a857e4ed982e9eeac9214eff677774d4ef",
+    "Backend/src/recipe-evidence.js": "0f9dffcbba9a45b66fdf98731d2c661d34d32572b1b4c0e93b9dccdbcd8b4c18",
+    "Backend/src/recipe-measures.js": "7650ffe1b8792b7019aad9f81fcca525142d377147064d12806aa11e2cbfe973",
+    "Web/core/food-composition.js": "6c4ed286831b65454abdb75aab1c7ebb7ed3e4b70bf877f7534710a85dbc2ff5",
+    "Web/core/meal-recovery-data.js": "e85024d451ca292c1e2b39cafa40f62d9b07c0b602ed07034de187907a8b7cc6",
+    "Web/core/meal-recovery.js": "8d7df9ea5f1e8018de1caecdbc3712ba46f60b522f4839057c197857c2540d9f",
+    "Web/core/meal-score.js": "4780737da871cc605d71a489e0771c70892a696d8b2696d6e57686623e50b2da",
+    "Web/core/nudge-score.js": "99cbe0097d311436250054c5c1c6bbf0daead3088ab20daa7d9d56d882458ebe",
+    "Web/core/recipe-composition.js": "f4abc37914705bd840996765522ddb5094fc8a6ec4a9c939a7146b4e0cfa7bc5"
+  }
+}

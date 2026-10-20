@@ -1,0 +1,401 @@
+{
+  "version": "USDA-SR-Legacy-2018-recipe-measures-v2",
+  "sourceURL": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip",
+  "sourceSHA256": "b80817294b8850530aaedf2e515c02593b1824f763a0ff356e5c2081643e6fd0",
+  "licenceURL": "https://fdc.nal.usda.gov/data-documentation/",
+  "retrievedAt": "2026-10-11",
+  "unitSourceURL": "https://www.nist.gov/document/2026-nist-handbook-44-appendix-c",
+  "unitBasis": "NIST: US fluid ounce approximately 29.573 ml; tablespoon exactly half a US fluid ounce; teaspoon one third tablespoon.",
+  "attribution": "USDA Agricultural Research Service, FoodData Central, SR Legacy April 2018. Public domain data.",
+  "foods": [
+    {
+      "id": "usda:167747",
+      "code": "167747",
+      "ndbCode": "9152",
+      "name": "Lemon juice, raw",
+      "values": {
+        "protein": "0.35",
+        "saturatedFat": "0.04",
+        "energyKj": "91",
+        "fibre": "0.3",
+        "sodiumMg": "1",
+        "sugars": "2.52",
+        "fat": "0.24",
+        "carbohydrate": "6.9",
+        "energyKcal": "22"
+      }
+    },
+    {
+      "id": "usda:169640",
+      "code": "169640",
+      "ndbCode": "19296",
+      "name": "Honey",
+      "values": {
+        "saturatedFat": "0",
+        "protein": "0.3",
+        "fibre": "0.2",
+        "sodiumMg": "4",
+        "fat": "0",
+        "carbohydrate": "82.4",
+        "energyKcal": "304",
+        "sugars": "82.12",
+        "energyKj": "1272"
+      }
+    },
+    {
+      "id": "usda:169655",
+      "code": "169655",
+      "ndbCode": "19335",
+      "name": "Sugars, granulated",
+      "values": {
+        "energyKj": "1618",
+        "protein": "0",
+        "sodiumMg": "1",
+        "fat": "0",
+        "energyKcal": "387",
+        "saturatedFat": "0",
+        "sugars": "99.8",
+        "carbohydrate": "99.98",
+        "fibre": "0"
+      }
+    },
+    {
+      "id": "usda:170000",
+      "code": "170000",
+      "ndbCode": "11282",
+      "name": "Onions, raw",
+      "values": {
+        "sugars": "4.24",
+        "fat": "0.1",
+        "carbohydrate": "9.34",
+        "energyKcal": "40",
+        "saturatedFat": "0.042",
+        "protein": "1.1",
+        "energyKj": "166",
+        "fibre": "1.7",
+        "sodiumMg": "4"
+      }
+    },
+    {
+      "id": "usda:170108",
+      "code": "170108",
+      "ndbCode": "11821",
+      "name": "Peppers, sweet, red, raw",
+      "values": {
+        "fibre": "2.1",
+        "energyKcal": "26",
+        "energyKj": "111",
+        "saturatedFat": "0.059",
+        "sodiumMg": "4",
+        "sugars": "4.2",
+        "carbohydrate": "6.03",
+        "protein": "0.99",
+        "fat": "0.3"
+      }
+    },
+    {
+      "id": "usda:170173",
+      "code": "170173",
+      "ndbCode": "12118",
+      "name": "Nuts, coconut milk, canned (liquid expressed from grated meat and water)",
+      "values": {
+        "energyKj": "824",
+        "fat": "21.33",
+        "carbohydrate": "2.81",
+        "energyKcal": "197",
+        "protein": "2.02",
+        "sodiumMg": "13",
+        "saturatedFat": "18.915"
+      }
+    },
+    {
+      "id": "usda:170497",
+      "code": "170497",
+      "ndbCode": "11670",
+      "name": "Peppers, hot chili, green, raw",
+      "values": {
+        "energyKj": "167",
+        "fat": "0.2",
+        "carbohydrate": "9.46",
+        "energyKcal": "40",
+        "saturatedFat": "0.021",
+        "fibre": "1.5",
+        "sodiumMg": "7",
+        "protein": "2",
+        "sugars": "5.1"
+      }
+    },
+    {
+      "id": "usda:171287",
+      "code": "171287",
+      "ndbCode": "1123",
+      "name": "Egg, whole, raw, fresh",
+      "values": {
+        "energyKcal": "143",
+        "energyKj": "599",
+        "saturatedFat": "3.126",
+        "protein": "12.56",
+        "sodiumMg": "142",
+        "sugars": "0.37",
+        "fat": "9.51",
+        "carbohydrate": "0.72",
+        "fibre": "0"
+      }
+    },
+    {
+      "id": "usda:171413",
+      "code": "171413",
+      "ndbCode": "4053",
+      "name": "Oil, olive, salad or cooking",
+      "values": {
+        "fat": "100",
+        "carbohydrate": "0",
+        "energyKcal": "884",
+        "sodiumMg": "2",
+        "protein": "0",
+        "energyKj": "3699",
+        "saturatedFat": "13.808",
+        "fibre": "0",
+        "sugars": "0"
+      }
+    },
+    {
+      "id": "usda:172217",
+      "code": "172217",
+      "ndbCode": "1211",
+      "name": "Milk, whole, 3.25% milkfat, without added vitamin A and vitamin D",
+      "values": {
+        "energyKj": "256",
+        "carbohydrate": "4.78",
+        "sugars": "5.05",
+        "energyKcal": "61",
+        "saturatedFat": "1.865",
+        "fat": "3.27",
+        "fibre": "0",
+        "sodiumMg": "43",
+        "protein": "3.15"
+      }
+    },
+    {
+      "id": "usda:172336",
+      "code": "172336",
+      "ndbCode": "4582",
+      "name": "Oil, canola",
+      "values": {
+        "fat": "100",
+        "saturatedFat": "7.365",
+        "protein": "0",
+        "energyKj": "3699",
+        "carbohydrate": "0",
+        "energyKcal": "884",
+        "fibre": "0",
+        "sodiumMg": "0",
+        "sugars": "0"
+      }
+    },
+    {
+      "id": "usda:172370",
+      "code": "172370",
+      "ndbCode": "4669",
+      "name": "Oil, vegetable, soybean, refined",
+      "values": {
+        "protein": "0",
+        "energyKj": "3699",
+        "fibre": "0",
+        "sodiumMg": "0",
+        "saturatedFat": "15.251",
+        "fat": "100",
+        "carbohydrate": "0",
+        "energyKcal": "884",
+        "sugars": "0"
+      }
+    },
+    {
+      "id": "usda:173424",
+      "code": "173424",
+      "ndbCode": "1129",
+      "name": "Egg, whole, cooked, hard-boiled",
+      "values": {
+        "sugars": "1.12",
+        "energyKj": "649",
+        "fibre": "0",
+        "energyKcal": "155",
+        "protein": "12.58",
+        "sodiumMg": "124",
+        "saturatedFat": "3.267",
+        "fat": "10.61",
+        "carbohydrate": "1.12"
+      }
+    }
+  ],
+  "portions": [
+    {
+      "id": "81887",
+      "foodId": "usda:167747",
+      "amount": 1.0,
+      "measure": "cup",
+      "gramWeight": 244.0
+    },
+    {
+      "id": "81888",
+      "foodId": "usda:167747",
+      "amount": 1.0,
+      "measure": "fl oz",
+      "gramWeight": 30.5
+    },
+    {
+      "id": "85265",
+      "foodId": "usda:169640",
+      "amount": 1.0,
+      "measure": "tbsp",
+      "gramWeight": 21.0
+    },
+    {
+      "id": "85287",
+      "foodId": "usda:169655",
+      "amount": 1.0,
+      "measure": "tsp",
+      "gramWeight": 4.2
+    },
+    {
+      "id": "85858",
+      "foodId": "usda:170000",
+      "amount": 1.0,
+      "measure": "large",
+      "gramWeight": 150.0
+    },
+    {
+      "id": "85860",
+      "foodId": "usda:170000",
+      "amount": 1.0,
+      "measure": "medium (2-1/2\" dia)",
+      "gramWeight": 110.0
+    },
+    {
+      "id": "85862",
+      "foodId": "usda:170000",
+      "amount": 1.0,
+      "measure": "small",
+      "gramWeight": 70.0
+    },
+    {
+      "id": "86065",
+      "foodId": "usda:170108",
+      "amount": 1.0,
+      "measure": "large (2-1/4 per pound, approx 3-3/4\" long, 3\" dia.)",
+      "gramWeight": 164.0
+    },
+    {
+      "id": "86066",
+      "foodId": "usda:170108",
+      "amount": 1.0,
+      "measure": "medium (approx 2-3/4\" long, 2-1/2 dia.)",
+      "gramWeight": 119.0
+    },
+    {
+      "id": "86067",
+      "foodId": "usda:170108",
+      "amount": 1.0,
+      "measure": "small",
+      "gramWeight": 74.0
+    },
+    {
+      "id": "86171",
+      "foodId": "usda:170173",
+      "amount": 1.0,
+      "measure": "cup",
+      "gramWeight": 226.0
+    },
+    {
+      "id": "86172",
+      "foodId": "usda:170173",
+      "amount": 1.0,
+      "measure": "tbsp",
+      "gramWeight": 15.0
+    },
+    {
+      "id": "88374",
+      "foodId": "usda:171287",
+      "amount": 1.0,
+      "measure": "large",
+      "gramWeight": 50.0
+    },
+    {
+      "id": "88375",
+      "foodId": "usda:171287",
+      "amount": 1.0,
+      "measure": "extra large",
+      "gramWeight": 56.0
+    },
+    {
+      "id": "88376",
+      "foodId": "usda:171287",
+      "amount": 1.0,
+      "measure": "jumbo",
+      "gramWeight": 63.0
+    },
+    {
+      "id": "88378",
+      "foodId": "usda:171287",
+      "amount": 1.0,
+      "measure": "medium",
+      "gramWeight": 44.0
+    },
+    {
+      "id": "88379",
+      "foodId": "usda:171287",
+      "amount": 1.0,
+      "measure": "small",
+      "gramWeight": 38.0
+    },
+    {
+      "id": "88667",
+      "foodId": "usda:171413",
+      "amount": 1.0,
+      "measure": "tablespoon",
+      "gramWeight": 13.5
+    },
+    {
+      "id": "90101",
+      "foodId": "usda:172217",
+      "amount": 1.0,
+      "measure": "cup",
+      "gramWeight": 244.0
+    },
+    {
+      "id": "90102",
+      "foodId": "usda:172217",
+      "amount": 1.0,
+      "measure": "tbsp",
+      "gramWeight": 15.0
+    },
+    {
+      "id": "90103",
+      "foodId": "usda:172217",
+      "amount": 1.0,
+      "measure": "fl oz",
+      "gramWeight": 30.5
+    },
+    {
+      "id": "90374",
+      "foodId": "usda:172336",
+      "amount": 1.0,
+      "measure": "tbsp",
+      "gramWeight": 14.0
+    },
+    {
+      "id": "90462",
+      "foodId": "usda:172370",
+      "amount": 1.0,
+      "measure": "tablespoon",
+      "gramWeight": 13.6
+    },
+    {
+      "id": "92500",
+      "foodId": "usda:173424",
+      "amount": 1.0,
+      "measure": "large",
+      "gramWeight": 50.0
+    }
+  ]
+}

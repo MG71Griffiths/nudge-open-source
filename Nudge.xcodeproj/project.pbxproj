@@ -1,0 +1,641 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A5233475A789EF5A98D9354C /* ChatGPTPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */; };
+		F6CF27D47F6A53DE1E16C734 /* ChatGPTConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */; };
+		71F2AD43F4EB248B61705F9D /* ChatGPTProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA22218C477AF5B8A1A11ED /* ChatGPTProtocol.swift */; };
+		C77000000000000000000001 /* ChatGPTCaptureProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = C77000000000000000000002 /* ChatGPTCaptureProtocol.swift */; };
+		12CAFE0012CAFE0012CAFE01 /* NativeMealIngredientPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12CAFE0012CAFE0012CAFE02; };
+		AFCA00000000000000000002 /* NativeCaptureOutbox.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFCA00000000000000000001; };
+		BC0000000000000000000004 /* NudgeCatalogueSeed.json in Resources */ = {isa = PBXBuildFile; fileRef = BC0000000000000000000003 /* NudgeCatalogueSeed.json */; };
+		BC0000000000000000000002 /* NudgeCatalogueService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC0000000000000000000001 /* NudgeCatalogueService.swift */; };
+		A80000000000000000000001 /* NudgeDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80000000000000000000002; };
+		A80000000000000000000003 /* NudgeDataStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A80000000000000000000004; };
+		A70000000000000000000001 /* AnalysisCrew.swift in Sources */ = {isa = PBXBuildFile; fileRef = A70000000000000000000002; };
+		A60000000000000000000005 /* NudgeThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60000000000000000000006; };
+		A60000000000000000000001 /* NudgeTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = A60000000000000000000002; };
+		A60000000000000000000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A60000000000000000000004; };
+		A40000000000000000000001 /* AnalysisDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = A40000000000000000000002 /* AnalysisDiagnostics.swift */; };
+		A30000000000000000000001 /* AppShellGestureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A30000000000000000000002 /* AppShellGestureTests.swift */; };
+		204CB379035EC236893FE459 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24842D62EA5D0217279D1A04 /* PrivacyInfo.xcprivacy */; };
+		4324BF96F2662F8326D9EF66 /* BundledContentHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EB804AB301B61F3B085B85B /* BundledContentHandler.swift */; };
+		69EF152EFD3450BA83594110 /* NudgeApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79FCA37BC7FCD385A620CE6F /* NudgeApp.swift */; };
+		A743DD7B860A9E8DC7C0D3FC /* Web in Resources */ = {isa = PBXBuildFile; fileRef = 124830576E71A023547CD6B0 /* Web */; };
+		C7A5E3BC306DC6B900B82771 /* BarcodeFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A5E3BB306DC6B900B82771 /* BarcodeFeature.swift */; };
+		C7A5E3BE306DC79F00B82771 /* BarcodeFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A5E3BD306DC79F00B82771 /* BarcodeFeatureTests.swift */; };
+		C7A5E3C0306DDB4F00B82771 /* NutritionLabelFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7A5E3BF306DDB4F00B82771 /* NutritionLabelFeature.swift */; };
+		DB87A9013024AD10CB9C18CD /* NudgeWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8DEF501F2A657F27B41F2D7 /* NudgeWebView.swift */; };
+		DDD6343426145B9B95E57C54 /* NudgeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DC0748453B8FB528EDA8B4E /* NudgeTests.swift */; };
+		A10000000000000000000001 /* AccountFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000002 /* AccountFeature.swift */; };
+		A10000000000000000000003 /* AccountFeatureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* AccountFeatureTests.swift */; };
+		A20000000000000000000001 /* SmartFoodCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* SmartFoodCamera.swift */; };
+		A20000000000000000000003 /* SmartFoodCameraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* SmartFoodCameraTests.swift */; };
+		A50000000000000000000001 /* VoiceMemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000002 /* VoiceMemo.swift */; };
+		A50000000000000000000003 /* VoiceMemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A50000000000000000000004 /* VoiceMemoTests.swift */; };
+		B90000000000000000000002 /* NativeProductSearchModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000001 /* NativeProductSearchModel.swift */; };
+		B90000000000000000000004 /* NativeProductSearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000003 /* NativeProductSearchView.swift */; };
+		B90000000000000000000006 /* NativeProductRating.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000005 /* NativeProductRating.swift */; };
+		B90000000000000000000008 /* NativeSearchRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000007 /* NativeSearchRouter.swift */; };
+		B9000000000000000000000A /* NativeProductSearchModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90000000000000000000009 /* NativeProductSearchModelTests.swift */; };
+		B9000000000000000000000C /* NativeSearchIntegrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9000000000000000000000B /* NativeSearchIntegrationTests.swift */; };
+		B9000000000000000000000E /* NativeProductSearchViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9000000000000000000000D /* NativeProductSearchViewTests.swift */; };
+		BA0000000000000000000002 /* NativeSearchRatingLoaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA0000000000000000000001 /* NativeSearchRatingLoaderTests.swift */; };
+		2216123EF09AF315F682788A /* NativeAppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A299CE8AFE29A2FAA366031; };
+		95B6AD6902EEE096CCB66299 /* NativeCaptureCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD5EC03F22BB4CF37D68E58C; };
+		09ACC33CC90BC491BE50DDA1 /* NativeAppShell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 807543F0C5CA68B0C72ADF50; };
+		2144DE486408BC89403895AF /* NativeTodayHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A93D7D22497026E5E6BEF891; };
+		403D4EE009114FABDA035336 /* NativeProfileCycleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C76326F90B536E317C8B6BD6; };
+		E9678B65D71AF2104DEB692C /* NativeFoodReviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1579B4CC8000258B0D3B30A; };
+		4774FDAB9A20828A4848600B /* NativeTrackingDisplayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E1A9310546081BD1471FE3B; };
+		22341F26FFFC950235D6AA06 /* NativeAppScreensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF01CB14629FFB17F9CE8103; };
+		0E4E18CCE858FE10A3B6AAC3 /* NativeAppStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CFE033C92E6AE328DB18405; };
+		56F1559A92C750238728D0B7 /* NativeProductContextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0857EDFB635CD703DED4AA9; };
+		74C881AEEFB8B69312BD199D /* NativeProductContextTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CFCEFCF51BBECEDDFC7A73E; };
+		95DEB5A26D1DE585710AE183 /* BoundedHTTPData.swift in Sources */ = {isa = PBXBuildFile; fileRef = BED0210E0708FEA7518A8A46; };
+		1758D56C1F1887CADABBD3BF /* ProductTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70419B0C96918D4A7A5EA47F; };
+		ADDD00000000000000000002 /* NativeProductContribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDD00000000000000000001; };
+		ADDD00000000000000000004 /* NativeProductContributionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADDD00000000000000000003; };
+		9CBE7E9F98E00832F3637750 /* NativeSearchDiscovery.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527D89D1661E59930AEEAA62 /* NativeSearchDiscovery.swift */; };
+		932D8006B0DFE7CD127E3DFD /* NativeSearchDiscoveryViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3191FFE6C39287D4DC2C68F /* NativeSearchDiscoveryViews.swift */; };
+		AFAF4820A21EE524FBC731C0 /* NativeProductGridCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CDE4FC306B82686861EC863 /* NativeProductGridCard.swift */; };
+		AB1100000000000000000002 /* NativeAmbassadorFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000001; };
+		AB1100000000000000000004 /* NativeAmbassadorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB1100000000000000000003; };
+		FC2800000000000000000100 /* FastCaptureSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2800000000000000000000 /* FastCaptureSupport.swift */; };
+		FC2800000000000000000101 /* LocalFoodLabelParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2800000000000000000001 /* LocalFoodLabelParser.swift */; };
+		FC2800000000000000000102 /* VisionFoodTextRecognizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2800000000000000000002 /* VisionFoodTextRecognizer.swift */; };
+		FC2900000000000000000100 /* FoodTextImagePreparation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2900000000000000000000 /* FoodTextImagePreparation.swift */; };
+		FC2900000000000000000101 /* FoodBarcodeIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2900000000000000000001 /* FoodBarcodeIdentity.swift */; };
+		FC2900000000000000000102 /* FoodBarcodeEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC2900000000000000000002 /* FoodBarcodeEntry.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A30000000000000000000003 = {isa = PBXContainerItemProxy; containerPortal = 90B3EFEDE37C37A19E7CD5C5; proxyType = 1; remoteGlobalIDString = 91C3A641622B63EAA51391FC; remoteInfo = Nudge; };
+		43462E09606D5B6EFD7D8B2B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 90B3EFEDE37C37A19E7CD5C5 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 91C3A641622B63EAA51391FC;
+			remoteInfo = Nudge;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTPreviewView.swift; sourceTree = "<group>"; };
+		0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTConnection.swift; sourceTree = "<group>"; };
+		3FA22218C477AF5B8A1A11ED /* ChatGPTProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTProtocol.swift; sourceTree = "<group>"; };
+		C77000000000000000000002 /* ChatGPTCaptureProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTCaptureProtocol.swift; sourceTree = "<group>"; };
+		12CAFE0012CAFE0012CAFE02 /* NativeMealIngredientPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeMealIngredientPicker.swift; sourceTree = "<group>"; };
+		AFCA00000000000000000001 /* NativeCaptureOutbox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCaptureOutbox.swift; sourceTree = "<group>"; };
+		BC0000000000000000000003 /* NudgeCatalogueSeed.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = NudgeCatalogueSeed.json; sourceTree = "<group>"; };
+		BC0000000000000000000001 /* NudgeCatalogueService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeCatalogueService.swift; sourceTree = "<group>"; };
+		A80000000000000000000002 /* NudgeDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeDataStore.swift; sourceTree = "<group>"; };
+		A80000000000000000000004 /* NudgeDataStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeDataStoreTests.swift; sourceTree = "<group>"; };
+		A70000000000000000000002 /* AnalysisCrew.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisCrew.swift; sourceTree = "<group>"; };
+		A60000000000000000000006 /* NudgeThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeThemeTests.swift; sourceTree = "<group>"; };
+		A60000000000000000000002 /* NudgeTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeTheme.swift; sourceTree = "<group>"; };
+		A60000000000000000000004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A40000000000000000000002 /* AnalysisDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisDiagnostics.swift; sourceTree = "<group>"; };
+		A30000000000000000000002 /* AppShellGestureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellGestureTests.swift; sourceTree = "<group>"; };
+		A30000000000000000000004 /* NudgeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NudgeUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		005E4ABF7C7750E6BB4D9ACC /* Nudge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nudge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		124830576E71A023547CD6B0 /* Web */ = {isa = PBXFileReference; lastKnownFileType = folder; path = Web; sourceTree = "<group>"; };
+		173DCAFA99E721BD66B280EE /* START-HERE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "START-HERE.txt"; sourceTree = "<group>"; };
+		24842D62EA5D0217279D1A04 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		49CF626CDE34FB436AD83124 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6EB804AB301B61F3B085B85B /* BundledContentHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledContentHandler.swift; sourceTree = "<group>"; };
+		79FCA37BC7FCD385A620CE6F /* NudgeApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeApp.swift; sourceTree = "<group>"; };
+		7DC0748453B8FB528EDA8B4E /* NudgeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeTests.swift; sourceTree = "<group>"; };
+		A61F3B0C03F1A06D79E6E345 /* NudgeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NudgeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A8DEF501F2A657F27B41F2D7 /* NudgeWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NudgeWebView.swift; sourceTree = "<group>"; };
+		C7A5E3BB306DC6B900B82771 /* BarcodeFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeFeature.swift; sourceTree = "<group>"; };
+		C7A5E3BD306DC79F00B82771 /* BarcodeFeatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeFeatureTests.swift; sourceTree = "<group>"; };
+		C7A5E3BF306DDB4F00B82771 /* NutritionLabelFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionLabelFeature.swift; sourceTree = "<group>"; };
+		A10000000000000000000002 /* AccountFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountFeature.swift; sourceTree = "<group>"; };
+		A10000000000000000000004 /* AccountFeatureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountFeatureTests.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* SmartFoodCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartFoodCamera.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* SmartFoodCameraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartFoodCameraTests.swift; sourceTree = "<group>"; };
+		A50000000000000000000002 /* VoiceMemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceMemo.swift; sourceTree = "<group>"; };
+		A50000000000000000000004 /* VoiceMemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceMemoTests.swift; sourceTree = "<group>"; };
+		B90000000000000000000001 /* NativeProductSearchModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductSearchModel.swift; sourceTree = "<group>"; };
+		B90000000000000000000003 /* NativeProductSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductSearchView.swift; sourceTree = "<group>"; };
+		B90000000000000000000005 /* NativeProductRating.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductRating.swift; sourceTree = "<group>"; };
+		B90000000000000000000007 /* NativeSearchRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSearchRouter.swift; sourceTree = "<group>"; };
+		B90000000000000000000009 /* NativeProductSearchModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductSearchModelTests.swift; sourceTree = "<group>"; };
+		B9000000000000000000000B /* NativeSearchIntegrationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSearchIntegrationTests.swift; sourceTree = "<group>"; };
+		B9000000000000000000000D /* NativeProductSearchViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductSearchViewTests.swift; sourceTree = "<group>"; };
+		BA0000000000000000000001 /* NativeSearchRatingLoaderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSearchRatingLoaderTests.swift; sourceTree = "<group>"; };
+		2A299CE8AFE29A2FAA366031 /* NativeAppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppStore.swift; sourceTree = "<group>"; };
+		FD5EC03F22BB4CF37D68E58C /* NativeCaptureCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeCaptureCoordinator.swift; sourceTree = "<group>"; };
+		807543F0C5CA68B0C72ADF50 /* NativeAppShell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppShell.swift; sourceTree = "<group>"; };
+		A93D7D22497026E5E6BEF891 /* NativeTodayHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeTodayHistoryView.swift; sourceTree = "<group>"; };
+		C76326F90B536E317C8B6BD6 /* NativeProfileCycleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProfileCycleView.swift; sourceTree = "<group>"; };
+		D1579B4CC8000258B0D3B30A /* NativeFoodReviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeFoodReviewView.swift; sourceTree = "<group>"; };
+		3E1A9310546081BD1471FE3B /* NativeTrackingDisplayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeTrackingDisplayTests.swift; sourceTree = "<group>"; };
+		AF01CB14629FFB17F9CE8103 /* NativeAppScreensTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppScreensTests.swift; sourceTree = "<group>"; };
+		6CFE033C92E6AE328DB18405 /* NativeAppStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAppStoreTests.swift; sourceTree = "<group>"; };
+		F0857EDFB635CD703DED4AA9 /* NativeProductContextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductContextView.swift; sourceTree = "<group>"; };
+		3CFCEFCF51BBECEDDFC7A73E /* NativeProductContextTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductContextTests.swift; sourceTree = "<group>"; };
+		BED0210E0708FEA7518A8A46 /* BoundedHTTPData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundedHTTPData.swift; sourceTree = "<group>"; };
+		70419B0C96918D4A7A5EA47F /* ProductTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProductTransportTests.swift; sourceTree = "<group>"; };
+		ADDD00000000000000000001 /* NativeProductContribution.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductContribution.swift; sourceTree = "<group>"; };
+		ADDD00000000000000000003 /* NativeProductContributionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductContributionTests.swift; sourceTree = "<group>"; };
+		527D89D1661E59930AEEAA62 /* NativeSearchDiscovery.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSearchDiscovery.swift; sourceTree = "<group>"; };
+		B3191FFE6C39287D4DC2C68F /* NativeSearchDiscoveryViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeSearchDiscoveryViews.swift; sourceTree = "<group>"; };
+		0CDE4FC306B82686861EC863 /* NativeProductGridCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeProductGridCard.swift; sourceTree = "<group>"; };
+		AB1100000000000000000001 /* NativeAmbassadorFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAmbassadorFeature.swift; sourceTree = "<group>"; };
+		AB1100000000000000000003 /* NativeAmbassadorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeAmbassadorTests.swift; sourceTree = "<group>"; };
+		FC2800000000000000000000 /* FastCaptureSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FastCaptureSupport.swift; sourceTree = "<group>"; };
+		FC2800000000000000000001 /* LocalFoodLabelParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFoodLabelParser.swift; sourceTree = "<group>"; };
+		FC2800000000000000000002 /* VisionFoodTextRecognizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VisionFoodTextRecognizer.swift; sourceTree = "<group>"; };
+		FC2900000000000000000000 /* FoodTextImagePreparation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodTextImagePreparation.swift; sourceTree = "<group>"; };
+		FC2900000000000000000001 /* FoodBarcodeIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodBarcodeIdentity.swift; sourceTree = "<group>"; };
+		FC2900000000000000000002 /* FoodBarcodeEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodBarcodeEntry.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A30000000000000000000005 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		08BA8D005BE6B5EDA7796ACC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		73C7302450BCFDD7A364EE93 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A30000000000000000000006 /* NudgeUITests */ = {isa = PBXGroup; children = (A30000000000000000000002); path = NudgeUITests; sourceTree = "<group>"; };
+		03E60796D538AF739F46DAD4 /* NudgeTests */ = {
+			isa = PBXGroup;
+			children = (
+				7DC0748453B8FB528EDA8B4E /* NudgeTests.swift */,
+				BA0000000000000000000001 /* NativeSearchRatingLoaderTests.swift */,
+				70419B0C96918D4A7A5EA47F /* ProductTransportTests.swift */,
+				3CFCEFCF51BBECEDDFC7A73E /* NativeProductContextTests.swift */,
+				ADDD00000000000000000003 /* NativeProductContributionTests.swift */,
+				AB1100000000000000000003 /* NativeAmbassadorTests.swift */,
+				6CFE033C92E6AE328DB18405 /* NativeAppStoreTests.swift */,
+				AF01CB14629FFB17F9CE8103 /* NativeAppScreensTests.swift */,
+				3E1A9310546081BD1471FE3B /* NativeTrackingDisplayTests.swift */,
+				B9000000000000000000000D /* NativeProductSearchViewTests.swift */,
+				B9000000000000000000000B /* NativeSearchIntegrationTests.swift */,
+				B90000000000000000000009 /* NativeProductSearchModelTests.swift */,
+				A80000000000000000000004 /* NudgeDataStoreTests.swift */,
+				A60000000000000000000006 /* NudgeThemeTests.swift */,
+				C7A5E3BD306DC79F00B82771 /* BarcodeFeatureTests.swift */,
+				A10000000000000000000004 /* AccountFeatureTests.swift */,
+				A20000000000000000000004 /* SmartFoodCameraTests.swift */,
+				A50000000000000000000004 /* VoiceMemoTests.swift */,
+			);
+			path = NudgeTests;
+			sourceTree = "<group>";
+		};
+		80F7B72B6D0D14E815DDB0E6 /* Nudge */ = {
+			isa = PBXGroup;
+			children = (
+				79FCA37BC7FCD385A620CE6F /* NudgeApp.swift */,
+				B90000000000000000000007 /* NativeSearchRouter.swift */,
+				BED0210E0708FEA7518A8A46 /* BoundedHTTPData.swift */,
+				F0857EDFB635CD703DED4AA9 /* NativeProductContextView.swift */,
+				ADDD00000000000000000001 /* NativeProductContribution.swift */,
+				AB1100000000000000000001 /* NativeAmbassadorFeature.swift */,
+				D1579B4CC8000258B0D3B30A /* NativeFoodReviewView.swift */,
+				12CAFE0012CAFE0012CAFE02 /* NativeMealIngredientPicker.swift */,
+				C76326F90B536E317C8B6BD6 /* NativeProfileCycleView.swift */,
+				E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */,
+				0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */,
+				3FA22218C477AF5B8A1A11ED /* ChatGPTProtocol.swift */,
+				C77000000000000000000002 /* ChatGPTCaptureProtocol.swift */,
+				A93D7D22497026E5E6BEF891 /* NativeTodayHistoryView.swift */,
+				807543F0C5CA68B0C72ADF50 /* NativeAppShell.swift */,
+				FD5EC03F22BB4CF37D68E58C /* NativeCaptureCoordinator.swift */,
+				AFCA00000000000000000001 /* NativeCaptureOutbox.swift */,
+				FC2900000000000000000000 /* FoodTextImagePreparation.swift */,
+				FC2900000000000000000001 /* FoodBarcodeIdentity.swift */,
+				FC2900000000000000000002 /* FoodBarcodeEntry.swift */,
+				FC2800000000000000000002 /* VisionFoodTextRecognizer.swift */,
+				FC2800000000000000000001 /* LocalFoodLabelParser.swift */,
+				FC2800000000000000000000 /* FastCaptureSupport.swift */,
+				2A299CE8AFE29A2FAA366031 /* NativeAppStore.swift */,
+				B90000000000000000000005 /* NativeProductRating.swift */,
+				B90000000000000000000003 /* NativeProductSearchView.swift */,
+				0CDE4FC306B82686861EC863 /* NativeProductGridCard.swift */,
+				B3191FFE6C39287D4DC2C68F /* NativeSearchDiscoveryViews.swift */,
+				527D89D1661E59930AEEAA62 /* NativeSearchDiscovery.swift */,
+				BC0000000000000000000001 /* NudgeCatalogueService.swift */,
+				BC0000000000000000000003 /* NudgeCatalogueSeed.json */,
+				B90000000000000000000001 /* NativeProductSearchModel.swift */,
+				A60000000000000000000002 /* NudgeTheme.swift */,
+				A70000000000000000000002 /* AnalysisCrew.swift */,
+				A60000000000000000000004 /* Assets.xcassets */,
+				A8DEF501F2A657F27B41F2D7 /* NudgeWebView.swift */,
+				A80000000000000000000002 /* NudgeDataStore.swift */,
+				6EB804AB301B61F3B085B85B /* BundledContentHandler.swift */,
+				49CF626CDE34FB436AD83124 /* Info.plist */,
+				24842D62EA5D0217279D1A04 /* PrivacyInfo.xcprivacy */,
+				C7A5E3BB306DC6B900B82771 /* BarcodeFeature.swift */,
+				C7A5E3BF306DDB4F00B82771 /* NutritionLabelFeature.swift */,
+				A10000000000000000000002 /* AccountFeature.swift */,
+				A40000000000000000000002 /* AnalysisDiagnostics.swift */,
+				A20000000000000000000002 /* SmartFoodCamera.swift */,
+				A50000000000000000000002 /* VoiceMemo.swift */,
+			);
+			path = Nudge;
+			sourceTree = "<group>";
+		};
+		9001281A84D097FE7F9932D1 = {
+			isa = PBXGroup;
+			children = (
+				80F7B72B6D0D14E815DDB0E6 /* Nudge */,
+				124830576E71A023547CD6B0 /* Web */,
+				03E60796D538AF739F46DAD4 /* NudgeTests */,
+				A30000000000000000000006 /* NudgeUITests */,
+				173DCAFA99E721BD66B280EE /* START-HERE.txt */,
+				DB7FCC9CFDB12FE83B558BFA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DB7FCC9CFDB12FE83B558BFA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				005E4ABF7C7750E6BB4D9ACC /* Nudge.app */,
+				A61F3B0C03F1A06D79E6E345 /* NudgeTests.xctest */,
+				A30000000000000000000004 /* NudgeUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A30000000000000000000007 /* NudgeUITests */ = {isa = PBXNativeTarget; buildConfigurationList = A30000000000000000000008; buildPhases = (A30000000000000000000009, A30000000000000000000005, A3000000000000000000000A); buildRules = (); dependencies = (A3000000000000000000000B); name = NudgeUITests; productName = NudgeUITests; productReference = A30000000000000000000004; productType = "com.apple.product-type.bundle.ui-testing"; };
+		7EC05BB0CD88102223EDDDEB /* NudgeTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0062792C62CDDAB5AE6C5FC2 /* Build configuration list for PBXNativeTarget "NudgeTests" */;
+			buildPhases = (
+				B3784F0F99754EEF580CB4EC /* Sources */,
+				08BA8D005BE6B5EDA7796ACC /* Frameworks */,
+				E4887FBE3361C575AA995D7F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				1CDF8821D83DBF66F5BFAFF4 /* PBXTargetDependency */,
+			);
+			name = NudgeTests;
+			productName = NudgeTests;
+			productReference = A61F3B0C03F1A06D79E6E345 /* NudgeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		91C3A641622B63EAA51391FC /* Nudge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7C32C5E0EEC025DF841B2565 /* Build configuration list for PBXNativeTarget "Nudge" */;
+			buildPhases = (
+				17D4020BB95574CB5986157A /* Sources */,
+				73C7302450BCFDD7A364EE93 /* Frameworks */,
+				BDD2EC23C4AC05F038707F8E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Nudge;
+			productName = Nudge;
+			productReference = 005E4ABF7C7750E6BB4D9ACC /* Nudge.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		90B3EFEDE37C37A19E7CD5C5 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					A30000000000000000000007 = {CreatedOnToolsVersion = 16.0; TestTargetID = 91C3A641622B63EAA51391FC; };
+					7EC05BB0CD88102223EDDDEB = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 91C3A641622B63EAA51391FC;
+					};
+					91C3A641622B63EAA51391FC = {
+						CreatedOnToolsVersion = 16.0;
+					};
+				};
+			};
+			buildConfigurationList = 15D3A392604FD4FF11138966 /* Build configuration list for PBXProject "Nudge" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 9001281A84D097FE7F9932D1;
+			productRefGroup = DB7FCC9CFDB12FE83B558BFA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				91C3A641622B63EAA51391FC /* Nudge */,
+				7EC05BB0CD88102223EDDDEB /* NudgeTests */,
+				A30000000000000000000007 /* NudgeUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A3000000000000000000000A = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		BDD2EC23C4AC05F038707F8E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A743DD7B860A9E8DC7C0D3FC /* Web in Resources */,
+				BC0000000000000000000004 /* NudgeCatalogueSeed.json in Resources */,
+				A60000000000000000000003 /* Assets.xcassets in Resources */,
+				204CB379035EC236893FE459 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E4887FBE3361C575AA995D7F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A30000000000000000000009 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A30000000000000000000001); runOnlyForDeploymentPostprocessing = 0; };
+		17D4020BB95574CB5986157A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				69EF152EFD3450BA83594110 /* NudgeApp.swift in Sources */,
+				B90000000000000000000008 /* NativeSearchRouter.swift in Sources */,
+				95DEB5A26D1DE585710AE183 /* BoundedHTTPData.swift in Sources */,
+				56F1559A92C750238728D0B7 /* NativeProductContextView.swift in Sources */,
+				ADDD00000000000000000002 /* NativeProductContribution.swift in Sources */,
+				AB1100000000000000000002 /* NativeAmbassadorFeature.swift in Sources */,
+				E9678B65D71AF2104DEB692C /* NativeFoodReviewView.swift in Sources */,
+				12CAFE0012CAFE0012CAFE01 /* NativeMealIngredientPicker.swift in Sources */,
+				403D4EE009114FABDA035336 /* NativeProfileCycleView.swift in Sources */,
+				A5233475A789EF5A98D9354C /* ChatGPTPreviewView.swift in Sources */,
+				F6CF27D47F6A53DE1E16C734 /* ChatGPTConnection.swift in Sources */,
+				71F2AD43F4EB248B61705F9D /* ChatGPTProtocol.swift in Sources */,
+				C77000000000000000000001 /* ChatGPTCaptureProtocol.swift in Sources */,
+				2144DE486408BC89403895AF /* NativeTodayHistoryView.swift in Sources */,
+				09ACC33CC90BC491BE50DDA1 /* NativeAppShell.swift in Sources */,
+				95B6AD6902EEE096CCB66299 /* NativeCaptureCoordinator.swift in Sources */,
+				AFCA00000000000000000002 /* NativeCaptureOutbox.swift in Sources */,
+				FC2900000000000000000100 /* FoodTextImagePreparation.swift in Sources */,
+				FC2900000000000000000101 /* FoodBarcodeIdentity.swift in Sources */,
+				FC2900000000000000000102 /* FoodBarcodeEntry.swift in Sources */,
+				FC2800000000000000000102 /* VisionFoodTextRecognizer.swift in Sources */,
+				FC2800000000000000000101 /* LocalFoodLabelParser.swift in Sources */,
+				FC2800000000000000000100 /* FastCaptureSupport.swift in Sources */,
+				2216123EF09AF315F682788A /* NativeAppStore.swift in Sources */,
+				B90000000000000000000006 /* NativeProductRating.swift in Sources */,
+				B90000000000000000000004 /* NativeProductSearchView.swift in Sources */,
+				AFAF4820A21EE524FBC731C0 /* NativeProductGridCard.swift in Sources */,
+				932D8006B0DFE7CD127E3DFD /* NativeSearchDiscoveryViews.swift in Sources */,
+				9CBE7E9F98E00832F3637750 /* NativeSearchDiscovery.swift in Sources */,
+				BC0000000000000000000002 /* NudgeCatalogueService.swift in Sources */,
+				B90000000000000000000002 /* NativeProductSearchModel.swift in Sources */,
+				A60000000000000000000001 /* NudgeTheme.swift in Sources */,
+				A70000000000000000000001 /* AnalysisCrew.swift in Sources */,
+				DB87A9013024AD10CB9C18CD /* NudgeWebView.swift in Sources */,
+				A80000000000000000000001 /* NudgeDataStore.swift in Sources */,
+				C7A5E3C0306DDB4F00B82771 /* NutritionLabelFeature.swift in Sources */,
+				A10000000000000000000001 /* AccountFeature.swift in Sources */,
+				A40000000000000000000001 /* AnalysisDiagnostics.swift in Sources */,
+				A20000000000000000000001 /* SmartFoodCamera.swift in Sources */,
+				A50000000000000000000001 /* VoiceMemo.swift in Sources */,
+				4324BF96F2662F8326D9EF66 /* BundledContentHandler.swift in Sources */,
+				C7A5E3BC306DC6B900B82771 /* BarcodeFeature.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B3784F0F99754EEF580CB4EC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DDD6343426145B9B95E57C54 /* NudgeTests.swift in Sources */,
+				BA0000000000000000000002 /* NativeSearchRatingLoaderTests.swift in Sources */,
+				1758D56C1F1887CADABBD3BF /* ProductTransportTests.swift in Sources */,
+				74C881AEEFB8B69312BD199D /* NativeProductContextTests.swift in Sources */,
+				ADDD00000000000000000004 /* NativeProductContributionTests.swift in Sources */,
+				AB1100000000000000000004 /* NativeAmbassadorTests.swift in Sources */,
+				0E4E18CCE858FE10A3B6AAC3 /* NativeAppStoreTests.swift in Sources */,
+				22341F26FFFC950235D6AA06 /* NativeAppScreensTests.swift in Sources */,
+				4774FDAB9A20828A4848600B /* NativeTrackingDisplayTests.swift in Sources */,
+				B9000000000000000000000E /* NativeProductSearchViewTests.swift in Sources */,
+				B9000000000000000000000C /* NativeSearchIntegrationTests.swift in Sources */,
+				B9000000000000000000000A /* NativeProductSearchModelTests.swift in Sources */,
+				A80000000000000000000003 /* NudgeDataStoreTests.swift in Sources */,
+				A60000000000000000000005 /* NudgeThemeTests.swift in Sources */,
+				C7A5E3BE306DC79F00B82771 /* BarcodeFeatureTests.swift in Sources */,
+				A10000000000000000000003 /* AccountFeatureTests.swift in Sources */,
+				A20000000000000000000003 /* SmartFoodCameraTests.swift in Sources */,
+				A50000000000000000000003 /* VoiceMemoTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A3000000000000000000000B = {isa = PBXTargetDependency; target = 91C3A641622B63EAA51391FC; targetProxy = A30000000000000000000003; };
+		1CDF8821D83DBF66F5BFAFF4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 91C3A641622B63EAA51391FC /* Nudge */;
+			targetProxy = 43462E09606D5B6EFD7D8B2B /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		A3000000000000000000000C /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = org.example.nudge.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = Nudge; }; name = Debug; };
+		A3000000000000000000000D /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; PRODUCT_BUNDLE_IDENTIFIER = org.example.nudge.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = iphonesimulator; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = Nudge; }; name = Release; };
+		1DCF843E6515F8767B5709C8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		264FAE14FAE6B2C08DA205F0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 37;
+				DEVELOPMENT_TEAM = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Nudge/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = org.example.nudge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		85129BF52AA65CDE9B02B9D4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.example.nudge.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Nudge.app/Nudge";
+			};
+			name = Release;
+		};
+		ABA2BFDFD6CB6D68776CC0A7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 37;
+				DEVELOPMENT_TEAM = "";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Nudge/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = org.example.nudge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		F2F4E6B2F678CB0DCCA3CE57 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		FFB3474ED1D8CF3C2A22DA6F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = org.example.nudge.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Nudge.app/Nudge";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A30000000000000000000008 = {isa = XCConfigurationList; buildConfigurations = (A3000000000000000000000C,A3000000000000000000000D); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		0062792C62CDDAB5AE6C5FC2 /* Build configuration list for PBXNativeTarget "NudgeTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FFB3474ED1D8CF3C2A22DA6F /* Debug */,
+				85129BF52AA65CDE9B02B9D4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		15D3A392604FD4FF11138966 /* Build configuration list for PBXProject "Nudge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F2F4E6B2F678CB0DCCA3CE57 /* Debug */,
+				1DCF843E6515F8767B5709C8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		7C32C5E0EEC025DF841B2565 /* Build configuration list for PBXNativeTarget "Nudge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				264FAE14FAE6B2C08DA205F0 /* Debug */,
+				ABA2BFDFD6CB6D68776CC0A7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 90B3EFEDE37C37A19E7CD5C5 /* Project object */;
+}

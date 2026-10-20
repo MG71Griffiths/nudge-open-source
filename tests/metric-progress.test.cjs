@@ -1,0 +1,21 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs');
+const w={Date,console};w.window=w;vm.createContext(w);
+for(const file of ['shared-controls','streaks','core/food-log','food-patterns','core/nutrition-profile','nudge-fit','today-goals'])vm.runInContext(fs.readFileSync('Web/'+file+'.js','utf8'),w);
+w.NudgeIcons=()=>'';
+const day='2026-10-04',n=w.NudgeNutrition,model=w.NudgeToday.model;
+const profile=n.saveDraft({...n.draft({}),target:100,calorieTarget:2200,carbTarget:250,fibreTarget:30,weeklyPlantTarget:30,dailyPlantTarget:5},{},'2026-10-01');
+const entry=(id,day,more={})=>({id,day,name:'Synthetic meal',slot:'Lunch',portions:1,plants:[],ferments:[],...more});
+const snapshot=(portion,status='calculated')=>({carbohydrate:{portion,portionStatus:status,per100:null,per100Status:'unknown',unit:'g'}});
+const state={nutritionProfile:profile,foodLog:{entries:[entry('old','2026-09-28',{nutritionSnapshot:snapshot(10)}),entry('known','2026-10-01',{nutritionSnapshot:snapshot(20),portions:.3,fibrePerPortion:4,plants:['oats']}),entry('zero','2026-10-02',{nutritionSnapshot:snapshot(0),fibrePerPortion:0,sourceMeta:{entryKind:'product-consumption',plantKnowledge:'known'}}),entry('unknown','2026-10-03',{nutritionSnapshot:snapshot(100,'unknown')}),entry('partial',day,{nutritionSnapshot:snapshot(25),plants:['oat','rice']}),entry('unknown-today',day),entry('future','2026-10-05',{nutritionSnapshot:snapshot(999)})]}};
+const before=JSON.stringify(state),m=model(state,day);
+assert.equal(m.carbs.value,25);assert.equal(m.carbs.unknown,1);assert.equal(m.carbs.target,250);assert.equal(m.weekCarbs.value,41);
+assert.equal(m.weekCarbs.days[3].value,6);assert.equal(m.weekCarbs.days[4].value,0);assert.equal(m.weekCarbs.days[5].value,null);assert.equal(m.weekCarbs.days[1].recorded,false);
+assert.equal(m.weekCarbs.comparison.intake,31);assert.equal(m.weekCarbs.comparison.target,750);assert.equal(m.weekCarbs.comparison.days,3);
+assert.equal(m.weekFibre.value,1.2);assert.equal(m.weekFibre.days[4].value,0);assert.equal(m.weekPlantProgress.days[4].value,0);assert.equal(m.weekPlantProgress.days[5].value,null);assert.equal(m.weekPlants,2);
+const html=w.NudgeToday.screen(state,day,String);assert.equal((html.match(/class="n-week n-week-graphic/g)||[]).length,6);assert.ok(html.indexOf('n-metric-protein')<html.indexOf('n-metric-energy'));assert.ok(html.indexOf('n-metric-energy')<html.indexOf('n-metric-carbs'));assert.ok(html.indexOf('n-metric-carbs')<html.indexOf('n-metric-fat'));assert.ok(html.indexOf('n-metric-fat')<html.indexOf('n-metric-fibre'));assert.ok(html.indexOf('n-metric-fibre')<html.indexOf('n-metric-plants'));
+assert.match(html,/n-day-unknown/);assert.match(html,/n-day-partial/);assert.match(html,/n-day-unlogged/);assert.doesNotMatch(html,/<ol class="n-week-nutrient-days"/);assert.equal(JSON.stringify(state),before);
+const noRecords=model({nutritionProfile:profile,foodLog:{entries:[]}},day);for(const key of ['weekProtein','weekEnergy','weekCarbs','weekFat','weekFibre','weekPlantProgress'])assert.equal(noRecords[key].value,null);
+// Same confirmation is counted once, and delete/Undo changes the read-only totals.
+const duplicated={nutritionProfile:profile,foodLog:{entries:[entry('a',day,{nutritionSnapshot:snapshot(10),sourceMeta:{confirmationId:'once'}}),entry('b',day,{nutritionSnapshot:snapshot(10),sourceMeta:{confirmationId:'once'}})]}};
+assert.equal(model(duplicated,day).carbs.value,10);duplicated.foodLog.entries=[];assert.equal(model(duplicated,day).carbs.value,0);duplicated.foodLog.entries=[entry('a',day,{nutritionSnapshot:snapshot(10)})];assert.equal(model(duplicated,day).carbs.value,10);
+console.log('PASS: carbs/fibre/plants weekly unknown-zero-partial data, fractional portions, dated targets, six graphics, future exclusion, duplicate confirmation and read-only totals.');

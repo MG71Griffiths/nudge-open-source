@@ -1,0 +1,621 @@
+{
+  "version": "nudge-catalogue-index-v1",
+  "products": [
+    {
+      "code": "5000000000001",
+      "product_name": "Catalogue test beans",
+      "brands": "Test",
+      "ingredients_text": "Beans (60%), water, tomatoes, salt",
+      "nutriments": {
+        "energy-kcal_100g": 90,
+        "proteins_100g": 5,
+        "carbohydrates_100g": 14,
+        "fat_100g": 0.5,
+        "saturated-fat_100g": 0.1,
+        "sugars_100g": 4,
+        "fiber_100g": 4,
+        "salt_100g": 0.5
+      },
+      "categories_tags": [
+        "en:baked-beans"
+      ],
+      "countries_tags": [
+        "en:united-kingdom"
+      ],
+      "stores": "Tesco",
+      "last_modified_t": 1700000000
+    }
+  ],
+  "ratings": [
+    {
+      "barcode": "5000000000001",
+      "method": "nudge_nutrition_v0_4",
+      "version": "0.4",
+      "classifierVersion": "food-evidence-2026-10-11-v16",
+      "sourceRevision": 1700000000,
+      "sourceFingerprint": "f4349d6ae47ea185e3363ab749aba8be0ddc3f3bc0b6f46e1c8af67094be5d40",
+      "fetchedAt": 1792072800000,
+      "expiresAt": 1794664800000,
+      "calculatedAt": 1792072800000,
+      "freshness": "current",
+      "discoveryScope": "uk_discovery",
+      "score": {
+        "status": "rated",
+        "methodStatus": "directional",
+        "grade": "B",
+        "rawScore": 1,
+        "rawLower": 1,
+        "rawUpper": 1,
+        "value": 75,
+        "displayLower": 75,
+        "displayUpper": 75,
+        "band": {
+          "id": "green",
+          "label": "Green",
+          "interpretation": "Nudge directional nutrition score"
+        },
+        "methodId": "nudge_nutrition_v0_4",
+        "version": "0.4",
+        "methodVersion": "0.4",
+        "model_version": "0.4",
+        "classifierVersion": "food-evidence-2026-10-11-v16",
+        "sourceVersion": "SPF-FAQ-2025-03-17/2023",
+        "baseAlgorithmVersion": "2023",
+        "category": "general",
+        "available": true,
+        "label": "Nudge score",
+        "completeness": "nutrition_only",
+        "assumptions": [
+          "No unverified plant bonus; the qualifying plant percentage remains unknown."
+        ],
+        "baseFrequency": null,
+        "finalFrequency": null,
+        "frequencyStatus": "not_provided",
+        "reasonCodes": [
+          "supported_nutrition_calculation",
+          "nudge_directional",
+          "no_unverified_plant_bonus"
+        ],
+        "personalSuitability": "unchecked",
+        "components": {
+          "negative": [
+            {
+              "id": "energy",
+              "label": "Energy",
+              "value": 376.56,
+              "unit": "kJ",
+              "points": 1,
+              "pointsLower": 1,
+              "pointsUpper": 1,
+              "pointsMax": 10,
+              "counted": true,
+              "missing": false
+            },
+            {
+              "id": "saturatedFat",
+              "label": "Saturated fat",
+              "value": 0.1,
+              "unit": "g",
+              "points": 0,
+              "pointsLower": 0,
+              "pointsUpper": 0,
+              "pointsMax": 10,
+              "counted": true,
+              "missing": false
+            },
+            {
+              "id": "sugars",
+              "label": "Sugars",
+              "value": 4,
+              "unit": "g",
+              "points": 1,
+              "pointsLower": 1,
+              "pointsUpper": 1,
+              "pointsMax": 15,
+              "counted": true,
+              "missing": false
+            },
+            {
+              "id": "salt",
+              "label": "Salt",
+              "value": 0.5,
+              "unit": "g",
+              "points": 2,
+              "pointsLower": 2,
+              "pointsUpper": 2,
+              "pointsMax": 20,
+              "counted": true,
+              "missing": false
+            }
+          ],
+          "positive": [
+            {
+              "id": "fvl",
+              "label": "Fruit, vegetables and legumes",
+              "value": null,
+              "unit": "%",
+              "points": 0,
+              "pointsLower": 0,
+              "pointsUpper": 5,
+              "pointsMax": 5,
+              "counted": true,
+              "missing": true
+            },
+            {
+              "id": "fibre",
+              "label": "Fibre",
+              "value": 4,
+              "unit": "g",
+              "points": 1,
+              "pointsLower": 1,
+              "pointsUpper": 1,
+              "pointsMax": 5,
+              "counted": true,
+              "missing": false
+            },
+            {
+              "id": "protein",
+              "label": "Protein",
+              "value": 5,
+              "unit": "g",
+              "points": 2,
+              "pointsLower": 2,
+              "pointsUpper": 2,
+              "pointsMax": 7,
+              "counted": true,
+              "missing": false
+            }
+          ]
+        },
+        "negativePoints": 4,
+        "positivePoints": 3,
+        "countProteins": true,
+        "missingInputs": [
+          "qualifying fruit, vegetable and legume percentage"
+        ],
+        "missingFields": [
+          "qualifying fruit, vegetable and legume percentage"
+        ],
+        "reason": "Based on energy, sugars, saturated fat and salt per 100 g.",
+        "explanation": "Based on energy, sugars, saturated fat and salt per 100 g. A practical guide based on available nutrition and food information. Our scoring improves over time.  No unverified plant bonus; the qualifying plant percentage remains unknown.",
+        "inputs": {
+          "basisUnit": "g",
+          "nutritionPreparation": "as_sold",
+          "energyKj": 376.56,
+          "energySource": "derived-kcal-times-4.184",
+          "sugars": 4,
+          "fat": 0.5,
+          "saturatedFat": 0.1,
+          "salt": 0.5,
+          "fibre": 4,
+          "protein": 5,
+          "carbohydrate": 14,
+          "nutrientBounds": {
+            "sugars": null,
+            "fat": null,
+            "saturatedFat": null,
+            "salt": null,
+            "fibre": null,
+            "protein": null,
+            "carbohydrate": null
+          },
+          "positiveBounds": {
+            "fibre": null,
+            "protein": null
+          },
+          "fvlPercent": null,
+          "fvlBounds": null,
+          "fvlSource": null,
+          "hasNonNutritiveSweeteners": null
+        },
+        "sources": [
+          {
+            "title": "Santé publique France · updated Nutri-Score 2023 nutrient model",
+            "url": "https://www.santepubliquefrance.fr/sites/default/files/rdd/document/FAQ-updatedAlgo-V11.pdf"
+          }
+        ],
+        "promptVersion": "nudge-label-evidence-7",
+        "calculationBasis": {
+          "unit": "g",
+          "per": 100,
+          "preparation": "as_sold"
+        },
+        "classificationEvidence": {
+          "version": "food-evidence-2026-10-11-v16",
+          "evidence": [],
+          "resolutions": [],
+          "conflicts": []
+        },
+        "scoreBasis": "nudge_directional",
+        "inputFingerprint": "nudge_nutrition_v0_4:food-evidence-2026-10-11-v16:off2023-facts-v1:1109:b9aa76f1:80030a5f:{\"sodiumNormalized\":false,\"providerInputs\":{},\"sourceEstimateKeys\":[],\"providerEstimates\":true,\"sourceKind\":null,\"type\":null}",
+        "sourceInputs": {
+          "basisUnit": "g",
+          "nutritionPreparation": "as_sold",
+          "energyKj": 376.56,
+          "energySource": "derived-kcal-times-4.184",
+          "sugars": 4,
+          "fat": 0.5,
+          "saturatedFat": 0.1,
+          "salt": 0.5,
+          "fibre": 4,
+          "protein": 5,
+          "carbohydrate": 14,
+          "nutrientBounds": {
+            "sugars": null,
+            "fat": null,
+            "saturatedFat": null,
+            "salt": null,
+            "fibre": null,
+            "protein": null,
+            "carbohydrate": null
+          },
+          "positiveBounds": {
+            "fibre": null,
+            "protein": null
+          },
+          "fvlPercent": null,
+          "fvlBounds": null,
+          "fvlSource": null,
+          "hasNonNutritiveSweeteners": null
+        },
+        "positivePointsUpper": 3,
+        "inferredInputs": {
+          "fvlPoints": {
+            "value": 0,
+            "method": "no_unverified_bonus"
+          }
+        },
+        "sourceData": {
+          "source": "Open Food Facts",
+          "url": "https://world.openfoodfacts.org/product/5000000000001",
+          "retrievedAt": "2026-10-15T14:00:00.000Z",
+          "version": null,
+          "nutrientSources": {
+            "energyKcal": "Open Food Facts legacy nutriments",
+            "protein": "Open Food Facts legacy nutriments",
+            "carbohydrate": "Open Food Facts legacy nutriments",
+            "sugars": "Open Food Facts legacy nutriments",
+            "fat": "Open Food Facts legacy nutriments",
+            "saturatedFat": "Open Food Facts legacy nutriments",
+            "fibre": "Open Food Facts legacy nutriments",
+            "salt": "Open Food Facts legacy nutriments"
+          }
+        },
+        "quality": {
+          "extraction": null,
+          "match": null,
+          "portion": null,
+          "evidence": null
+        }
+      }
+    }
+  ],
+  "page": 1,
+  "total": 1,
+  "hasMore": false,
+  "catalogue": {
+    "source": "Nudge catalogue",
+    "coverage": "imported_uk_subset",
+    "complete": false,
+    "generatedAt": 1792072800000,
+    "freshness": "current",
+    "attribution": "Contains information from Open Food Facts, made available under the Open Database License (ODbL).",
+    "sourceURL": "https://world.openfoodfacts.org",
+    "licenceURL": "https://opendatacommons.org/licenses/odbl/1-0/",
+    "exportPath": "/v1/catalogue/export"
+  },
+  "places": {
+    "selected": null,
+    "evidence": [
+      {
+        "barcode": "5000000000001",
+        "sourceFingerprint": "f4349d6ae47ea185e3363ab749aba8be0ddc3f3bc0b6f46e1c8af67094be5d40",
+        "evaluatedAt": 1792072800000,
+        "version": "uk-places-2026-10-09-v1-associations-v2",
+        "taxonomyVersion": "uk-places-2026-10-09-v1",
+        "source": "Open Food Facts",
+        "menuAvailable": false,
+        "stockConfirmed": false,
+        "associations": [
+          {
+            "placeID": "tesco",
+            "relation": "retailer",
+            "confidence": "source_metadata",
+            "field": "stores",
+            "value": "Tesco"
+          }
+        ]
+      }
+    ]
+  },
+  "discovery": {
+    "excludedDietary": null,
+    "evidence": [
+      {
+        "barcode": "5000000000001",
+        "version": "food-discovery-2026-10-09-v4",
+        "aisles": [
+          "pulses"
+        ],
+        "dietary": {
+          "gluten": {
+            "state": "unconfirmed",
+            "reason": "No explicit free-from label supplied.",
+            "source": "Open Food Facts",
+            "claim": null
+          },
+          "lactose": {
+            "state": "unconfirmed",
+            "reason": "No explicit free-from label supplied.",
+            "source": "Open Food Facts",
+            "claim": null
+          },
+          "milk": {
+            "state": "unconfirmed",
+            "reason": "No explicit free-from label supplied.",
+            "source": "Open Food Facts",
+            "claim": null
+          },
+          "wheat": {
+            "state": "unconfirmed",
+            "reason": "No explicit free-from label supplied.",
+            "source": "Open Food Facts",
+            "claim": null
+          },
+          "peanut": {
+            "state": "unconfirmed",
+            "reason": "No explicit free-from label supplied.",
+            "source": "Open Food Facts",
+            "claim": null
+          },
+          "soya": {
+            "state": "unconfirmed",
+            "reason": "No explicit free-from label supplied.",
+            "source": "Open Food Facts",
+            "claim": null
+          },
+          "vegan": {
+            "state": "unconfirmed",
+            "reason": "No explicit preference label supplied.",
+            "source": "Open Food Facts"
+          },
+          "vegetarian": {
+            "state": "unconfirmed",
+            "reason": "No explicit preference label supplied.",
+            "source": "Open Food Facts"
+          }
+        },
+        "nutrition": {
+          "protein": {
+            "state": "supported",
+            "value": 5,
+            "unit": "g",
+            "basis": "100g",
+            "preparation": "as_sold",
+            "threshold": 12,
+            "reason": "At least 12% of energy from protein; requires source energy.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4",
+            "energyKcal": 90,
+            "energyPercent": 22.22222222222222
+          },
+          "fibre": {
+            "state": "supported",
+            "value": 4,
+            "unit": "g",
+            "basis": "100g",
+            "preparation": "as_sold",
+            "threshold": {
+              "per100g": 3,
+              "per100kcal": 1.5
+            },
+            "reason": "At least 3g per 100g or 1.5g per 100kcal.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4",
+            "energyKcal": 90,
+            "gramsPer100Kcal": 4.444444444444445
+          },
+          "highfibre": {
+            "state": "supported",
+            "value": 4,
+            "unit": "g",
+            "basis": "100g",
+            "preparation": "as_sold",
+            "threshold": {
+              "per100g": 6,
+              "per100kcal": 3
+            },
+            "reason": "At least 6g per 100g or 3g per 100kcal.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4",
+            "energyKcal": 90,
+            "gramsPer100Kcal": 4.444444444444445
+          },
+          "iron": {
+            "state": "unconfirmed",
+            "value": null,
+            "unit": "mg",
+            "basis": "100g",
+            "preparation": "as_sold",
+            "threshold": 2.1,
+            "reason": "15% of label reference value per 100g; not a personalised daily target.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4"
+          },
+          "calcium": {
+            "state": "unconfirmed",
+            "value": null,
+            "unit": "mg",
+            "basis": "100g",
+            "preparation": "as_sold",
+            "threshold": 120,
+            "reason": "15% of label reference value per 100g; not a personalised daily target.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4"
+          },
+          "vitd": {
+            "state": "unconfirmed",
+            "value": null,
+            "unit": "µg",
+            "basis": "100g",
+            "preparation": "as_sold",
+            "threshold": 0.75,
+            "reason": "15% of label reference value per 100g; not a personalised daily target.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4"
+          },
+          "wholegrain": {
+            "state": "unconfirmed",
+            "reason": "No wholegrain ingredient evidence supplied.",
+            "source": "Open Food Facts",
+            "ruleVersion": "food-discovery-2026-10-09-v4"
+          }
+        },
+        "sourceURL": "https://world.openfoodfacts.org/product/5000000000001",
+        "retrievedAt": 1792072800000,
+        "sources": {
+          "claims": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX%3A32006R1924",
+          "references": "https://www.legislation.gov.uk/eur/2011/1169/annex/XIII"
+        }
+      }
+    ]
+  },
+  "supportTags": [
+    {
+      "barcode": "5000000000001",
+      "tags": [
+        {
+          "id": "plant_food_option",
+          "label": "Plant food option",
+          "contexts": [
+            "period",
+            "follicular",
+            "ovulation",
+            "luteal",
+            "perimenopause",
+            "postmenopause"
+          ],
+          "evidence": "established_nutrition",
+          "evidenceDirection": "general_nutrition",
+          "wording": "An option for a varied, plant-rich eating pattern.",
+          "foodDataConfidence": "source_reported_identity",
+          "foodFamilies": [
+            "cooked_beans_peas"
+          ],
+          "sources": [
+            {
+              "id": "emas_pattern_2020",
+              "title": "EMAS Mediterranean diet and menopausal health position statement",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/32682573/"
+            },
+            {
+              "id": "nhs_fibre",
+              "title": "NHS dietary fibre guidance",
+              "url": "https://www.nhs.uk/live-well/eat-well/digestive-health/how-to-get-more-fibre-into-your-diet/"
+            }
+          ],
+          "limitations": [
+            "Identified food-family candidate; nutrient amounts and symptom benefit are not verified for this product.",
+            "No claim that this product changes hormones or treats a symptom.",
+            "Mixed products need substantial identifiable pulse content.",
+            "General nutrition relevance only; no special follicular or ovulatory effect is established."
+          ]
+        },
+        {
+          "id": "magnesium_premenstrual_candidate",
+          "label": "Magnesium foods and premenstrual comfort",
+          "contexts": [
+            "luteal"
+          ],
+          "evidence": "research_only",
+          "evidenceDirection": "mixed",
+          "wording": "Possible premenstrual fit; evidence for ordinary foods is indirect and mixed.",
+          "foodDataConfidence": "source_reported_identity",
+          "foodFamilies": [
+            "cooked_beans_peas"
+          ],
+          "sources": [
+            {
+              "id": "nih_magnesium",
+              "title": "NIH magnesium fact sheet",
+              "url": "https://ods.od.nih.gov/factsheets/Magnesium-HealthProfessional/"
+            },
+            {
+              "id": "magnesium_pms_1998",
+              "title": "Walker et al. magnesium and premenstrual symptoms",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/9861593/"
+            },
+            {
+              "id": "magnesium_pms_2002",
+              "title": "Walker et al. magnesium dose response",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/12018972/"
+            }
+          ],
+          "limitations": [
+            "Identified food-family candidate; nutrient amounts and symptom benefit are not verified for this product.",
+            "Do not infer magnesium deficiency, treat anxiety, or copy supplement doses.",
+            "Mixed products need substantial identifiable pulse content."
+          ]
+        },
+        {
+          "id": "pulse_satisfying_candidate",
+          "label": "Pulses and satisfying meals",
+          "contexts": [
+            "luteal"
+          ],
+          "evidence": "limited_food_evidence",
+          "evidenceDirection": "suggestive",
+          "wording": "A pulse-based option when you feel hungrier.",
+          "foodDataConfidence": "source_reported_identity",
+          "foodFamilies": [
+            "cooked_beans_peas"
+          ],
+          "sources": [
+            {
+              "id": "pulses_satiety_2014",
+              "title": "Li et al. pulses and satiety",
+              "url": "https://pubmed.ncbi.nlm.nih.gov/24820437/"
+            }
+          ],
+          "limitations": [
+            "Identified food-family candidate; nutrient amounts and symptom benefit are not verified for this product.",
+            "Not a hunger-suppression or lower-intake promise; record gas and portion.",
+            "Mixed products need substantial identifiable pulse content."
+          ]
+        },
+        {
+          "id": "folate_food_adequacy_candidate",
+          "label": "Folate food options",
+          "contexts": [
+            "period",
+            "follicular",
+            "ovulation",
+            "luteal",
+            "perimenopause",
+            "postmenopause"
+          ],
+          "evidence": "plausible_indirect",
+          "evidenceDirection": "conditional",
+          "wording": "An everyday nutrition candidate; fatigue benefits are uncertain.",
+          "foodDataConfidence": "source_reported_identity",
+          "foodFamilies": [
+            "cooked_beans_peas"
+          ],
+          "sources": [
+            {
+              "id": "nih_folate",
+              "title": "NIH folate fact sheet",
+              "url": "https://ods.od.nih.gov/factsheets/Folate-HealthProfessional/"
+            }
+          ],
+          "limitations": [
+            "Identified food-family candidate; nutrient amounts and symptom benefit are not verified for this product.",
+            "Not an instant energy boost, deficiency diagnosis or substitute for investigation of persistent fatigue.",
+            "Mixed products need substantial identifiable pulse content.",
+            "General nutrition relevance only; no special follicular or ovulatory effect is established."
+          ]
+        }
+      ]
+    }
+  ]
+}

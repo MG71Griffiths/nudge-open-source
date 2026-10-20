@@ -1,0 +1,26 @@
+/* Photo-led review uses only the captured preview, never a stock food image. */
+.n-photo-analysing{position:relative;isolation:isolate;overflow:hidden;border-radius:24px;min-height:min(620px,65svh);display:flex;align-items:flex-end;background:var(--n-lilac,var(--n-canvas));}
+.n-analysis-photo,.n-analysis-scrim{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;}
+.n-analysis-scrim{background:linear-gradient(180deg,var(--n-camera-scrim),var(--n-camera-scrim));z-index:-1;}
+.n-photo-analysis-panel{width:100%;padding:20px;background:linear-gradient(0deg,var(--n-card,var(--n-surface)) 65%,transparent);border-radius:24px;}
+.n-photo-analysis-panel .n-analysis-crew{margin:0 auto 15px;}.n-photo-analysis-panel .button{width:100%;}
+.n-photo-review{--nf-paper:var(--n-surface);--nf-ink:var(--n-ink);--nf-muted:var(--n-muted);--nf-line:var(--n-border);}
+.n-meal-product-head{display:grid;grid-template-columns:78px minmax(0,1fr);gap:14px;align-items:center;margin:3px 0 12px;}
+.n-meal-product-photo{width:78px;height:94px;object-fit:cover;border-radius:15px;background:var(--n-paper,var(--n-surface));}.n-meal-photo-placeholder{display:grid;place-items:center;color:var(--n-muted,var(--n-muted));}.n-meal-photo-placeholder svg{width:32px;height:32px;}
+.n-meal-product-head h1{font-size:1.3125rem;line-height:1.22;letter-spacing:-.025em;margin:0;font-weight:750;color:var(--n-ink,inherit);overflow-wrap:anywhere;}
+.n-photo-review .n-meal-estimate{font-size:.75rem;font-weight:600;line-height:1.35;margin:0 0 5px;color:var(--n-muted,var(--n-muted));}
+.n-photo-review .n-meal-components{font-size:.8125rem;line-height:1.45;margin:0 0 12px;color:var(--n-muted,var(--n-muted));}
+.n-meal-intake{border-top:1px solid var(--n-line,var(--n-border));padding-top:16px;}.n-meal-intake>h2{font-size:1rem;line-height:1.3;margin:0 0 13px;color:var(--n-ink,inherit);}
+.n-meal-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;}.n-meal-metrics>div{min-width:0;}.n-meal-metrics span{display:block;font-size:.75rem;line-height:1.25;opacity:.86;}.n-meal-metrics strong{display:block;font-size:1.125rem;line-height:1.25;margin-top:7px;overflow-wrap:anywhere;}
+.n-photo-review .n-meal-counted-plants{font-size:.75rem;line-height:1.35;margin:12px 0 0;color:inherit;}.n-meal-counted-plants span{font-weight:650;}
+/* Dial geometry, number and marker styles are shared with barcode results. */
+.n-photo-review .nf-compact-score{padding:0 6px;margin:0 0 16px;text-align:center;color:var(--n-ink,inherit);}
+.n-photo-review .n-meal-preparation-note{font-size:.8125rem;line-height:1.4;margin:8px 4px;color:var(--n-muted,var(--n-muted));}
+.n-meal-stepper{display:grid;grid-template-columns:minmax(70px,1fr) minmax(80px,1.4fr) minmax(70px,1fr);gap:8px;align-items:center;margin:0 0 16px;text-align:center;}.n-meal-stepper button{min-height:56px;border:1px solid var(--n-line,var(--n-border));border-radius:16px;background:var(--n-paper,var(--n-surface));color:var(--n-purple,var(--n-accent));font-size:1.125rem;font-weight:700;}.n-meal-stepper button:disabled{opacity:.4;}.n-meal-stepper>span{font-size:.875rem;line-height:1.35;}.n-meal-stepper>span strong{display:block;font-size:1.25rem;}
+.n-photo-review .n-meal-selection{font-size:.8125rem;color:var(--n-muted,var(--n-muted));line-height:1.4;margin:12px 4px;}
+.n-meal-review-actions{display:grid;grid-template-columns:minmax(80px,1fr) minmax(0,2fr);gap:12px;}.n-meal-review-actions .n-wide-button{margin:0;min-height:54px;}.n-meal-review-actions button:disabled{opacity:.45;}
+.n-photo-review .n-meal-sources{margin-top:18px;}.n-meal-editor{margin-top:20px;}.n-meal-portion-required{border:1px solid var(--n-line,var(--n-border));border-radius:18px;padding:16px;margin:12px 0;}.n-meal-portion-required>p{margin:0;font-size:.875rem;}.n-meal-portion-options{flex-wrap:wrap;}.n-meal-portion-options button{min-width:calc(50% - 8px);min-height:48px;}.n-meal-editor .n-component+.n-component{border-top:1px solid var(--n-line,var(--n-border));padding-top:18px;margin-top:15px;}
+.n-meal-sources>p{padding:0 16px 12px;}
+html.n-large-text .n-meal-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;}html.n-large-text .n-meal-product-head{align-items:start;}html.n-large-text .n-meal-review-actions{grid-template-columns:1fr;}
+@media(max-width:359px){.n-meal-product-head{grid-template-columns:68px minmax(0,1fr);gap:11px;}.n-meal-product-photo{width:68px;height:87px;}}
+@media(prefers-color-scheme:dark){.n-photo-analysis-panel{background:linear-gradient(0deg,var(--n-progress-track) 65%,transparent);}}

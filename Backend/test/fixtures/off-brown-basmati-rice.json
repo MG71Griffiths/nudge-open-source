@@ -1,0 +1,545 @@
+{
+  "sourceURL": "https://world.openfoodfacts.org/product/5063334012694",
+  "licenceURL": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "retrievedAt": "2026-10-09T18:44:58.335Z",
+  "attribution": "Open Food Facts public product data; original source fields retained for regression.",
+  "product": {
+    "code": "5063334012694",
+    "product_name": "Brown Basmati Rice",
+    "product_name_en": "Brown Basmati Rice",
+    "brands": "Sainsbury's",
+    "brands_tags": [
+      "xx:sainsbury-s"
+    ],
+    "quantity": "250g",
+    "product_quantity": 250,
+    "product_quantity_unit": "g",
+    "ingredients_text": "Cooked Brown Basmati Rice, Vegetable Oil (Sunflower, Rapeseed), Salt",
+    "ingredients_text_en": "Cooked Brown Basmati Rice, Vegetable Oil (Sunflower, Rapeseed), Salt",
+    "ingredients": [
+      {
+        "ciqual_food_code": "9119",
+        "ecobalyse_code": "cce078cf-3d3e-4153-a0a1-35555b2da639",
+        "id": "en:brown-basmati-rice",
+        "is_in_taxonomy": 1,
+        "percent_estimate": 74.93125,
+        "percent_max": 100,
+        "percent_min": 49.8625,
+        "processing": "en:cooked",
+        "text": "Brown Basmati Rice",
+        "vegan": "yes",
+        "vegetarian": "yes"
+      },
+      {
+        "from_palm_oil": "maybe",
+        "id": "en:vegetable-oil",
+        "ingredients": [
+          {
+            "ciqual_food_code": "17440",
+            "ecobalyse_code": "3cfab110-363e-442a-9170-1af337fe9ea3",
+            "from_palm_oil": "no",
+            "id": "en:sunflower-oil",
+            "is_in_taxonomy": 1,
+            "percent_estimate": 6.2671875,
+            "percent_max": 50,
+            "percent_min": 0,
+            "text": "Sunflower Vegetable Oil",
+            "vegan": "yes",
+            "vegetarian": "yes"
+          },
+          {
+            "ciqual_food_code": "17130",
+            "ecobalyse_code": "96b301d9-d21b-4cea-8903-bd7917e95a30",
+            "from_palm_oil": "no",
+            "id": "en:rapeseed-oil",
+            "is_in_taxonomy": 1,
+            "percent_estimate": 6.2671875,
+            "percent_max": 25,
+            "percent_min": 0,
+            "text": "Rapeseed Vegetable Oil",
+            "vegan": "yes",
+            "vegetarian": "yes"
+          }
+        ],
+        "is_in_taxonomy": 1,
+        "percent_estimate": 12.534375,
+        "percent_max": 50,
+        "percent_min": 0,
+        "text": "Vegetable Oil",
+        "vegan": "yes",
+        "vegetarian": "yes"
+      },
+      {
+        "ciqual_food_code": "11058",
+        "id": "en:salt",
+        "is_in_taxonomy": 1,
+        "percent_estimate": 12.534375,
+        "percent_max": 0.1375,
+        "percent_min": 0,
+        "text": "Salt",
+        "vegan": "yes",
+        "vegetarian": "yes"
+      }
+    ],
+    "ingredients_analysis_tags": [
+      "en:palm-oil-free",
+      "en:vegan",
+      "en:vegetarian"
+    ],
+    "allergens_tags": [],
+    "traces_tags": [],
+    "nutriments": {},
+    "nutrition": {
+      "aggregated_set": {
+        "nutrients": {
+          "added-sugars": {
+            "modifier": "~",
+            "source": "estimate",
+            "source_index": 2,
+            "source_per": "100g",
+            "unit": "g",
+            "value": 0
+          },
+          "carbohydrates": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 24
+          },
+          "energy": {
+            "modifier": "~",
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "kJ",
+            "value": 537.44
+          },
+          "energy-kcal": {
+            "source": "packaging",
+            "source_index": 0,
+            "source_per": "100g",
+            "unit": "kcal",
+            "value": 133.6
+          },
+          "energy-kj": {
+            "modifier": "~",
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "kJ",
+            "value": 537.44
+          },
+          "fat": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 1.44
+          },
+          "fiber": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 4.08
+          },
+          "fruits-vegetables-legumes": {
+            "modifier": "~",
+            "source": "estimate",
+            "source_index": 2,
+            "source_per": "100g",
+            "unit": "%",
+            "value": 0
+          },
+          "fruits-vegetables-nuts": {
+            "modifier": "~",
+            "source": "estimate",
+            "source_index": 2,
+            "source_per": "100g",
+            "unit": "%",
+            "value": 6.2671875
+          },
+          "nova-group": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": null,
+            "value": 2.4
+          },
+          "proteins": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 2.56
+          },
+          "salt": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 0.11,
+            "value_computed": 0.1375
+          },
+          "saturated-fat": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 0.16
+          },
+          "sodium": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 0.044,
+            "value_computed": 0.055
+          },
+          "starch": {
+            "source": "packaging",
+            "source_index": 0,
+            "source_per": "100g",
+            "unit": "g",
+            "value": 24.32
+          },
+          "sugars": {
+            "source": "packaging",
+            "source_index": 1,
+            "source_per": "serving",
+            "unit": "g",
+            "value": 0.4
+          }
+        },
+        "per": "100g",
+        "preparation": "as_sold"
+      },
+      "input_sets": [
+        {
+          "nutrients": {
+            "energy-kcal": {
+              "unit": "kcal",
+              "value": 133.6,
+              "value_string": "133.6"
+            },
+            "starch": {
+              "unit": "g",
+              "value": 24.32,
+              "value_string": "24.32"
+            }
+          },
+          "per": "100g",
+          "per_quantity": 100,
+          "per_unit": "g",
+          "preparation": "as_sold",
+          "source": "packaging"
+        },
+        {
+          "last_updated_t": 1774654499,
+          "nutrients": {
+            "carbohydrates": {
+              "unit": "g",
+              "value": 30,
+              "value_string": "30"
+            },
+            "energy-kcal": {
+              "unit": "kcal",
+              "value": 133,
+              "value_computed": 159.2,
+              "value_string": "133"
+            },
+            "energy-kj": {
+              "unit": "kJ",
+              "value_computed": 671.8
+            },
+            "fat": {
+              "unit": "g",
+              "value": 1.8,
+              "value_string": "1.8"
+            },
+            "fiber": {
+              "unit": "g",
+              "value": 5.1,
+              "value_string": "5.1"
+            },
+            "nova-group": {
+              "unit": null,
+              "value": 3,
+              "value_string": "3"
+            },
+            "proteins": {
+              "unit": "g",
+              "value": 3.2,
+              "value_string": "3.2"
+            },
+            "salt": {
+              "unit": "g",
+              "value": 0.1375,
+              "value_computed": 0.1375,
+              "value_string": "0.1375"
+            },
+            "saturated-fat": {
+              "unit": "g",
+              "value": 0.2,
+              "value_string": "0.2"
+            },
+            "sodium": {
+              "unit": "g",
+              "value": 0.055,
+              "value_computed": 0.055,
+              "value_string": "0.055"
+            },
+            "sugars": {
+              "unit": "g",
+              "value": 0.5,
+              "value_string": "0.5"
+            }
+          },
+          "per": "serving",
+          "per_quantity": 125,
+          "per_unit": "g",
+          "preparation": "as_sold",
+          "source": "packaging"
+        },
+        {
+          "nutrients": {
+            "added-sugars": {
+              "modifier": "~",
+              "unit": "g",
+              "value": 0,
+              "value_string": "0"
+            },
+            "fruits-vegetables-legumes": {
+              "modifier": "~",
+              "unit": "%",
+              "value": 0,
+              "value_string": "0"
+            },
+            "fruits-vegetables-nuts": {
+              "modifier": "~",
+              "unit": "%",
+              "value": 6.2671875,
+              "value_string": "6.2671875"
+            }
+          },
+          "per": "100g",
+          "per_quantity": 100,
+          "per_unit": "g",
+          "preparation": "as_sold",
+          "source": "estimate",
+          "source_description": "Estimate from ingredients"
+        }
+      ]
+    },
+    "nutrition_data_per": "100g",
+    "serving_size": "1 portion (125 g)",
+    "serving_quantity": 125,
+    "serving_quantity_unit": "g",
+    "categories_tags": [
+      "en:plant-based-foods-and-beverages",
+      "en:plant-based-foods",
+      "en:fruits-and-vegetables-based-foods",
+      "en:seeds",
+      "en:vegetable-based-foods-and-beverages",
+      "en:cereals-and-potatoes",
+      "en:vegetables-based-foods",
+      "en:cereals-and-their-products",
+      "en:vegetables",
+      "en:cereal-grains",
+      "en:rices",
+      "en:aromatic-rices",
+      "en:indica-rices",
+      "en:long-grain-rices",
+      "en:basmati-rices",
+      "en:vegetables-from-spain"
+    ],
+    "countries_tags": [
+      "en:united-kingdom"
+    ],
+    "stores_tags": [
+      "Sainsbury's"
+    ],
+    "labels_tags": [
+      "en:vegetarian",
+      "en:vegan"
+    ],
+    "last_modified_t": 1777571433,
+    "data_quality_errors_tags": [],
+    "data_quality_warnings_tags": [
+      "en:nutrition-packaging-as-sold-serving-energy-value-in-kcal-may-not-match-value-computed-from-other-nutrients",
+      "en:nutrition-sugars-plus-starch-greater-than-carbohydrates",
+      "en:environmental-score-packaging-packaging-data-missing",
+      "en:environmental-score-production-system-no-label"
+    ],
+    "selected_images": {
+      "front": {
+        "display": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/front_en.3.400.jpg"
+        },
+        "small": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/front_en.3.200.jpg"
+        },
+        "thumb": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/front_en.3.100.jpg"
+        }
+      },
+      "ingredients": {
+        "display": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/ingredients_en.12.400.jpg"
+        },
+        "small": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/ingredients_en.12.200.jpg"
+        },
+        "thumb": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/ingredients_en.12.100.jpg"
+        }
+      },
+      "nutrition": {
+        "display": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/nutrition_en.5.400.jpg"
+        },
+        "small": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/nutrition_en.5.200.jpg"
+        },
+        "thumb": {
+          "en": "https://images.openfoodfacts.org/images/products/506/333/401/2694/nutrition_en.5.100.jpg"
+        }
+      }
+    },
+    "lc": "en",
+    "image_front_url": "https://images.openfoodfacts.org/images/products/506/333/401/2694/front_en.3.400.jpg",
+    "image_front_small_url": "https://images.openfoodfacts.org/images/products/506/333/401/2694/front_en.3.200.jpg",
+    "image_url": "https://images.openfoodfacts.org/images/products/506/333/401/2694/front_en.3.400.jpg",
+    "image_nutrition_url": "https://images.openfoodfacts.org/images/products/506/333/401/2694/nutrition_en.5.400.jpg",
+    "image_ingredients_url": "https://images.openfoodfacts.org/images/products/506/333/401/2694/ingredients_en.12.400.jpg",
+    "nutriscore_grade": "b",
+    "nutrition_grades": "b",
+    "nutriscore": {
+      "2021": {
+        "category_available": 1,
+        "data": {
+          "energy": 537.44,
+          "energy_points": 1,
+          "energy_value": 537.4,
+          "fiber": 4.08,
+          "fiber_points": 4,
+          "fiber_value": 4.08,
+          "fruits_vegetables_nuts_colza_walnut_olive_oils": 6.2671875,
+          "fruits_vegetables_nuts_colza_walnut_olive_oils_points": 0,
+          "fruits_vegetables_nuts_colza_walnut_olive_oils_value": 6.3,
+          "is_beverage": 0,
+          "is_cheese": 0,
+          "is_fat": 0,
+          "is_water": 0,
+          "negative_points": 1,
+          "positive_points": 5,
+          "proteins": 2.56,
+          "proteins_points": 1,
+          "proteins_value": 2.56,
+          "saturated_fat": 0.16,
+          "saturated_fat_points": 0,
+          "saturated_fat_value": 0.2,
+          "sodium": 44,
+          "sodium_points": 0,
+          "sodium_value": 44,
+          "sugars": 0.4,
+          "sugars_points": 0,
+          "sugars_value": 0.4
+        },
+        "estimated": 0,
+        "grade": "a",
+        "nutrients_available": 1,
+        "nutriscore_applicable": 1,
+        "nutriscore_computed": 1,
+        "preparation": "as_sold",
+        "score": -4
+      },
+      "2023": {
+        "category_available": 1,
+        "data": {
+          "components": {
+            "negative": [
+              {
+                "id": "energy_from_saturated_fat",
+                "points": 0,
+                "points_max": 10,
+                "unit": "kJ",
+                "value": 5.92
+              },
+              {
+                "id": "sugars",
+                "points": 0,
+                "points_max": 15,
+                "unit": "g",
+                "value": 0.4
+              },
+              {
+                "id": "saturated_fat_ratio",
+                "points": 1,
+                "points_max": 10,
+                "unit": "%",
+                "value": 11.1
+              },
+              {
+                "id": "salt",
+                "points": 0,
+                "points_max": 20,
+                "unit": "g",
+                "value": 0.11
+              }
+            ],
+            "positive": [
+              {
+                "id": "proteins",
+                "points": 1,
+                "points_max": 7,
+                "unit": "g",
+                "value": 2.56
+              },
+              {
+                "id": "fiber",
+                "points": 1,
+                "points_max": 5,
+                "unit": "g",
+                "value": 4.08
+              },
+              {
+                "id": "fruits_vegetables_legumes",
+                "points": 0,
+                "points_max": 5,
+                "unit": "%",
+                "value": 0
+              }
+            ]
+          },
+          "count_proteins": 1,
+          "count_proteins_reason": "negative_points_less_than_7",
+          "is_beverage": 0,
+          "is_cheese": 0,
+          "is_fat_oil_nuts_seeds": 1,
+          "is_red_meat_product": 0,
+          "is_water": 0,
+          "negative_points": 1,
+          "negative_points_max": 55,
+          "positive_nutrients": [
+            "proteins",
+            "fiber",
+            "fruits_vegetables_legumes"
+          ],
+          "positive_points": 2,
+          "positive_points_max": 17
+        },
+        "estimated": 0,
+        "grade": "b",
+        "nutrients_available": 1,
+        "nutriscore_applicable": 1,
+        "nutriscore_computed": 1,
+        "preparation": "as_sold",
+        "score": -1
+      }
+    },
+    "nova_group": 3,
+    "additives_tags": []
+  }
+}

@@ -1,0 +1,78 @@
+name = "nudge-nutrition-label-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+preview_urls = false
+
+[[durable_objects.bindings]]
+name = "LABEL_QUOTA"
+class_name = "LabelQuota"
+
+[[durable_objects.bindings]]
+name = "FOOD_CATALOGUE_INDEX"
+class_name = "FoodCatalogueIndex"
+
+[[durable_objects.bindings]]
+name = "PRODUCT_IMAGE_WARM_RUNNER"
+class_name = "ProductImageWarmRunner"
+
+[[durable_objects.bindings]]
+name = "CATALOGUE_ENRICHMENT_RUNNER"
+class_name = "CatalogueEnrichmentRunner"
+
+[[durable_objects.bindings]]
+name = "PRIVATE_CAPTURE_JOBS"
+class_name = "PrivateCaptureJobs"
+
+[[r2_buckets]]
+binding = "PRODUCT_IMAGES"
+bucket_name = "nudge-product-thumbnails"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LabelQuota"]
+
+[[migrations]]
+tag = "v2-food-catalogue-index"
+new_sqlite_classes = ["FoodCatalogueIndex"]
+
+[[migrations]]
+tag = "v3-product-image-warm-runner"
+new_sqlite_classes = ["ProductImageWarmRunner"]
+
+[[migrations]]
+tag = "v4-catalogue-enrichment-runner"
+new_sqlite_classes = ["CatalogueEnrichmentRunner"]
+
+[[migrations]]
+tag = "v5-private-capture-jobs"
+new_sqlite_classes = ["PrivateCaptureJobs"]
+
+[triggers]
+crons = [] # Enable deliberately after independent setup.
+
+[vars]
+SCORING_AUTO_REFRESH = "false"
+OPENAI_MODEL = "gpt-4.1-mini"
+# Background public-evidence work has its own budget and never holds a user's
+# scanning/analysis lease. Failed provider attempts also consume this budget.
+ENRICHMENT_ENABLED = "false"
+ENRICHMENT_AI_DAILY_LIMIT = "100"
+ENRICHMENT_SOURCE_DAILY_LIMIT = "1000"
+# Development allowance approved by the owner; both photos and uncached AI
+# product scoring count. Keep shared spending ceilings and single-flight admission.
+LABEL_ACCOUNT_HOURLY_LIMIT = "20"
+LABEL_ACCOUNT_DAILY_LIMIT = "100"
+LABEL_GLOBAL_HOURLY_LIMIT = "30"
+LABEL_GLOBAL_DAILY_LIMIT = "150"
+# Owner exemptions are disabled in this export.
+LABEL_PRIVATE_OWNER_UNLIMITED = "false"
+# Public client configuration; these values do not grant administrative access.
+SUPABASE_URL = ""
+SUPABASE_PUBLISHABLE_KEY = ""
+# Add OPENAI_API_KEY, PRIVATE_ACCESS_TOKEN_SHA256 and SUPABASE_SECRET_KEY using Wrangler secrets.
+# No secret belongs in this file or the iPhone app bundle.
+
+[observability]
+enabled = false

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NudgeBackendURL</key>
+	<string>https://configure-nudge-backend.invalid</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Nudge</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Nudge uses your camera to scan barcodes and photograph food or labels.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Optional voice note sent with photos to Nudge and OpenAI when you analyse.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Nudge lets you choose food and label photos to analyse after you confirm sharing.</string>
+	<key>UIApplicationSceneManifest</key>
+	<dict>
+	<key>NudgeBackendURL</key>
+	<string>https://configure-nudge-backend.invalid</string>
+		<key>UIApplicationSupportsMultipleScenes</key>
+		<false/>
+	</dict>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
+	<key>UILaunchScreen</key>
+	<dict>
+	<key>NudgeBackendURL</key>
+	<string>https://configure-nudge-backend.invalid</string>
+		<key>UIColorName</key>
+		<string>NudgeCanvas</string>
+	</dict>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+</dict>
+</plist>

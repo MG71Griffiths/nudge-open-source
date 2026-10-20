@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "sourceRelease": "0.1.1-build37",
+  "licenceScope": "Original generated artwork: MIT. Lucide/Feather: preserved separate notices. Product marks: no trademark grant.",
+  "generated": [
+    {
+      "path": "Web/assets/nudge.png",
+      "evidence": "Original image-generation brief; original violet creature, no third-party mascot. Project prototype history, 28 September 2026.",
+      "sha256": "ce4602dfed46b0d3a77cc1923a947cfac9f8752c0a45664fa5e29580ce2bb4e7"
+    },
+    {
+      "path": "Web/assets/nudge-celebrate.png",
+      "evidence": "Generated edit of original Nudge mascot; exact prompt in Web/assets/nudge-visual-prompts.txt.",
+      "sha256": "ad7d53c5c820f86352a2d923e67c1277f9f53ed79c82f38a7b43534d52475dd6"
+    },
+    {
+      "path": "Web/assets/nudge-garden-stage.png",
+      "evidence": "Original generated illustrated garden; exact prompt in Web/assets/nudge-visual-prompts.txt.",
+      "sha256": "16b3750cb0bf9650e7fe02191da27cad16d5520549a88334da5ed4a916e9ba3a"
+    },
+    {
+      "path": "Web/assets/salmon-meal.webp",
+      "evidence": "Original generated illustration; prototype history, meal walkthrough 28 September 2026.",
+      "sha256": "e4513069597f70fe0f8f6768a5eace4905a1335d3cc1411468d4d6186986f69b"
+    },
+    {
+      "path": "Web/assets/burst-berry.webp",
+      "evidence": "Original generated blueberry illustration; prototype history, progress 28 September 2026.",
+      "sha256": "331b7d494e000aeb185b9196be859deedf9c90a25922661820a7d0c4789451fc"
+    },
+    {
+      "path": "Web/assets/berry-bowl.webp",
+      "evidence": "Original generated recipe illustration; prototype history, recipe concepts 28 September 2026.",
+      "sha256": "cfc950a271dc676e18613e31a9dd955ab73a9cef9f0a4cb29904d043c0e830d9"
+    },
+    {
+      "path": "Web/assets/chickpea-bowl.webp",
+      "evidence": "Original generated recipe illustration; prototype history, recipe concepts 28 September 2026.",
+      "sha256": "e1b193771b625be67f13e70e788a3a92947c756ce24a2c756defefc7c4d16667"
+    },
+    {
+      "path": "Web/assets/ketchup-camera.webp",
+      "evidence": "Original generated illustrative packaging; prototype history, scan walkthrough 28 September 2026. Brand names remain third-party marks.",
+      "sha256": "a42cf52d5775c9c65d95438ae31e3b86d2462072a72fc4fd33fc9e19954bd7d0"
+    },
+    {
+      "path": "Web/assets/yogurt-camera.webp",
+      "evidence": "Original generated illustrative packaging; prototype history, scan walkthrough 28 September 2026. Brand names remain third-party marks.",
+      "sha256": "b5778d8f0c2a7172ad9ba322ef01a5ebd5fdf970628abd6fd9c986e65a09db4d"
+    },
+    {
+      "path": "Nudge/Assets.xcassets/AppIcon.appiconset/NudgeIcon.png",
+      "evidence": "Generated from original Nudge mascot; app-icon composition prompt in project targeted tidy notes, October 2026.",
+      "sha256": "201440fa39411bc629da6235014350d0860a76bba4bc808343109993c3a890b6"
+    }
+  ],
+  "legacyMonograms": [
+    {
+      "path": "Web/assets/app-icon.png",
+      "evidence": "Simple Nudge n monogram; retained application icon.",
+      "sha256": "c637f7caaedf81cf98ddbdac92ba60539d64da6749b2f26c1c6cc0927b12b754"
+    },
+    {
+      "path": "Web/assets/app-icon-512.png",
+      "evidence": "Simple Nudge n monogram; visually checked during export audit.",
+      "sha256": "5854547ea3204e898bf925043e5d8654e65624fffc19c8d907c1bac3a6c3d8c7"
+    }
+  ],
+  "excluded": [
+    {
+      "path": "Web/assets/lindt-70.png",
+      "reason": "Copied manufacturer photograph; redistribution permission not established."
+    },
+    {
+      "path": "Web/assets/yuka-lindt-reference.png",
+      "reason": "User-supplied third-party app screenshot; excluded from public source."
+    }
+  ]
+}

@@ -1,0 +1,335 @@
+{
+  "version": "USDA-SR-Legacy-2018-meal-subset-v1",
+  "sourceURL": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_csv_2018-04.zip",
+  "sourceSHA256": "b80817294b8850530aaedf2e515c02593b1824f763a0ff356e5c2081643e6fd0",
+  "retrievedAt": "2026-10-03",
+  "licenceURL": "https://fdc.nal.usda.gov/data-documentation/",
+  "attribution": "USDA Agricultural Research Service, FoodData Central, SR Legacy April 2018 release. Public domain data.",
+  "basis": "per 100 g edible food in the named preparation",
+  "carbohydrateDefinition": "USDA carbohydrate by difference includes dietary fibre; do not treat this as UK available carbohydrate.",
+  "fibreDefinition": "USDA total dietary fibre; whole records are used, not spliced into CoFID records.",
+  "foods": [
+    {
+      "id": "usda:168409",
+      "code": "168409",
+      "ndbCode": "11205",
+      "name": "Cucumber, with peel, raw",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "carbohydrate": "3.63",
+        "energyKcal": "15",
+        "sugars": "1.67",
+        "energyKj": "65",
+        "saturatedFat": "0.037",
+        "sodiumMg": "2",
+        "fat": "0.11",
+        "fibre": "0.5",
+        "protein": "0.65"
+      }
+    },
+    {
+      "id": "usda:168462",
+      "code": "168462",
+      "ndbCode": "11457",
+      "name": "Spinach, raw",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "protein": "2.86",
+        "sodiumMg": "79",
+        "fibre": "2.2",
+        "sugars": "0.42",
+        "fat": "0.39",
+        "carbohydrate": "3.63",
+        "energyKcal": "23",
+        "energyKj": "97",
+        "saturatedFat": "0.063"
+      }
+    },
+    {
+      "id": "usda:168463",
+      "code": "168463",
+      "ndbCode": "11458",
+      "name": "Spinach, cooked, boiled, drained, without salt",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "carbohydrate": "3.75",
+        "energyKj": "96",
+        "saturatedFat": "0.043",
+        "fat": "0.26",
+        "sugars": "0.43",
+        "protein": "2.97",
+        "fibre": "2.4",
+        "sodiumMg": "70",
+        "energyKcal": "23"
+      }
+    },
+    {
+      "id": "usda:168910",
+      "code": "168910",
+      "ndbCode": "20125",
+      "name": "Pasta, whole-wheat, cooked (Includes foods for USDA's Food Distribution Program)",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": false,
+      "values": {
+        "fat": "1.71",
+        "carbohydrate": "30.07",
+        "energyKcal": "149",
+        "sugars": "0.75",
+        "protein": "5.99",
+        "energyKj": "625",
+        "fibre": "3.9",
+        "sodiumMg": "4",
+        "saturatedFat": "0.243"
+      }
+    },
+    {
+      "id": "usda:168928",
+      "code": "168928",
+      "ndbCode": "20421",
+      "name": "Pasta, cooked, unenriched, without added salt",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": false,
+      "values": {
+        "fat": "0.93",
+        "protein": "5.8",
+        "fibre": "1.8",
+        "sodiumMg": "1",
+        "carbohydrate": "30.86",
+        "energyKcal": "158",
+        "sugars": "0.56",
+        "energyKj": "660",
+        "saturatedFat": "0.176"
+      }
+    },
+    {
+      "id": "usda:169134",
+      "code": "169134",
+      "ndbCode": "9286",
+      "name": "Pomegranates, raw",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "saturatedFat": "0.12",
+        "protein": "1.67",
+        "fibre": "4",
+        "sodiumMg": "3",
+        "sugars": "13.67",
+        "fat": "1.17",
+        "energyKj": "346",
+        "carbohydrate": "18.7",
+        "energyKcal": "83"
+      }
+    },
+    {
+      "id": "usda:169704",
+      "code": "169704",
+      "ndbCode": "20037",
+      "name": "Rice, brown, long-grain, cooked (Includes foods for USDA's Food Distribution Program)",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": false,
+      "values": {
+        "saturatedFat": "0.26",
+        "energyKj": "514",
+        "fibre": "1.6",
+        "sodiumMg": "4",
+        "protein": "2.74",
+        "fat": "0.97",
+        "carbohydrate": "25.58",
+        "energyKcal": "123",
+        "sugars": "0.24"
+      }
+    },
+    {
+      "id": "usda:169757",
+      "code": "169757",
+      "ndbCode": "20445",
+      "name": "Rice, white, long-grain, regular, unenriched, cooked without salt",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": false,
+      "values": {
+        "sugars": "0.05",
+        "fat": "0.28",
+        "carbohydrate": "28.17",
+        "energyKcal": "130",
+        "protein": "2.69",
+        "fibre": "0.4",
+        "sodiumMg": "1",
+        "saturatedFat": "0.077",
+        "energyKj": "544"
+      }
+    },
+    {
+      "id": "usda:170005",
+      "code": "170005",
+      "ndbCode": "11291",
+      "name": "Onions, spring or scallions (includes tops and bulb), raw",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "sugars": "2.33",
+        "energyKj": "135",
+        "energyKcal": "32",
+        "fat": "0.19",
+        "protein": "1.83",
+        "fibre": "2.6",
+        "sodiumMg": "16",
+        "saturatedFat": "0.032",
+        "carbohydrate": "7.34"
+      }
+    },
+    {
+      "id": "usda:170108",
+      "code": "170108",
+      "ndbCode": "11821",
+      "name": "Peppers, sweet, red, raw",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "fibre": "2.1",
+        "energyKcal": "26",
+        "energyKj": "111",
+        "saturatedFat": "0.059",
+        "sodiumMg": "4",
+        "sugars": "4.2",
+        "carbohydrate": "6.03",
+        "protein": "0.99",
+        "fat": "0.3"
+      }
+    },
+    {
+      "id": "usda:170427",
+      "code": "170427",
+      "ndbCode": "11333",
+      "name": "Peppers, sweet, green, raw",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "fat": "0.17",
+        "protein": "0.86",
+        "fibre": "1.7",
+        "sodiumMg": "3",
+        "saturatedFat": "0.058",
+        "energyKj": "84",
+        "carbohydrate": "4.64",
+        "energyKcal": "20",
+        "sugars": "2.4"
+      }
+    },
+    {
+      "id": "usda:171413",
+      "code": "171413",
+      "ndbCode": "4053",
+      "name": "Oil, olive, salad or cooking",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": false,
+      "values": {
+        "fat": "100",
+        "carbohydrate": "0",
+        "energyKcal": "884",
+        "sodiumMg": "2",
+        "protein": "0",
+        "energyKj": "3699",
+        "saturatedFat": "13.808",
+        "fibre": "0",
+        "sugars": "0"
+      }
+    },
+    {
+      "id": "usda:172421",
+      "code": "172421",
+      "ndbCode": "16070",
+      "name": "Lentils, mature seeds, cooked, boiled, without salt",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "sugars": "1.8",
+        "energyKj": "487",
+        "carbohydrate": "20.13",
+        "energyKcal": "116",
+        "protein": "9.02",
+        "fibre": "7.9",
+        "sodiumMg": "2",
+        "saturatedFat": "0.053",
+        "fat": "0.38"
+      }
+    },
+    {
+      "id": "usda:172475",
+      "code": "172475",
+      "ndbCode": "16426",
+      "name": "Tofu, raw, firm, prepared with calcium sulfate",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": null,
+      "values": {
+        "fibre": "2.3",
+        "carbohydrate": "2.78",
+        "energyKcal": "144",
+        "energyKj": "603",
+        "protein": "17.27",
+        "saturatedFat": "1.261",
+        "sodiumMg": "14",
+        "fat": "8.72"
+      }
+    },
+    {
+      "id": "usda:172476",
+      "code": "172476",
+      "ndbCode": "16427",
+      "name": "Tofu, raw, regular, prepared with calcium sulfate",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": null,
+      "values": {
+        "energyKj": "317",
+        "sugars": "0.62",
+        "carbohydrate": "1.87",
+        "fibre": "0.3",
+        "fat": "4.78",
+        "energyKcal": "76",
+        "protein": "8.08",
+        "saturatedFat": "0.691",
+        "sodiumMg": "7"
+      }
+    },
+    {
+      "id": "usda:173757",
+      "code": "173757",
+      "ndbCode": "16057",
+      "name": "Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": true,
+      "values": {
+        "fibre": "7.6",
+        "sugars": "4.8",
+        "energyKj": "686",
+        "carbohydrate": "27.42",
+        "energyKcal": "164",
+        "fat": "2.59",
+        "sodiumMg": "7",
+        "protein": "8.86",
+        "saturatedFat": "0.269"
+      }
+    },
+    {
+      "id": "usda:175168",
+      "code": "175168",
+      "ndbCode": "15237",
+      "name": "Fish, salmon, Atlantic, farmed, cooked, dry heat",
+      "publishedAt": "2019-04-01",
+      "fvlEligible": false,
+      "values": {
+        "sugars": "0",
+        "saturatedFat": "2.397",
+        "fat": "12.35",
+        "carbohydrate": "0",
+        "protein": "22.1",
+        "fibre": "0",
+        "sodiumMg": "61",
+        "energyKcal": "206",
+        "energyKj": "861"
+      }
+    }
+  ]
+}

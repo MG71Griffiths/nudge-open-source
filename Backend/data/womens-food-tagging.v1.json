@@ -1,0 +1,3559 @@
+{
+  "schema_version": 1,
+  "rulebook_version": "womens_food_context_2026_10_08_draft2",
+  "status": "candidate_search_release",
+  "purpose": "Food contributions and explicitly uncertain food-family hypotheses for public catalogue search review. No clinical validation or research data collection is implied.",
+  "reviewed_on": "2026-10-08",
+  "review_due_on": "2027-04-08",
+  "default_evidence_policy": [
+    "established_nutrition",
+    "limited_food_evidence",
+    "plausible_indirect",
+    "research_only"
+  ],
+  "scope": {
+    "age": "adults",
+    "life_stages": [
+      "menstruating",
+      "perimenopause",
+      "postmenopause",
+      "unknown"
+    ],
+    "phase_labels": [
+      "period",
+      "follicular",
+      "ovulation",
+      "luteal",
+      "unknown"
+    ],
+    "initial_exclusions": [
+      "pregnancy-specific guidance",
+      "breastfeeding-specific guidance",
+      "disease-specific therapeutic diets"
+    ],
+    "notes": [
+      "Perimenopause may overlap with menstruation.",
+      "Period is a display label within the biological follicular phase.",
+      "Unknown stage must retain ordinary food search."
+    ]
+  },
+  "confidence_dimensions": {
+    "food_data": [
+      "product_reported",
+      "product_reviewed",
+      "compatible_generic_estimate",
+      "incomplete",
+      "conflicting"
+    ],
+    "rationale": [
+      "established_nutrition",
+      "limited_food_evidence",
+      "plausible_indirect",
+      "research_only"
+    ],
+    "context": [
+      "reported_bleeding",
+      "user_selected_stage",
+      "calendar_estimate",
+      "unknown"
+    ],
+    "interpretation": "Independent editorial dimensions, not a combined probability, formal GRADE rating or guarantee of benefit."
+  },
+  "thresholds": {
+    "purpose": "Draft editorial contribution thresholds per realistic supported serving; not daily targets, treatment doses or UK nutrition-claim eligibility.",
+    "iron": {
+      "minimum": 2.1,
+      "unit": "mg",
+      "basis": "per_serving",
+      "origin": "existing Nudge supportMatch editorial threshold"
+    },
+    "calcium": {
+      "minimum": 200,
+      "unit": "mg",
+      "basis": "per_serving",
+      "origin": "existing Nudge supportMatch editorial threshold"
+    },
+    "vitamin_c": {
+      "minimum": 12,
+      "unit": "mg",
+      "basis": "per_serving",
+      "origin": "proposed editorial threshold; evaluate portion coverage"
+    },
+    "vitamin_d": {
+      "minimum": 1.5,
+      "unit": "ug",
+      "basis": "per_serving",
+      "origin": "proposed editorial threshold; evaluate portion coverage"
+    },
+    "protein": {
+      "minimum": 10,
+      "unit": "g",
+      "basis": "per_serving",
+      "origin": "proposed editorial threshold; evaluate portion coverage"
+    },
+    "fibre": {
+      "minimum": 3,
+      "unit": "g",
+      "basis": "per_serving",
+      "origin": "proposed editorial threshold; evaluate portion coverage"
+    }
+  },
+  "assignment_contract": {
+    "required": [
+      "food_id",
+      "food_id_kind",
+      "tag_id",
+      "rulebook_version",
+      "product_source_fingerprint",
+      "qualification_state",
+      "supporting_facts",
+      "food_data_confidence",
+      "context_evidence",
+      "source_ids",
+      "explanation",
+      "review_state",
+      "assessed_at",
+      "expires_at"
+    ],
+    "food_id_kind": [
+      "barcode",
+      "generic_food",
+      "recipe"
+    ],
+    "qualification_state": [
+      "qualifies",
+      "does_not_qualify",
+      "unknown",
+      "conflicting"
+    ],
+    "supporting_fact_fields": [
+      "field",
+      "value",
+      "unit",
+      "basis_amount",
+      "basis_unit",
+      "preparation",
+      "source_url",
+      "source_revision",
+      "retrieved_at",
+      "estimate_status",
+      "serving_amount",
+      "serving_unit",
+      "serving_source"
+    ],
+    "review_state": [
+      "pending",
+      "verified",
+      "rejected"
+    ],
+    "notes": [
+      "A verified assignment is reviewed against a rule, not proof of symptom efficacy.",
+      "Unknown values are never converted to zero.",
+      "A generic estimate cannot be persisted as verified product label data.",
+      "Invalidate facts-derived assignments when relevant product or rule fingerprints change.",
+      "No user symptoms or identity in catalogue assignment payloads."
+    ]
+  },
+  "context_activation_contract": {
+    "evaluation_location": "private personalisation or explicit user search context, never the public food record",
+    "contexts_mean": "Potential relevance annotations, not proof of benefit or food eligibility restrictions.",
+    "rule": "Compute food qualification from food evidence only. Evaluate relevance_conditions separately for the current user or query. Unknown stage does not remove a nutrient fact."
+  },
+  "ranking_policy": [
+    "Nudge rating, personal food requirements and context relevance remain independent.",
+    "Context tags cannot raise a nutrition score or override a known allergy conflict.",
+    "Qualifying facts can have multiple applicable contexts.",
+    "Incomplete data is not a negative food rating; return coverage and general alternatives.",
+    "Use phase uncertainty to change explanation or offer symptom-led options, not to invent a phase.",
+    "Do not infer a natural ovulatory phase by calendar under hormonal contraception or HRT; use reported symptoms/bleeding unless a separately supported method applies.",
+    "No exclusive follicular or ovulatory food prescription.",
+    "Store prices and availability separately with retrieval dates.",
+    "Precompute assignments; no model call per search result."
+  ],
+  "rules": [
+    {
+      "id": "iron_contribution",
+      "label": "Iron contribution",
+      "contexts": [
+        "menstruating",
+        "period",
+        "perimenopause_with_periods"
+      ],
+      "evidence": "established_nutrition",
+      "application": "practical_stage_emphasis",
+      "kind": "nutrient",
+      "qualification": {
+        "threshold": "iron",
+        "additional_conditions": [
+          "Compatible iron value and realistic supported portion are required."
+        ]
+      },
+      "relevance_conditions": [
+        "Menstrual emphasis applies to someone who has periods or explicitly searches for that context; not restricted to bleeding days."
+      ],
+      "sources": [
+        "nhs_iron"
+      ],
+      "examples": [
+        "cooked pulses",
+        "compatible fortified cereals"
+      ],
+      "wording": "An iron-containing option to help meet your needs when you have periods.",
+      "limits": [
+        "Does not diagnose or treat iron deficiency.",
+        "Do not assume lower needs solely because age exceeds 50."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "vitamin_c_iron_pairing",
+      "label": "Pair with plant iron",
+      "contexts": [
+        "all_stages",
+        "period"
+      ],
+      "evidence": "established_nutrition",
+      "application": "food_combination",
+      "kind": "pairing",
+      "qualification": {
+        "threshold": "vitamin_c",
+        "additional_conditions": [
+          "Suggest alongside a compatible food with non-haem iron, not as a standalone period treatment."
+        ]
+      },
+      "sources": [
+        "nih_iron"
+      ],
+      "examples": [
+        "peppers",
+        "citrus",
+        "broccoli"
+      ],
+      "wording": "A vitamin-C option to pair with plant iron.",
+      "limits": [
+        "Absorption rationale is not a demonstrated change in cramps, bleeding or mood."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "calcium_contribution",
+      "label": "Calcium contribution",
+      "contexts": [
+        "all_stages",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "established_nutrition",
+      "application": "stage_relevant_general_nutrition",
+      "kind": "nutrient",
+      "qualification": {
+        "threshold": "calcium",
+        "additional_conditions": [
+          "Check fortification, calcium-set preparation, edible bones and bioavailability where relevant."
+        ]
+      },
+      "sources": [
+        "nhs_bones",
+        "nhs_menopause"
+      ],
+      "examples": [
+        "yoghurt",
+        "calcium-fortified plant drink",
+        "calcium-set tofu",
+        "sardines with edible bones"
+      ],
+      "wording": "A calcium option towards your daily bone-nutrition needs.",
+      "limits": [
+        "No fracture-prevention claim for an individual product.",
+        "Spinach should not qualify as a preferred calcium choice from total calcium alone."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "vitamin_d_contribution",
+      "label": "Vitamin D contribution",
+      "contexts": [
+        "all_stages",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "established_nutrition",
+      "application": "stage_relevant_general_nutrition",
+      "kind": "nutrient",
+      "qualification": {
+        "threshold": "vitamin_d",
+        "additional_conditions": [
+          "Fortification must be explicit; ordinary dairy is not presumed fortified."
+        ]
+      },
+      "sources": [
+        "nhs_bones"
+      ],
+      "examples": [
+        "compatible oily fish",
+        "verified fortified foods"
+      ],
+      "wording": "Contributes vitamin D to your diet.",
+      "limits": [
+        "This portion does not imply the whole daily requirement is met."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "protein_contribution",
+      "label": "Protein contribution",
+      "contexts": [
+        "all_stages",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "established_nutrition",
+      "application": "stage_relevant_general_nutrition",
+      "kind": "nutrient",
+      "qualification": {
+        "threshold": "protein",
+        "additional_conditions": [
+          "Retain preparation, portion and exact product protein basis."
+        ]
+      },
+      "sources": [
+        "nhs_menopause",
+        "protein_training_2022"
+      ],
+      "examples": [
+        "eggs",
+        "pulses",
+        "tofu",
+        "yoghurt",
+        "tinned fish"
+      ],
+      "wording": "A protein option to help meet your daily target.",
+      "limits": [
+        "Postmenopausal supplement-and-exercise trial outcomes are not attributed to this food.",
+        "This tag does not increase a protein target."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "fibre_contribution",
+      "label": "Fibre contribution",
+      "contexts": [
+        "all_stages",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "established_nutrition",
+      "application": "general_nutrition",
+      "kind": "nutrient",
+      "qualification": {
+        "threshold": "fibre",
+        "additional_conditions": [
+          "Use a relevant edible portion, with personal tolerance respected."
+        ]
+      },
+      "sources": [
+        "nhs_fibre"
+      ],
+      "examples": [
+        "oats",
+        "pulses",
+        "wholemeal bread",
+        "vegetables",
+        "fruit"
+      ],
+      "wording": "Contributes fibre towards your daily target.",
+      "limits": [
+        "Not a universal bloating remedy."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "plant_food_option",
+      "label": "Plant food option",
+      "contexts": [
+        "all_stages",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "established_nutrition",
+      "application": "pattern_level",
+      "kind": "food_identity",
+      "qualification": {
+        "identity": "reviewed substantial plant-food component",
+        "additional_conditions": [
+          "Trace ingredients do not qualify a mixed product.",
+          "Pattern-level suggestion only; evaluate the whole product separately."
+        ]
+      },
+      "sources": [
+        "emas_pattern_2020",
+        "nhs_fibre"
+      ],
+      "examples": [
+        "pulses",
+        "wholegrains",
+        "vegetables",
+        "fruit",
+        "nuts",
+        "seeds"
+      ],
+      "wording": "An option for a varied, plant-rich eating pattern.",
+      "limits": [
+        "No claim that this product changes hormones or treats a symptom."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "satisfying_option",
+      "label": "A satisfying meal or snack option",
+      "contexts": [
+        "luteal",
+        "reported_increased_hunger"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "appetite_responsive",
+      "kind": "meal_pattern",
+      "qualification": {
+        "requires": [
+          "protein_contribution",
+          "fibre_contribution"
+        ],
+        "additional_conditions": [
+          "Meal or snack identity and reasonable serving established."
+        ]
+      },
+      "relevance_conditions": [
+        "User wants hunger-related guidance; the same food can be useful in any phase."
+      ],
+      "sources": [
+        "luteal_intake_2024"
+      ],
+      "examples": [
+        "yoghurt with oats",
+        "beans on wholemeal toast"
+      ],
+      "wording": "Feeling hungrier? Try this meal or snack and let your appetite guide the portion.",
+      "limits": [
+        "Specific meal effects are not established by cycle intake studies.",
+        "No automatic calorie-target increase."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": false,
+      "assignment_granularity": "meal"
+    },
+    {
+      "id": "premenstrual_calcium_candidate",
+      "label": "Calcium and premenstrual nutrition",
+      "contexts": [
+        "luteal",
+        "reported_premenstrual_symptoms"
+      ],
+      "evidence": "limited_food_evidence",
+      "application": "indirect_from_mostly_supplement_evidence",
+      "kind": "context_link",
+      "qualification": {
+        "requires": [
+          "calcium_contribution"
+        ],
+        "additional_conditions": [
+          "Promote regular adequate intake, not a luteal-only dose."
+        ]
+      },
+      "sources": [
+        "pms_nutrition_2024",
+        "calcium_rct_1998"
+      ],
+      "examples": [
+        "qualifying calcium foods"
+      ],
+      "wording": "Calcium may be relevant to premenstrual symptoms; food-specific evidence is limited.",
+      "limits": [
+        "Supplement doses and measured treatment effects must not be transferred to a food portion."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "soluble_fibre_option",
+      "label": "An option when constipation contributes",
+      "contexts": [
+        "reported_constipation",
+        "reported_bloating_with_constipation"
+      ],
+      "evidence": "established_nutrition",
+      "application": "conditional_symptom_guidance",
+      "kind": "food_identity",
+      "qualification": {
+        "identity": "reviewed oats or linseed food and portion",
+        "additional_conditions": [
+          "Do not infer soluble fibre amount from total fibre.",
+          "Small ingredient traces do not qualify."
+        ]
+      },
+      "relevance_conditions": [
+        "For the symptom suggestion, constipation context must be reported or explicitly requested; do not infer it from bloating alone."
+      ],
+      "sources": [
+        "nhs_bloating",
+        "nice_ibs"
+      ],
+      "examples": [
+        "oats",
+        "linseed"
+      ],
+      "wording": "An option to try when constipation is contributing to bloating.",
+      "limits": [
+        "Not a blanket low-FODMAP or bloating-free classification."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "hypothesis": {
+        "question": "Do tolerated oat/linseed portions relate to easier stools and digestive comfort?",
+        "primary_outcome": "stool_difficulty_and_bloating",
+        "observation_window": "bowel_daily_weekly",
+        "stage_specificity": "general_guidance_not_phase_specific",
+        "expected_direction": "conditional",
+        "causal_claim_allowed": false
+      },
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "lower_caffeine_option",
+      "label": "Lower-caffeine alternative",
+      "contexts": [
+        "reported_caffeine_sensitivity",
+        "reported_anxiety",
+        "reported_sleep_difficulty"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "preference_and_general_guidance",
+      "kind": "comparison",
+      "qualification": {
+        "requires_facts": [
+          "comparable serving caffeine content or reviewed explicit caffeine-free evidence"
+        ],
+        "additional_conditions": [
+          "Lower is relative to the selected drink; unknown caffeine is not zero."
+        ]
+      },
+      "relevance_conditions": [
+        "Show only as an optional preference, not an anxiety diagnosis."
+      ],
+      "sources": [
+        "nhs_anxiety"
+      ],
+      "examples": [
+        "verified caffeine-free alternatives"
+      ],
+      "wording": "An alternative if caffeine seems to affect your sleep or anxiety.",
+      "limits": [
+        "No anti-anxiety or sleep-treatment claim.",
+        "Decaf may still contain caffeine; withdrawal symptoms can confound short-term results."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "hypothesis": {
+        "question": "Does a lower-caffeine replacement relate to sleep or caffeine-sensitive anxiety for this person?",
+        "primary_outcome": "sleep_quality_and_restedness",
+        "secondary_outcomes": [
+          "anxiety_severity",
+          "withdrawal_headache",
+          "next_day_fatigue"
+        ],
+        "observation_window": "sleep_next_morning",
+        "stage_specificity": "general_not_phase_specific",
+        "expected_direction": "conditional",
+        "causal_claim_allowed": false
+      },
+      "exposure_details": [
+        "replacement_drink",
+        "replaced_drink",
+        "caffeine_mg_or_unknown",
+        "serving",
+        "last_caffeine_time",
+        "change_from_usual_intake"
+      ],
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "period_omega3_research",
+      "label": "Omega-3 and period comfort research",
+      "contexts": [
+        "reported_cramps"
+      ],
+      "evidence": "research_only",
+      "application": "supplement_to_food_extrapolation",
+      "kind": "research_candidate",
+      "qualification": {
+        "identity": "Supported substantial oily-fish food identity and preparation",
+        "additional_conditions": [
+          "Do not substitute plant ALA or tuna for the oily-fish candidate family.",
+          "A trace fish ingredient does not qualify."
+        ],
+        "claims_require_facts": [
+          "Quantified EPA/DHA statements require compatible measured or separately labelled composition data; missing EPA/DHA does not exclude an identity-based candidate."
+        ]
+      },
+      "sources": [
+        "omega3_cramps_2023",
+        "nhs_fish"
+      ],
+      "examples": [
+        "compatible oily fish"
+      ],
+      "wording": "Omega-3 supplements have been studied for cramps; benefits from this food are uncertain.",
+      "limits": [
+        "Can appear as a labelled candidate; do not rank it as an established symptom remedy.",
+        "Usual fish-frequency guidance applies; a candidate is not an instruction to eat oily fish daily."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "presentation": "clearly_labelled_candidate",
+      "candidate_priority": "exploratory",
+      "hypothesis": {
+        "question": "Do ordinary oily-fish meals relate to period comfort over comparable cycles?",
+        "primary_outcome": "cramp_severity",
+        "observation_window": "matched_cycle_windows",
+        "stage_specificity": "supplement_to_food_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "soy_hot_flush_research",
+      "label": "Soy foods and hot-flush research",
+      "contexts": [
+        "postmenopause",
+        "reported_hot_flushes"
+      ],
+      "evidence": "research_only",
+      "application": "uncertain_food_pattern_evidence",
+      "kind": "research_candidate",
+      "qualification": {
+        "identity": "reviewed substantial whole-soy food",
+        "additional_conditions": [
+          "Soy sauce, soy lecithin and trace soy do not qualify.",
+          "Perimenopause generalisation remains indirect.",
+          "No trial-equivalent isoflavone dose is inferred."
+        ]
+      },
+      "sources": [
+        "soy_diet_rct_2023",
+        "menopause_statement_2023",
+        "menopause_food_review_2026"
+      ],
+      "examples": [
+        "tofu",
+        "edamame",
+        "compatible soya food"
+      ],
+      "wording": "Soy foods are being studied for hot flushes; results are uncertain.",
+      "limits": [
+        "Can appear as a labelled candidate; do not rank it as an established symptom remedy."
+      ],
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "presentation": "clearly_labelled_candidate",
+      "candidate_priority": "exploratory",
+      "hypothesis": {
+        "question": "Do substantial soy-food choices relate to reported hot-flush patterns?",
+        "primary_outcome": "hot_flush_frequency_and_bother",
+        "observation_window": "symptom_daily_weekly",
+        "stage_specificity": "predominantly_postmenopausal",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "magnesium_premenstrual_candidate",
+      "label": "Magnesium foods and premenstrual comfort",
+      "contexts": [
+        "luteal",
+        "reported_premenstrual_symptoms"
+      ],
+      "evidence": "research_only",
+      "application": "mixed_supplement_evidence",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nih_magnesium",
+        "magnesium_pms_1998",
+        "magnesium_pms_2002"
+      ],
+      "examples": [
+        "pumpkin seeds",
+        "almonds",
+        "cashews",
+        "beans",
+        "oats"
+      ],
+      "wording": "Possible premenstrual fit; evidence for ordinary foods is indirect and mixed.",
+      "limits": [
+        "Do not infer magnesium deficiency, treat anxiety, or copy supplement doses."
+      ],
+      "evidence_direction": "mixed",
+      "hypothesis": {
+        "question": "Could usual magnesium-food intake be associated with less premenstrual discomfort?",
+        "primary_outcome": "premenstrual_bloating_severity",
+        "observation_window": "matched_cycle_windows",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "b6_premenstrual_candidate",
+      "label": "Vitamin B6 foods and premenstrual symptoms",
+      "contexts": [
+        "luteal",
+        "reported_premenstrual_symptoms"
+      ],
+      "evidence": "research_only",
+      "application": "supplement_to_food_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nih_b6",
+        "pms_nutrition_2024"
+      ],
+      "examples": [
+        "chickpeas",
+        "banana",
+        "potato",
+        "chicken",
+        "salmon"
+      ],
+      "wording": "Possible premenstrual fit; benefits from ordinary food amounts are uncertain.",
+      "limits": [
+        "No high-dose B6 supplement advice or trial-dose equivalence."
+      ],
+      "evidence_direction": "suggestive",
+      "hypothesis": {
+        "question": "Could B6-containing foods contribute to a diet associated with fewer premenstrual symptoms?",
+        "primary_outcome": "premenstrual_mood_severity",
+        "observation_window": "matched_cycle_windows",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "zinc_premenstrual_candidate",
+      "label": "Zinc foods and premenstrual symptoms",
+      "contexts": [
+        "luteal",
+        "reported_premenstrual_symptoms"
+      ],
+      "evidence": "research_only",
+      "application": "supplement_to_food_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nih_zinc",
+        "zinc_pms_2025"
+      ],
+      "examples": [
+        "pumpkin seeds",
+        "lentils",
+        "oats",
+        "meat",
+        "shellfish",
+        "dairy"
+      ],
+      "wording": "Possible premenstrual fit; the stronger research concerns supplements.",
+      "limits": [
+        "Do not assign supplement-study certainty to a food; quantify zinc only from compatible data."
+      ],
+      "evidence_direction": "suggestive",
+      "hypothesis": {
+        "question": "Could usual zinc-food intake be relevant to premenstrual symptom patterns?",
+        "primary_outcome": "premenstrual_symptom_impact",
+        "observation_window": "matched_cycle_windows",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "ginger_period_comfort_candidate",
+      "label": "Ginger and period comfort",
+      "contexts": [
+        "period",
+        "reported_cramps"
+      ],
+      "evidence": "research_only",
+      "application": "powder_to_culinary_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "ginger_nccih",
+        "ginger_cramps_2016"
+      ],
+      "examples": [
+        "fresh ginger in food",
+        "ginger infusion with actual ginger"
+      ],
+      "wording": "A ginger option to explore; normal food amounts have uncertain effects on cramps.",
+      "limits": [
+        "Preparation matters. Flavouring, biscuits and token ginger do not qualify; record reflux or intolerance."
+      ],
+      "evidence_direction": "suggestive",
+      "hypothesis": {
+        "question": "Could a tolerated ginger food or drink be associated with period comfort?",
+        "primary_outcome": "cramp_severity",
+        "observation_window": "same_day_with_baseline",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "wholegrain_premenstrual_candidate",
+      "label": "Wholegrain swaps and premenstrual symptoms",
+      "contexts": [
+        "luteal",
+        "reported_premenstrual_symptoms"
+      ],
+      "evidence": "limited_food_evidence",
+      "application": "dietary_substitution",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "wholegrain_pms_2019",
+        "pms_nutrition_2024"
+      ],
+      "examples": [
+        "oats",
+        "wholemeal bread",
+        "brown rice",
+        "wholegrain pasta"
+      ],
+      "wording": "A practical wholegrain swap with early, inconclusive premenstrual research.",
+      "limits": [
+        "Record the food replaced; preserve gluten requirements and GI tolerance."
+      ],
+      "evidence_direction": "mixed",
+      "hypothesis": {
+        "question": "Are wholegrain-for-refined-grain swaps associated with better premenstrual wellbeing?",
+        "primary_outcome": "premenstrual_symptom_impact",
+        "observation_window": "matched_cycle_windows",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "pulse_satisfying_candidate",
+      "label": "Pulses and satisfying meals",
+      "contexts": [
+        "reported_increased_hunger",
+        "luteal"
+      ],
+      "evidence": "limited_food_evidence",
+      "application": "general_food_trial_cycle_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "pulses_satiety_2014"
+      ],
+      "examples": [
+        "beans",
+        "lentils",
+        "chickpeas",
+        "peas"
+      ],
+      "wording": "A pulse-based option when you feel hungrier.",
+      "limits": [
+        "Not a hunger-suppression or lower-intake promise; record gas and portion."
+      ],
+      "evidence_direction": "suggestive",
+      "hypothesis": {
+        "question": "Do pulse-containing meals improve satisfaction when hunger increases?",
+        "primary_outcome": "meal_satisfaction",
+        "observation_window": "same_meal_followup",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "dark_chocolate_comfort_candidate",
+      "label": "Dark chocolate and period comfort",
+      "contexts": [
+        "period",
+        "reported_cramps"
+      ],
+      "evidence": "research_only",
+      "application": "small_unblinded_food_trial",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "chocolate_cramps_2023"
+      ],
+      "examples": [
+        "dark chocolate"
+      ],
+      "wording": "An optional comfort food; cramp-relief evidence is very limited.",
+      "limits": [
+        "Retain ordinary rating/portion guidance; caffeine, sugar, allergies and expectation can affect results."
+      ],
+      "evidence_direction": "very_preliminary",
+      "hypothesis": {
+        "question": "Does an ordinary chosen dark-chocolate portion improve subjective comfort?",
+        "primary_outcome": "period_comfort",
+        "observation_window": "same_day_with_baseline",
+        "stage_specificity": "cycle_context_food_applicability_may_be_indirect",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "easy_regular_meal_candidate",
+      "label": "Easy meals on low-energy days",
+      "contexts": [
+        "reported_low_energy",
+        "all_stages"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "practical_meal_access",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nhs_fatigue_meals"
+      ],
+      "examples": [
+        "porridge with yoghurt",
+        "beans on toast",
+        "potato with a protein food",
+        "suitable ready meal"
+      ],
+      "wording": "A practical meal option when preparing food feels difficult.",
+      "limits": [
+        "Qualification requires credible meal/preparation information; no diagnosis or fatigue-treatment promise."
+      ],
+      "evidence_direction": "general_rationale",
+      "hypothesis": {
+        "question": "Does an affordable easy meal make regular eating easier on low-energy days?",
+        "primary_outcome": "meal_regularness_and_feasibility",
+        "observation_window": "same_day",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": false,
+      "assignment_granularity": "meal"
+    },
+    {
+      "id": "b12_food_adequacy_candidate",
+      "label": "Vitamin B12 food options",
+      "contexts": [
+        "reported_low_energy",
+        "all_stages"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "nutrient_adequacy",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nih_b12"
+      ],
+      "examples": [
+        "eggs",
+        "milk",
+        "yoghurt",
+        "fish",
+        "explicitly B12-fortified foods"
+      ],
+      "wording": "An option for B12 intake; an energy benefit is not established when intake and status are sufficient.",
+      "limits": [
+        "Never infer deficiency from tiredness. Fortification must be explicit; food does not address every absorption problem."
+      ],
+      "evidence_direction": "conditional",
+      "hypothesis": {
+        "question": "Could including appropriate B12 foods improve dietary coverage when intake is limited?",
+        "primary_outcome": "dietary_b12_coverage",
+        "observation_window": "nutrition_pattern_weeks",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "folate_food_adequacy_candidate",
+      "label": "Folate food options",
+      "contexts": [
+        "reported_low_energy",
+        "all_stages"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "nutrient_adequacy",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nih_folate"
+      ],
+      "examples": [
+        "lentils",
+        "beans",
+        "leafy greens",
+        "broccoli"
+      ],
+      "wording": "An everyday nutrition candidate; fatigue benefits are uncertain.",
+      "limits": [
+        "Not an instant energy boost, deficiency diagnosis or substitute for investigation of persistent fatigue."
+      ],
+      "evidence_direction": "conditional",
+      "hypothesis": {
+        "question": "Could folate-containing food choices improve dietary variety and coverage?",
+        "primary_outcome": "dietary_folate_coverage",
+        "observation_window": "nutrition_pattern_weeks",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "kiwifruit_bowel_candidate",
+      "label": "Green kiwifruit and bowel regularity",
+      "contexts": [
+        "reported_constipation",
+        "reported_bloating_with_constipation",
+        "all_stages"
+      ],
+      "evidence": "limited_food_evidence",
+      "application": "direct_food_trial",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "kiwi_bowel_2023"
+      ],
+      "examples": [
+        "green kiwifruit"
+      ],
+      "wording": "A bowel-regularity option with food-trial evidence; cycle-specific effects are unknown.",
+      "limits": [
+        "Check kiwi allergy; do not transfer whole-fruit evidence to trace kiwi flavouring."
+      ],
+      "evidence_direction": "supportive",
+      "hypothesis": {
+        "question": "Is green kiwi associated with easier, more regular stools without worse discomfort?",
+        "primary_outcome": "complete_spontaneous_bowel_movements",
+        "observation_window": "bowel_daily_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "prunes_bowel_candidate",
+      "label": "Prunes and bowel regularity",
+      "contexts": [
+        "reported_constipation",
+        "all_stages"
+      ],
+      "evidence": "limited_food_evidence",
+      "application": "direct_food_trial",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "prunes_bowel_2019"
+      ],
+      "examples": [
+        "prunes"
+      ],
+      "wording": "A bowel-regularity candidate; some people experience more gas.",
+      "limits": [
+        "Sorbitol and portion can worsen bloating/diarrhoea; large trial quantities are not defaults."
+      ],
+      "evidence_direction": "supportive_with_tolerance_cost",
+      "hypothesis": {
+        "question": "Are prunes associated with easier stools at a personally tolerated portion?",
+        "primary_outcome": "stool_frequency_and_straining",
+        "observation_window": "bowel_daily_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "fermented_milk_gut_candidate",
+      "label": "Live fermented dairy and digestive comfort",
+      "contexts": [
+        "reported_digestive_discomfort",
+        "all_stages"
+      ],
+      "evidence": "research_only",
+      "application": "formulation_specific_to_family_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "fermented_milk_2013"
+      ],
+      "examples": [
+        "live yoghurt",
+        "specified fermented milk"
+      ],
+      "wording": "A candidate for digestive comfort; effects depend on the product and cultures.",
+      "limits": [
+        "Generic yoghurt does not inherit tested-strain efficacy; milk allergy, lactose and actual culture evidence matter."
+      ],
+      "evidence_direction": "mixed",
+      "hypothesis": {
+        "question": "Does a particular tolerated fermented dairy product relate to digestive comfort?",
+        "primary_outcome": "digestive_discomfort",
+        "observation_window": "bowel_daily_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "kefir_bowel_candidate",
+      "label": "Kefir and bowel regularity",
+      "contexts": [
+        "reported_constipation",
+        "all_stages"
+      ],
+      "evidence": "research_only",
+      "application": "uncontrolled_food_pilot",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "kefir_pilot_2014"
+      ],
+      "examples": [
+        "milk kefir"
+      ],
+      "wording": "A bowel-regularity candidate with very preliminary evidence.",
+      "limits": [
+        "Do not extrapolate to water kefir or raw-milk recommendations; culture, lactose, gas and serving vary."
+      ],
+      "evidence_direction": "very_preliminary",
+      "hypothesis": {
+        "question": "Is a tolerated milk-kefir portion associated with improved stool regularity?",
+        "primary_outcome": "stool_frequency_and_form",
+        "observation_window": "bowel_daily_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "plant_ferment_stress_pattern_candidate",
+      "label": "Varied plants and fermented-food pattern",
+      "contexts": [
+        "reported_stress",
+        "reported_low_mood",
+        "all_stages"
+      ],
+      "evidence": "research_only",
+      "application": "whole_pattern_not_single_food",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "diet_stress_2023",
+        "fermented_pattern_2021"
+      ],
+      "examples": [
+        "varied plants with tolerated fermented foods"
+      ],
+      "wording": "A dietary pattern being explored for wellbeing; symptom benefits are uncertain.",
+      "limits": [
+        "Stress trial between-group result was not significant. Biomarkers do not prove anxiety relief; individual ingredients cannot inherit the whole-pattern effect."
+      ],
+      "evidence_direction": "mixed_or_null",
+      "hypothesis": {
+        "question": "Could a varied plant and tolerated fermented-food pattern relate to perceived stress?",
+        "primary_outcome": "perceived_stress",
+        "observation_window": "pattern_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "lower_priority_observation",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": false,
+      "assignment_granularity": "dietary_pattern"
+    },
+    {
+      "id": "hydration_bowel_candidate",
+      "label": "Hydration alongside fibre",
+      "contexts": [
+        "reported_constipation",
+        "all_stages"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "conditional_general_guidance",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "niddk_constipation"
+      ],
+      "examples": [
+        "water",
+        "unsweetened non-fizzy drinks"
+      ],
+      "wording": "A hydration option alongside fibre, according to your needs.",
+      "limits": [
+        "No forced extra water or override of fluid restrictions; tea/coffee still contribute fluid."
+      ],
+      "evidence_direction": "conditional",
+      "hypothesis": {
+        "question": "Does adequate fluid alongside usual fibre relate to easier stools when fluid intake was low?",
+        "primary_outcome": "stool_difficulty",
+        "observation_window": "bowel_daily_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "kiwifruit_sleep_candidate",
+      "label": "Kiwifruit and sleep",
+      "contexts": [
+        "reported_sleep_difficulty",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "research_only",
+      "application": "uncontrolled_food_pilot",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "kiwi_sleep_2011"
+      ],
+      "examples": [
+        "kiwifruit"
+      ],
+      "wording": "A sleep candidate with early uncontrolled research; benefit is uncertain.",
+      "limits": [
+        "Keep separate from stronger green-kiwi bowel evidence; record timing, allergy and other sleep changes."
+      ],
+      "evidence_direction": "very_preliminary",
+      "hypothesis": {
+        "question": "Is eating kiwi associated with sleep changes for this person?",
+        "primary_outcome": "sleep_onset_and_restedness",
+        "observation_window": "sleep_next_morning",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "tart_cherry_sleep_candidate",
+      "label": "Tart cherry and sleep",
+      "contexts": [
+        "reported_sleep_difficulty",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "research_only",
+      "application": "very_small_beverage_trials",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "cherry_sleep_2018",
+        "cherry_sleep_2010",
+        "nhs_juice"
+      ],
+      "examples": [
+        "tart cherry juice"
+      ],
+      "wording": "An exploratory sleep candidate with limited, mixed evidence.",
+      "limits": [
+        "Lower-priority optional item: cost, sugar and juice guidance matter; do not prescribe high-volume trial doses or assume sweet cherries/concentrates are equivalent."
+      ],
+      "evidence_direction": "mixed",
+      "hypothesis": {
+        "question": "Is an ordinary chosen tart-cherry drink portion associated with sleep changes?",
+        "primary_outcome": "sleep_onset_and_restedness",
+        "observation_window": "sleep_next_morning",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "flax_hot_flush_candidate",
+      "label": "Ground flax and hot-flush observations",
+      "contexts": [
+        "reported_hot_flushes",
+        "postmenopause"
+      ],
+      "evidence": "research_only",
+      "application": "direct_food_trials_with_null_results",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "flax_flushes_2012",
+        "flax_soy_2006"
+      ],
+      "examples": [
+        "ground flaxseed",
+        "ground linseed"
+      ],
+      "wording": "Studied for hot flushes, but trials have not shown a reliable benefit.",
+      "limits": [
+        "Observation-only priority, not a likely remedy; no seed cycling or hormone-balancing claim."
+      ],
+      "evidence_direction": "mixed_or_null",
+      "hypothesis": {
+        "question": "Do individuals report changes with ground flax despite no reliable group-level benefit in trials?",
+        "primary_outcome": "hot_flush_frequency_and_bother",
+        "observation_window": "symptom_daily_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "lower_priority_observation",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "prunes_bone_candidate",
+      "label": "Prunes and bone-health research",
+      "contexts": [
+        "postmenopause"
+      ],
+      "evidence": "limited_food_evidence",
+      "application": "direct_postmenopause_food_trial",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "prunes_bone_2022"
+      ],
+      "examples": [
+        "prunes"
+      ],
+      "wording": "Prunes have early research on bone health after menopause.",
+      "limits": [
+        "A symptom diary cannot establish bone benefit. No fracture-prevention claim; bone-density outcomes require appropriate clinical measurement."
+      ],
+      "evidence_direction": "suggestive",
+      "hypothesis": {
+        "question": "Are ordinary prune portions acceptable long term, with bone outcomes reserved for an appropriate study?",
+        "primary_outcome": "adherence_and_tolerance",
+        "observation_window": "long_term_external_outcome",
+        "stage_specificity": "direct_postmenopause",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "walnuts_sleep_candidate",
+      "label": "Walnuts and sleep",
+      "contexts": [
+        "reported_sleep_difficulty",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "research_only",
+      "application": "young_adult_trial_stage_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "walnuts_sleep_2025"
+      ],
+      "examples": [
+        "walnuts"
+      ],
+      "wording": "An exploratory sleep candidate; menopause-specific benefit is unknown.",
+      "limits": [
+        "Nut allergy and portions matter; trial was open-label and industry funded."
+      ],
+      "evidence_direction": "very_preliminary",
+      "hypothesis": {
+        "question": "Could walnuts be associated with sleep changes outside the studied young-adult population?",
+        "primary_outcome": "sleep_quality_and_restedness",
+        "observation_window": "sleep_next_morning",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "berries_cognitive_ageing_candidate",
+      "label": "Berries and cognitive-ageing research",
+      "contexts": [
+        "reported_brain_fog",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "research_only",
+      "application": "preparation_and_population_extrapolation",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "blueberry_cognition_2023",
+        "mind_trial_2023"
+      ],
+      "examples": [
+        "blueberries",
+        "strawberries",
+        "mixed berries"
+      ],
+      "wording": "A fruit option being studied in healthy-ageing diets; brain-fog benefits are uncertain.",
+      "limits": [
+        "Wild-blueberry powder results do not establish effects of every berry. Subjective brain fog is not a cognitive test or proof of preventing decline."
+      ],
+      "evidence_direction": "mixed",
+      "hypothesis": {
+        "question": "Could ordinary berry intake relate to perceived concentration as part of a broader pattern?",
+        "primary_outcome": "self_reported_concentration",
+        "observation_window": "pattern_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "exploratory",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    },
+    {
+      "id": "mediterranean_mood_pattern_candidate",
+      "label": "Mediterranean-style eating and mood",
+      "contexts": [
+        "reported_low_mood",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "research_only",
+      "application": "whole_diet_pattern",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "emas_pattern_2020",
+        "predimed_mood_2013",
+        "predidep_2023"
+      ],
+      "examples": [
+        "plant-rich meals with olive oil nuts pulses wholegrains and optional fish"
+      ],
+      "wording": "A varied eating pattern with uncertain mood benefits.",
+      "limits": [
+        "No single nut or oil inherits a whole-pattern effect; overall depression/recurrence outcomes were not clearly improved."
+      ],
+      "evidence_direction": "mixed_or_null",
+      "hypothesis": {
+        "question": "Could an affordable Mediterranean-style pattern relate to wellbeing and feasibility?",
+        "primary_outcome": "self_reported_mood_and_feasibility",
+        "observation_window": "pattern_weekly",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "lower_priority_observation",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": false,
+      "assignment_granularity": "dietary_pattern"
+    },
+    {
+      "id": "unsaturated_fat_swap_candidate",
+      "label": "Unsaturated-fat food swaps",
+      "contexts": [
+        "all_stages",
+        "perimenopause",
+        "postmenopause"
+      ],
+      "evidence": "plausible_indirect",
+      "application": "general_nutrition_stage_application",
+      "kind": "candidate_hypothesis",
+      "qualification": {
+        "identity": "Supported identity and preparation of the listed food family or dietary pattern",
+        "additional_conditions": [
+          "A trace ingredient or marketing name alone is insufficient.",
+          "Exact nutrient amounts are optional for this hypothesis and must never be fabricated.",
+          "A pattern tag denotes an ingredient contribution until the pattern itself is observed."
+        ]
+      },
+      "relevance_conditions": [
+        "Use only for a matching requested context; candidate identity is independent of personal symptoms.",
+        "Respect known allergies, requirements and personal tolerance."
+      ],
+      "sources": [
+        "nhs_fats"
+      ],
+      "examples": [
+        "olive oil",
+        "rapeseed oil",
+        "unsalted nuts",
+        "seeds"
+      ],
+      "wording": "A practical fat-quality swap for everyday nutrition.",
+      "limits": [
+        "Record what was replaced; no automatic extra-calorie recommendation or immediate hormonal-symptom claim."
+      ],
+      "evidence_direction": "general_rationale",
+      "hypothesis": {
+        "question": "Can a suitable unsaturated-fat swap replace a saturated-fat source affordably?",
+        "primary_outcome": "swap_adherence_and_feasibility",
+        "observation_window": "nutrition_pattern_weeks",
+        "stage_specificity": "general_or_extrapolated",
+        "expected_direction": "exploratory_not_guaranteed",
+        "causal_claim_allowed": false
+      },
+      "candidate_priority": "practical_candidate",
+      "presentation": "clearly_labelled_candidate",
+      "review_state": "draft",
+      "score_effect": "none",
+      "production_enabled": true,
+      "assignment_granularity": "food_or_food_combination"
+    }
+  ],
+  "candidate_examples": [
+    {
+      "food_family": "Pumpkin seeds",
+      "candidate_tags": [
+        "magnesium_premenstrual_candidate",
+        "zinc_premenstrual_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "conditional_caution": "Record ordinary amount; exact mineral content remains unknown without compatible data."
+    },
+    {
+      "food_family": "Almonds and cashews",
+      "candidate_tags": [
+        "magnesium_premenstrual_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "conditional_caution": "Nut allergy and tolerance apply."
+    },
+    {
+      "food_family": "Walnuts",
+      "candidate_tags": [
+        "walnuts_sleep_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "conditional_caution": "Sleep link is exploratory; do not infer menopause benefit from young-adult data."
+    },
+    {
+      "food_family": "Cooked chickpeas",
+      "candidate_tags": [
+        "iron_contribution",
+        "protein_contribution",
+        "fibre_contribution",
+        "b6_premenstrual_candidate",
+        "pulse_satisfying_candidate"
+      ],
+      "conditional_caution": "Each nutrient tag qualifies independently; gas tolerance matters."
+    },
+    {
+      "food_family": "Cooked lentils",
+      "candidate_tags": [
+        "iron_contribution",
+        "protein_contribution",
+        "fibre_contribution",
+        "zinc_premenstrual_candidate",
+        "folate_food_adequacy_candidate",
+        "pulse_satisfying_candidate"
+      ],
+      "conditional_caution": "Use cooked/drained basis; generic estimate is not exact brand data."
+    },
+    {
+      "food_family": "Cooked beans and peas",
+      "candidate_tags": [
+        "iron_contribution",
+        "protein_contribution",
+        "fibre_contribution",
+        "magnesium_premenstrual_candidate",
+        "folate_food_adequacy_candidate",
+        "pulse_satisfying_candidate"
+      ],
+      "conditional_caution": "Mixed products need substantial identifiable pulse content."
+    },
+    {
+      "food_family": "Banana",
+      "candidate_tags": [
+        "b6_premenstrual_candidate",
+        "plant_food_option"
+      ],
+      "conditional_caution": "No claim that banana treats PMS; B6 quantity must be separately sourced."
+    },
+    {
+      "food_family": "Potato",
+      "candidate_tags": [
+        "b6_premenstrual_candidate",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Preparation and meal composition matter."
+    },
+    {
+      "food_family": "Chicken",
+      "candidate_tags": [
+        "protein_contribution",
+        "b6_premenstrual_candidate"
+      ],
+      "conditional_caution": "Cooking and portion affect nutrient values."
+    },
+    {
+      "food_family": "Salmon",
+      "candidate_tags": [
+        "protein_contribution",
+        "vitamin_d_contribution",
+        "b6_premenstrual_candidate",
+        "b12_food_adequacy_candidate",
+        "period_omega3_research"
+      ],
+      "conditional_caution": "Ordinary oily-fish frequency guidance and preparation apply."
+    },
+    {
+      "food_family": "Sardines with edible bones",
+      "candidate_tags": [
+        "calcium_contribution",
+        "protein_contribution",
+        "vitamin_d_contribution",
+        "b12_food_adequacy_candidate",
+        "period_omega3_research"
+      ],
+      "conditional_caution": "Verify edible bones and portion."
+    },
+    {
+      "food_family": "Mackerel",
+      "candidate_tags": [
+        "protein_contribution",
+        "b12_food_adequacy_candidate",
+        "period_omega3_research"
+      ],
+      "conditional_caution": "Do not extrapolate species-specific guidance blindly."
+    },
+    {
+      "food_family": "Eggs",
+      "candidate_tags": [
+        "protein_contribution",
+        "b12_food_adequacy_candidate"
+      ],
+      "conditional_caution": "Candidate identity does not guarantee a protein threshold for one egg."
+    },
+    {
+      "food_family": "Plain yoghurt",
+      "candidate_tags": [
+        "calcium_contribution",
+        "protein_contribution",
+        "premenstrual_calcium_candidate",
+        "b12_food_adequacy_candidate"
+      ],
+      "conditional_caution": "Check product nutrients; live-culture research needs separate culture evidence."
+    },
+    {
+      "food_family": "Live yoghurt and specified fermented milk",
+      "candidate_tags": [
+        "fermented_milk_gut_candidate",
+        "calcium_contribution",
+        "protein_contribution"
+      ],
+      "conditional_caution": "Formulation-specific evidence does not apply to every yoghurt."
+    },
+    {
+      "food_family": "Milk kefir",
+      "candidate_tags": [
+        "kefir_bowel_candidate",
+        "calcium_contribution",
+        "protein_contribution"
+      ],
+      "conditional_caution": "Record cultures/product and intolerance; no raw-milk recommendation."
+    },
+    {
+      "food_family": "Milk",
+      "candidate_tags": [
+        "calcium_contribution",
+        "protein_contribution",
+        "b12_food_adequacy_candidate",
+        "premenstrual_calcium_candidate"
+      ],
+      "conditional_caution": "Check allergy and lactose tolerance."
+    },
+    {
+      "food_family": "Calcium-set tofu",
+      "candidate_tags": [
+        "calcium_contribution",
+        "protein_contribution",
+        "soy_hot_flush_research",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Calcium-set identity required for that preparation; quantify each nutrient separately."
+    },
+    {
+      "food_family": "Edamame",
+      "candidate_tags": [
+        "protein_contribution",
+        "fibre_contribution",
+        "soy_hot_flush_research",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Do not transfer to trace soy ingredients."
+    },
+    {
+      "food_family": "Fortified soya drink",
+      "candidate_tags": [
+        "calcium_contribution",
+        "vitamin_d_contribution",
+        "protein_contribution",
+        "b12_food_adequacy_candidate"
+      ],
+      "conditional_caution": "Each fortificant must be explicit and independently qualify."
+    },
+    {
+      "food_family": "Oats",
+      "candidate_tags": [
+        "fibre_contribution",
+        "soluble_fibre_option",
+        "wholegrain_premenstrual_candidate",
+        "magnesium_premenstrual_candidate",
+        "zinc_premenstrual_candidate"
+      ],
+      "conditional_caution": "Preparation, gluten requirements and serving matter."
+    },
+    {
+      "food_family": "Wholemeal bread",
+      "candidate_tags": [
+        "fibre_contribution",
+        "wholegrain_premenstrual_candidate"
+      ],
+      "conditional_caution": "Record refined-food substitution; not every brown bread is wholegrain."
+    },
+    {
+      "food_family": "Brown rice",
+      "candidate_tags": [
+        "wholegrain_premenstrual_candidate",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Use cooked basis; record what it replaced."
+    },
+    {
+      "food_family": "Wholegrain pasta",
+      "candidate_tags": [
+        "wholegrain_premenstrual_candidate",
+        "fibre_contribution"
+      ],
+      "conditional_caution": "Serving/preparation and gluten requirements apply."
+    },
+    {
+      "food_family": "Ground flaxseed or linseed",
+      "candidate_tags": [
+        "soluble_fibre_option",
+        "fibre_contribution",
+        "flax_hot_flush_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "conditional_caution": "Hot-flush trials do not establish benefit; GI tolerance and fluid needs matter."
+    },
+    {
+      "food_family": "Actual ginger in food or infusion",
+      "candidate_tags": [
+        "ginger_period_comfort_candidate"
+      ],
+      "conditional_caution": "Capture preparation and approximate amount; flavour-only products excluded."
+    },
+    {
+      "food_family": "Dark chocolate",
+      "candidate_tags": [
+        "dark_chocolate_comfort_candidate"
+      ],
+      "conditional_caution": "Keep ordinary score and portions; caffeine and expectations may affect responses."
+    },
+    {
+      "food_family": "Green kiwifruit",
+      "candidate_tags": [
+        "kiwifruit_bowel_candidate",
+        "kiwifruit_sleep_candidate",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Separate bowel evidence from weaker sleep evidence; kiwi allergy matters."
+    },
+    {
+      "food_family": "Prunes",
+      "candidate_tags": [
+        "prunes_bowel_candidate",
+        "prunes_bone_candidate",
+        "fibre_contribution"
+      ],
+      "conditional_caution": "Potential gas/diarrhoea; bone effects cannot be inferred from check-ins."
+    },
+    {
+      "food_family": "Tart cherry juice",
+      "candidate_tags": [
+        "tart_cherry_sleep_candidate"
+      ],
+      "conditional_caution": "Optional lower priority; account for juice, sugar, cost and actual product."
+    },
+    {
+      "food_family": "Blueberries",
+      "candidate_tags": [
+        "berries_cognitive_ageing_candidate",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Ordinary fruit differs from trial powder; brain-fog effects unestablished."
+    },
+    {
+      "food_family": "Strawberries and mixed berries",
+      "candidate_tags": [
+        "berries_cognitive_ageing_candidate",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Extrapolation from blueberry/whole-pattern evidence is explicit."
+    },
+    {
+      "food_family": "Leafy greens",
+      "candidate_tags": [
+        "folate_food_adequacy_candidate",
+        "fibre_contribution",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Not oestrogen-detox foods; spinach is not a preferred calcium source."
+    },
+    {
+      "food_family": "Broccoli",
+      "candidate_tags": [
+        "folate_food_adequacy_candidate",
+        "vitamin_c_iron_pairing",
+        "fibre_contribution",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Preparation and GI tolerance matter; no hormone-balancing claim."
+    },
+    {
+      "food_family": "Peppers and citrus",
+      "candidate_tags": [
+        "vitamin_c_iron_pairing",
+        "plant_food_option"
+      ],
+      "conditional_caution": "Pairing relevance is meal-level."
+    },
+    {
+      "food_family": "Olive or rapeseed oil",
+      "candidate_tags": [
+        "unsaturated_fat_swap_candidate"
+      ],
+      "conditional_caution": "Replacement, not automatic extra energy."
+    },
+    {
+      "food_family": "Water and suitable unsweetened non-fizzy drinks",
+      "candidate_tags": [
+        "hydration_bowel_candidate"
+      ],
+      "conditional_caution": "Individual fluid needs/restrictions apply."
+    },
+    {
+      "food_family": "Lower-caffeine alternatives",
+      "candidate_tags": [
+        "lower_caffeine_option"
+      ],
+      "conditional_caution": "Decaf is not necessarily caffeine-free; record the replaced drink and timing."
+    }
+  ],
+  "candidate_example_status": "Family-level candidate associations. Identity can support exploration; nutrient and exact-product claims require independent qualification. No live barcode assignment has occurred.",
+  "sources": [
+    {
+      "id": "menopause_food_review_2026",
+      "title": "O'Neill et al. dietary interventions for menopausal symptoms",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://doi.org/10.1016/j.ajcnut.2026.101539",
+      "scope": "Very low certainty for pooled symptom outcomes, predominantly postmenopausal participants. Avoid precise estimates given pre-proof reporting inconsistencies.",
+      "publication_date": "2026-09-25",
+      "publication_status": "journal_pre_proof",
+      "access": "Publisher abstract and article text retrieved through search; PDF not inspected.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_iron",
+      "title": "NHS iron",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/conditions/vitamins-and-minerals/iron/",
+      "scope": "Menstrual iron needs and dietary sources; not evidence for period-only food timing.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nih_iron",
+      "title": "NIH iron health professional fact sheet",
+      "type": "guidance",
+      "url": "https://ods.od.nih.gov/factsheets/Iron-HealthProfessional/",
+      "scope": "Non-haem iron absorption and vitamin C; does not establish symptom relief.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "pms_nutrition_2024",
+      "title": "Robinson et al. nutritional interventions for psychological PMS symptoms",
+      "type": "systematic_review",
+      "url": "https://academic.oup.com/nutritionreviews/article/83/2/280/7659847",
+      "scope": "Positive calcium signal; most interventions are supplements and study bias limits conclusions.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "calcium_rct_1998",
+      "title": "Thys-Jacobs et al. calcium and PMS",
+      "type": "supplement_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9731851/",
+      "scope": "Daily calcium supplement over several cycles; not a trial of single foods or luteal-only intake.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "luteal_intake_2024",
+      "title": "Tucker et al. energy intake across the menstrual cycle",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11819481/",
+      "scope": "Higher average luteal intake with substantial heterogeneity; no individual calorie prescription.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "cycle_nutrition_2023",
+      "title": "Brown et al. nutritional practices for menstrual symptoms",
+      "type": "systematic_review",
+      "url": "https://www.cambridge.org/core/journals/nutrition-research-reviews/article/nutritional-practices-to-manage-menstrual-cycle-related-symptoms-a-systematic-review/F28E2DC079C7DC2F1AC07A0EFCDE0DE1",
+      "scope": "Inconsistent intervention evidence; applicability to hormonal contraception is limited.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "omega3_cramps_2023",
+      "title": "Snipe et al. long-chain omega-3 supplementation and dysmenorrhoea",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37545015/",
+      "scope": "Supplement interventions, not evidence that ordinary oily fish servings relieve cramps.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_bones",
+      "title": "NHS food for healthy bones",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/live-well/bone-health/food-for-strong-bones/",
+      "scope": "Calcium and vitamin D nutrition; preparation and calcium bioavailability matter.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_menopause",
+      "title": "NHS menopause and perimenopause self-care",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/conditions/menopause-and-perimenopause/things-you-can-do/",
+      "scope": "Balanced nutrition, calcium and activity; not a product-specific symptom treatment.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "protein_training_2022",
+      "title": "Kuo et al. whey supplementation in postmenopausal women",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9572824/",
+      "scope": "Whey supplement and resistance training evidence cannot establish effects of every protein food.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_fibre",
+      "title": "NHS dietary fibre guidance",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/live-well/eat-well/digestive-health/how-to-get-more-fibre-into-your-diet/",
+      "scope": "General adult dietary guidance, not a phase-specific requirement.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "emas_pattern_2020",
+      "title": "EMAS Mediterranean diet and menopausal health position statement",
+      "type": "position_statement",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/32682573/",
+      "scope": "Dietary-pattern guidance does not establish single-product symptom effects.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_bloating",
+      "title": "NHS bloating",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/symptoms/bloating/",
+      "scope": "Soluble fibre when constipated; pulses can increase gas; individual tolerance matters.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_anxiety",
+      "title": "NHS generalised anxiety disorder",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/mental-health/conditions/generalised-anxiety-disorder-gad/",
+      "scope": "Regular meals and limiting excessive caffeine; no food-based treatment claim.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "soy_diet_rct_2023",
+      "title": "Barnard et al. combined dietary intervention and vasomotor symptoms",
+      "type": "food_pattern_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36253903/",
+      "scope": "Combined dietary changes and soybeans; cannot isolate the soy component.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "menopause_statement_2023",
+      "title": "Menopause Society nonhormone therapy position statement",
+      "type": "position_statement",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37252752/",
+      "scope": "Soy foods and extracts are not recommended as established vasomotor symptom treatments.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "cofid",
+      "title": "UK composition of foods integrated dataset",
+      "type": "composition_dataset",
+      "url": "https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid",
+      "scope": "Generic composition requires preparation and food matching; not exact branded-product verification.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "uk_claims",
+      "title": "UK nutrition claim conditions",
+      "type": "claim_conditions",
+      "url": "https://www.legislation.gov.uk/eur/2006/1924/annexes/2020-12-31",
+      "scope": "Separate public claim-eligibility assessment required; editorial thresholds are not claim definitions.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nih_magnesium",
+      "title": "NIH magnesium fact sheet",
+      "type": "guidance",
+      "url": "https://ods.od.nih.gov/factsheets/Magnesium-HealthProfessional/",
+      "scope": "Food sources and nutritional roles; not proof of PMS relief.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "magnesium_pms_1998",
+      "title": "Walker et al. magnesium and premenstrual symptoms",
+      "type": "supplement_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/9861593/",
+      "scope": "Small trial found a fluid-retention symptom signal after two months.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "magnesium_pms_2002",
+      "title": "Walker et al. magnesium dose response",
+      "type": "supplement_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/12018972/",
+      "scope": "Comparator outperformed magnesium for some symptoms; retain contradictory evidence.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "nih_b6",
+      "title": "NIH vitamin B6 fact sheet",
+      "type": "guidance",
+      "url": "https://ods.od.nih.gov/factsheets/VitaminB6-HealthProfessional/",
+      "scope": "Candidate food sources; historical supplement doses must not become food or supplement advice.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nih_zinc",
+      "title": "NIH zinc fact sheet",
+      "type": "guidance",
+      "url": "https://ods.od.nih.gov/factsheets/Zinc-HealthProfessional/",
+      "scope": "Dietary sources and bioavailability; not a product-specific PMS claim.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "zinc_pms_2025",
+      "title": "Kim and Baek zinc supplementation and PMS",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/40737185/",
+      "scope": "Positive supplement evidence; its certainty cannot be transferred to ordinary foods.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "ginger_nccih",
+      "title": "NCCIH ginger",
+      "type": "guidance",
+      "url": "https://www.nccih.nih.gov/health/ginger/",
+      "scope": "Possible menstrual-cramp effect from supplements; culinary exposures differ.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "ginger_cramps_2016",
+      "title": "Chen et al. oral ginger for dysmenorrhoea",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4871956/",
+      "scope": "Powder/capsule trials; tea, fresh ginger and flavouring are not dose-equivalent.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "wholegrain_pms_2019",
+      "title": "Esmaeilpour et al. wholegrains and PMS",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/30761961/",
+      "scope": "Positive open-label dietary-substitution trial in nurses; broader evidence remains inconclusive.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "pulses_satiety_2014",
+      "title": "Li et al. pulses and satiety",
+      "type": "systematic_review_meta_analysis",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/24820437/",
+      "scope": "Acute food trials improved satiety but did not clearly reduce subsequent intake; not cycle-specific.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "chocolate_cramps_2023",
+      "title": "Nuha et al. dark chocolate and menstrual pain",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37623203/",
+      "scope": "Very small trial without placebo/no-treatment control; insufficient for analgesic equivalence.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Forty-five participants with primary dysmenorrhoea",
+        "preparation": "70% dark chocolate",
+        "dose": "35 g study serving",
+        "duration": "Pain measured two hours later",
+        "comparator": "Coconut water and ibuprofen groups; no placebo/no-treatment group",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "nhs_fatigue_meals",
+      "title": "NHS practical tips for tiredness",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/live-well/sleep-and-tiredness/self-help-tips-to-fight-fatigue/",
+      "scope": "Regular meals as practical guidance, not treatment of unexplained fatigue.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nih_b12",
+      "title": "NIH vitamin B12 fact sheet",
+      "type": "guidance",
+      "url": "https://ods.od.nih.gov/factsheets/VitaminB12-HealthProfessional/",
+      "scope": "Dietary adequacy matters; no established energy boost when status is sufficient.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nih_folate",
+      "title": "NIH folate fact sheet",
+      "type": "guidance",
+      "url": "https://ods.od.nih.gov/factsheets/Folate-HealthProfessional/",
+      "scope": "Dietary role and deficiency symptoms; fatigue alone does not diagnose deficiency.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "kiwi_bowel_2023",
+      "title": "Green kiwifruit and constipation trial",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36537785/",
+      "scope": "Direct evidence in functional constipation/IBS-C; no cycle-specific comparison.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Adults with functional constipation or IBS-C, plus healthy controls",
+        "preparation": "Whole green kiwifruit",
+        "dose": "Two fruits daily",
+        "duration": "Four weeks",
+        "comparator": "Psyllium in a randomised crossover design",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "prunes_bowel_2019",
+      "title": "Prunes and bowel function trial",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/29398337/",
+      "scope": "Stool frequency/weight improved, transit time did not; flatulence increased.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Adults with low fibre intake and infrequent stools",
+        "preparation": "Prunes",
+        "dose": "80 g or 120 g daily",
+        "duration": "Four weeks",
+        "comparator": "Control without prune supplementation",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "nice_ibs",
+      "title": "NICE IBS dietary guidance",
+      "type": "guidance",
+      "url": "https://www.nice.org.uk/guidance/cg61/chapter/recommendations",
+      "scope": "Conditional oats/linseed and fibre advice; not a licence to infer low-FODMAP suitability.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "fermented_milk_2013",
+      "title": "Specified fermented milk and digestive discomfort",
+      "type": "food_rct",
+      "url": "https://onlinelibrary.wiley.com/doi/10.1111/nmo.12078/full",
+      "scope": "Formulation-specific trials; second trial did not meet its primary global endpoint.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Women with minor digestive symptoms",
+        "preparation": "Specified fermented milk with B. lactis CNCM I-2494 and other cultures",
+        "dose": "125 g twice daily",
+        "duration": "Four weeks",
+        "comparator": "Control dairy product; formulation must be inspected before exact-product equivalence",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "kefir_pilot_2014",
+      "title": "Kefir and chronic constipation pilot",
+      "type": "uncontrolled_food_pilot",
+      "url": "https://turkjgastroenterol.org/content/files/sayilar/281/buyuk/650-6.pdf",
+      "scope": "Small uncontrolled study; no causal efficacy inference.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Twenty adults with chronic constipation",
+        "preparation": "Kefir studied in the pilot; do not assume every culture formulation matches",
+        "dose": "500 ml daily",
+        "duration": "Four weeks",
+        "comparator": "No untreated control group",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "diet_stress_2023",
+      "title": "Prebiotic and fermented-food dietary pattern and stress",
+      "type": "food_pattern_rct",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9908549/",
+      "scope": "Between-group perceived-stress difference was not significant; foods cannot be isolated.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "fermented_pattern_2021",
+      "title": "Fermented foods and host microbiome",
+      "type": "food_pattern_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/34256014/",
+      "scope": "Microbiome/inflammatory-marker outcomes are not proof of symptom relief.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "niddk_constipation",
+      "title": "NIDDK diet and constipation",
+      "type": "guidance",
+      "url": "https://www.niddk.nih.gov/health-information/digestive-diseases/constipation/eating-diet-nutrition",
+      "scope": "Fluid and fibre guidance; no universal benefit from extra water.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "kiwi_sleep_2011",
+      "title": "Kiwifruit and sleep pilot",
+      "type": "uncontrolled_food_pilot",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/21669584/",
+      "scope": "Small uncontrolled study; sleep improvements may reflect expectation or other changes.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Twenty-four adults with self-reported sleep difficulties",
+        "preparation": "Whole kiwifruit",
+        "dose": "Two fruits one hour before bed",
+        "duration": "Four weeks",
+        "comparator": "No control group",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "cherry_sleep_2018",
+      "title": "Tart cherry juice and insomnia pilot",
+      "type": "beverage_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/28901958/",
+      "scope": "Very small crossover trial; studied juice quantity is not an automatic food recommendation.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Adults older than 50 with insomnia; eight completed",
+        "preparation": "Study tart-cherry juice beverage",
+        "dose": "240 ml twice daily",
+        "duration": "Two weeks per intervention",
+        "comparator": "Placebo in crossover design",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "cherry_sleep_2010",
+      "title": "Tart cherry beverage and sleep pilot",
+      "type": "beverage_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/20438325/",
+      "scope": "Small trial with mixed outcomes.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "nhs_juice",
+      "title": "NHS fruit and vegetable guidance",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/healthier-families/food-facts/5-a-day/",
+      "scope": "Combined juice/smoothie intake guidance limits generalisation of high-volume juice trials.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "flax_flushes_2012",
+      "title": "Pruthi et al. flaxseed and hot flushes",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/21900849/",
+      "scope": "No significant hot-flush benefit over placebo.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "flax_soy_2006",
+      "title": "Lewis et al. flax/soy foods and menopausal symptoms",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/16837885/",
+      "scope": "No significant hot-flush or menopause-specific quality-of-life benefit.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "prunes_bone_2022",
+      "title": "Prune Study and postmenopausal bone outcomes",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35798020/",
+      "scope": "Bone-density signal in one study arm; not fracture prevention or a symptom outcome.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "population": "Postmenopausal women",
+        "preparation": "Prunes",
+        "dose": "50 g or 100 g daily",
+        "duration": "Twelve months",
+        "comparator": "No-prune control",
+        "metadata_status": "extracted_for_draft",
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "walnuts_sleep_2025",
+      "title": "Walnuts and sleep in young adults",
+      "type": "food_rct",
+      "url": "https://pubs.rsc.org/en/content/articlehtml/2025/fo/d5fo00971e",
+      "scope": "Open-label trial in young adults with industry funding; menopausal applicability indirect.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "blueberry_cognition_2023",
+      "title": "Wild blueberry food powder and older-adult outcomes",
+      "type": "food_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36972800/",
+      "scope": "Some cognitive outcomes in older adults; powder/preparation and population matter.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "mind_trial_2023",
+      "title": "MIND diet cognitive trial",
+      "type": "food_pattern_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37466280/",
+      "scope": "No significant between-group cognitive benefit at three years.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "predimed_mood_2013",
+      "title": "PREDIMED depression analysis",
+      "type": "food_pattern_rct_analysis",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/24229349/",
+      "scope": "Overall depression comparison not significant; does not isolate nuts or olive oil.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "predidep_2023",
+      "title": "PREDIDEP depression recurrence trial",
+      "type": "food_pattern_rct",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/37990906/",
+      "scope": "No reduction in recurrence; some secondary symptoms improved.",
+      "checked_on": "2026-10-08",
+      "study_exposure": {
+        "metadata_status": "not_fully_extracted",
+        "population": null,
+        "preparation": null,
+        "dose": null,
+        "duration": null,
+        "comparator": null,
+        "automatic_serving_instruction": false
+      }
+    },
+    {
+      "id": "nhs_fats",
+      "title": "NHS dietary fat guidance",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/live-well/eat-well/food-types/different-fats-nutrition/",
+      "scope": "General rationale for replacing saturated with unsaturated fat; not hormone-specific.",
+      "checked_on": "2026-10-08"
+    },
+    {
+      "id": "nhs_fish",
+      "title": "NHS fish guidance",
+      "type": "guidance",
+      "url": "https://www.nhs.uk/live-well/eat-well/food-types/fish-and-shellfish-nutrition/",
+      "scope": "Fish types and appropriate frequency matter; tuna is not classified as oily fish.",
+      "checked_on": "2026-10-08"
+    }
+  ],
+  "candidate_exploration_requires_separate_opt_in": false,
+  "research_participation_requires_separate_opt_in": true,
+  "candidate_policy": {
+    "eligible_evidence": [
+      "established_nutrition",
+      "limited_food_evidence",
+      "plausible_indirect",
+      "research_only"
+    ],
+    "presentation": "Established nutrition, early food evidence, possible support, or studied with mixed/no clear benefit.",
+    "decision": "Include sensible ordinary-food hypotheses even when symptom evidence is indirect. The research_only legacy evidence value means exploratory, not hidden from food browsing.",
+    "distinction": "Viewing a candidate does not enrol a user in research or authorise sharing health records.",
+    "eligibility": "A supported food-family identity can qualify a candidate without complete micronutrient data. It cannot qualify an exact nutrient claim or invent a nutrient amount.",
+    "no_clear_benefit": "Retain mixed and null findings visibly. Lower-priority observation candidates are not presented as likely remedies.",
+    "doses": "Use ordinary, adjustable portions; trial doses are evidence metadata and never automatic serving instructions.",
+    "promotion": "No automatic evidence upgrade from likes, self-reported improvement or exposure count.",
+    "filter_precedence": "Default candidate browsing includes every listed evidence category, with its label and priority. An explicit user evidence filter can narrow it; established-nutrition-only views must not masquerade as all candidates."
+  },
+  "food_family_candidates": [
+    {
+      "id": "pumpkin_seeds",
+      "label": "Pumpkin seeds",
+      "candidate_tag_ids": [
+        "magnesium_premenstrual_candidate",
+        "zinc_premenstrual_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Record ordinary amount; exact mineral content remains unknown without compatible data."
+    },
+    {
+      "id": "almonds_cashews",
+      "label": "Almonds and cashews",
+      "candidate_tag_ids": [
+        "magnesium_premenstrual_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Nut allergy and tolerance apply."
+    },
+    {
+      "id": "walnuts",
+      "label": "Walnuts",
+      "candidate_tag_ids": [
+        "walnuts_sleep_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Sleep link is exploratory; do not infer menopause benefit from young-adult data."
+    },
+    {
+      "id": "cooked_chickpeas",
+      "label": "Cooked chickpeas",
+      "candidate_tag_ids": [
+        "iron_contribution",
+        "protein_contribution",
+        "fibre_contribution",
+        "b6_premenstrual_candidate",
+        "pulse_satisfying_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Each nutrient tag qualifies independently; gas tolerance matters."
+    },
+    {
+      "id": "cooked_lentils",
+      "label": "Cooked lentils",
+      "candidate_tag_ids": [
+        "iron_contribution",
+        "protein_contribution",
+        "fibre_contribution",
+        "zinc_premenstrual_candidate",
+        "folate_food_adequacy_candidate",
+        "pulse_satisfying_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Use cooked/drained basis; generic estimate is not exact brand data."
+    },
+    {
+      "id": "cooked_beans_peas",
+      "label": "Cooked beans and peas",
+      "candidate_tag_ids": [
+        "iron_contribution",
+        "protein_contribution",
+        "fibre_contribution",
+        "magnesium_premenstrual_candidate",
+        "folate_food_adequacy_candidate",
+        "pulse_satisfying_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Mixed products need substantial identifiable pulse content."
+    },
+    {
+      "id": "banana",
+      "label": "Banana",
+      "candidate_tag_ids": [
+        "b6_premenstrual_candidate",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "No claim that banana treats PMS; B6 quantity must be separately sourced."
+    },
+    {
+      "id": "potato",
+      "label": "Potato",
+      "candidate_tag_ids": [
+        "b6_premenstrual_candidate",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Preparation and meal composition matter."
+    },
+    {
+      "id": "chicken",
+      "label": "Chicken",
+      "candidate_tag_ids": [
+        "protein_contribution",
+        "b6_premenstrual_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Cooking and portion affect nutrient values."
+    },
+    {
+      "id": "salmon",
+      "label": "Salmon",
+      "candidate_tag_ids": [
+        "protein_contribution",
+        "vitamin_d_contribution",
+        "b6_premenstrual_candidate",
+        "b12_food_adequacy_candidate",
+        "period_omega3_research"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Ordinary oily-fish frequency guidance and preparation apply."
+    },
+    {
+      "id": "sardines_bones",
+      "label": "Sardines with edible bones",
+      "candidate_tag_ids": [
+        "calcium_contribution",
+        "protein_contribution",
+        "vitamin_d_contribution",
+        "b12_food_adequacy_candidate",
+        "period_omega3_research"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Verify edible bones and portion."
+    },
+    {
+      "id": "mackerel",
+      "label": "Mackerel",
+      "candidate_tag_ids": [
+        "protein_contribution",
+        "b12_food_adequacy_candidate",
+        "period_omega3_research"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Do not extrapolate species-specific guidance blindly."
+    },
+    {
+      "id": "eggs",
+      "label": "Eggs",
+      "candidate_tag_ids": [
+        "protein_contribution",
+        "b12_food_adequacy_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Candidate identity does not guarantee a protein threshold for one egg."
+    },
+    {
+      "id": "plain_yoghurt",
+      "label": "Plain yoghurt",
+      "candidate_tag_ids": [
+        "calcium_contribution",
+        "protein_contribution",
+        "premenstrual_calcium_candidate",
+        "b12_food_adequacy_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Check product nutrients; live-culture research needs separate culture evidence."
+    },
+    {
+      "id": "live_yoghurt",
+      "label": "Live yoghurt and specified fermented milk",
+      "candidate_tag_ids": [
+        "fermented_milk_gut_candidate",
+        "calcium_contribution",
+        "protein_contribution"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Formulation-specific evidence does not apply to every yoghurt."
+    },
+    {
+      "id": "milk_kefir",
+      "label": "Milk kefir",
+      "candidate_tag_ids": [
+        "kefir_bowel_candidate",
+        "calcium_contribution",
+        "protein_contribution"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Record cultures/product and intolerance; no raw-milk recommendation."
+    },
+    {
+      "id": "milk",
+      "label": "Milk",
+      "candidate_tag_ids": [
+        "calcium_contribution",
+        "protein_contribution",
+        "b12_food_adequacy_candidate",
+        "premenstrual_calcium_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Check allergy and lactose tolerance."
+    },
+    {
+      "id": "calcium_set_tofu",
+      "label": "Calcium-set tofu",
+      "candidate_tag_ids": [
+        "calcium_contribution",
+        "protein_contribution",
+        "soy_hot_flush_research",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Calcium-set identity required for that preparation; quantify each nutrient separately."
+    },
+    {
+      "id": "edamame",
+      "label": "Edamame",
+      "candidate_tag_ids": [
+        "protein_contribution",
+        "fibre_contribution",
+        "soy_hot_flush_research",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Do not transfer to trace soy ingredients."
+    },
+    {
+      "id": "fortified_soya_drink",
+      "label": "Fortified soya drink",
+      "candidate_tag_ids": [
+        "calcium_contribution",
+        "vitamin_d_contribution",
+        "protein_contribution",
+        "b12_food_adequacy_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Each fortificant must be explicit and independently qualify."
+    },
+    {
+      "id": "oats",
+      "label": "Oats",
+      "candidate_tag_ids": [
+        "fibre_contribution",
+        "soluble_fibre_option",
+        "wholegrain_premenstrual_candidate",
+        "magnesium_premenstrual_candidate",
+        "zinc_premenstrual_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Preparation, gluten requirements and serving matter."
+    },
+    {
+      "id": "wholemeal_bread",
+      "label": "Wholemeal bread",
+      "candidate_tag_ids": [
+        "fibre_contribution",
+        "wholegrain_premenstrual_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Record refined-food substitution; not every brown bread is wholegrain."
+    },
+    {
+      "id": "brown_rice",
+      "label": "Brown rice",
+      "candidate_tag_ids": [
+        "wholegrain_premenstrual_candidate",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Use cooked basis; record what it replaced."
+    },
+    {
+      "id": "wholegrain_pasta",
+      "label": "Wholegrain pasta",
+      "candidate_tag_ids": [
+        "wholegrain_premenstrual_candidate",
+        "fibre_contribution"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Serving/preparation and gluten requirements apply."
+    },
+    {
+      "id": "ground_linseed",
+      "label": "Ground flaxseed or linseed",
+      "candidate_tag_ids": [
+        "soluble_fibre_option",
+        "fibre_contribution",
+        "flax_hot_flush_candidate",
+        "unsaturated_fat_swap_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Hot-flush trials do not establish benefit; GI tolerance and fluid needs matter."
+    },
+    {
+      "id": "ginger_food",
+      "label": "Actual ginger in food or infusion",
+      "candidate_tag_ids": [
+        "ginger_period_comfort_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Capture preparation and approximate amount; flavour-only products excluded."
+    },
+    {
+      "id": "dark_chocolate",
+      "label": "Dark chocolate",
+      "candidate_tag_ids": [
+        "dark_chocolate_comfort_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Keep ordinary score and portions; caffeine and expectations may affect responses."
+    },
+    {
+      "id": "green_kiwi",
+      "label": "Green kiwifruit",
+      "candidate_tag_ids": [
+        "kiwifruit_bowel_candidate",
+        "kiwifruit_sleep_candidate",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Separate bowel evidence from weaker sleep evidence; kiwi allergy matters."
+    },
+    {
+      "id": "prunes",
+      "label": "Prunes",
+      "candidate_tag_ids": [
+        "prunes_bowel_candidate",
+        "prunes_bone_candidate",
+        "fibre_contribution"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Potential gas/diarrhoea; bone effects cannot be inferred from check-ins."
+    },
+    {
+      "id": "tart_cherry_juice",
+      "label": "Tart cherry juice",
+      "candidate_tag_ids": [
+        "tart_cherry_sleep_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Optional lower priority; account for juice, sugar, cost and actual product."
+    },
+    {
+      "id": "blueberries",
+      "label": "Blueberries",
+      "candidate_tag_ids": [
+        "berries_cognitive_ageing_candidate",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Ordinary fruit differs from trial powder; brain-fog effects unestablished."
+    },
+    {
+      "id": "mixed_berries",
+      "label": "Strawberries and mixed berries",
+      "candidate_tag_ids": [
+        "berries_cognitive_ageing_candidate",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Extrapolation from blueberry/whole-pattern evidence is explicit."
+    },
+    {
+      "id": "leafy_greens",
+      "label": "Leafy greens",
+      "candidate_tag_ids": [
+        "folate_food_adequacy_candidate",
+        "fibre_contribution",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Not oestrogen-detox foods; spinach is not a preferred calcium source."
+    },
+    {
+      "id": "broccoli",
+      "label": "Broccoli",
+      "candidate_tag_ids": [
+        "folate_food_adequacy_candidate",
+        "vitamin_c_iron_pairing",
+        "fibre_contribution",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Preparation and GI tolerance matter; no hormone-balancing claim."
+    },
+    {
+      "id": "peppers_citrus",
+      "label": "Peppers and citrus",
+      "candidate_tag_ids": [
+        "vitamin_c_iron_pairing",
+        "plant_food_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Pairing relevance is meal-level."
+    },
+    {
+      "id": "unsaturated_oils",
+      "label": "Olive or rapeseed oil",
+      "candidate_tag_ids": [
+        "unsaturated_fat_swap_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Replacement, not automatic extra energy."
+    },
+    {
+      "id": "water",
+      "label": "Water and suitable unsweetened non-fizzy drinks",
+      "candidate_tag_ids": [
+        "hydration_bowel_candidate"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Individual fluid needs/restrictions apply."
+    },
+    {
+      "id": "lower_caffeine_drink",
+      "label": "Lower-caffeine alternatives",
+      "candidate_tag_ids": [
+        "lower_caffeine_option"
+      ],
+      "assignment_status": "family_candidate_not_verified_product",
+      "caution": "Decaf is not necessarily caffeine-free; record the replaced drink and timing."
+    }
+  ],
+  "observation_design": {
+    "status": "collection_contract_only_not_running",
+    "hypothesis_identity": [
+      "rulebook_version",
+      "tag_id",
+      "food_family_id",
+      "hypothesis_question",
+      "primary_outcome",
+      "window_version"
+    ],
+    "exposure": [
+      "hypothesis_instance_ids",
+      "event_id",
+      "actual_eaten_at",
+      "food_id",
+      "food_source_revision",
+      "amount",
+      "unit",
+      "portion_uncertainty",
+      "preparation",
+      "product_or_culture_details",
+      "food_replaced_if_any",
+      "recommendation_shown_at",
+      "suggestion_version"
+    ],
+    "outcome": [
+      "hypothesis_instance_ids",
+      "event_id",
+      "measure_id",
+      "scale_version",
+      "observed_at",
+      "recall_window",
+      "value_or_null",
+      "baseline_event_id",
+      "linked_exposure_ids",
+      "user_perceived_effect",
+      "missing_reason"
+    ],
+    "response_states": [
+      "not_tried",
+      "tried_outcome_pending",
+      "improved",
+      "no_noticeable_change",
+      "worse",
+      "mixed",
+      "stopped_intolerance",
+      "not_reported"
+    ],
+    "context": [
+      "reported_bleeding",
+      "phase_method_and_confidence",
+      "self_selected_life_stage",
+      "optional_sleep_stress_illness",
+      "optional_treatment_changes",
+      "other_major_food_changes"
+    ],
+    "windows": {
+      "same_day_with_baseline": "Time-stamped symptom before and after; record pain medicine and natural symptom timing.",
+      "same_meal_followup": "Meal satisfaction/hunger after eating; not a calorie-suppression objective.",
+      "same_day": "Practical feasibility and regular eating that day.",
+      "sleep_next_morning": "Next-morning recall linked to prior-evening intake; inspect repeated nights and other sleep influences.",
+      "bowel_daily_weekly": "Daily stool/comfort measures with weekly summaries over an initially proposed 2–4 weeks.",
+      "matched_cycle_windows": "Comparable prospectively observed windows across cycles; no immediate-effect assumption.",
+      "symptom_daily_weekly": "Daily symptom frequency/bother with weekly summaries; account for treatment and stage changes.",
+      "pattern_weekly": "Weekly pattern, feasibility and outcome observations, with component exposure retained.",
+      "nutrition_pattern_weeks": "Dietary coverage/adherence over weeks; not a clinical nutrient-status test.",
+      "long_term_external_outcome": "App measures adherence/tolerance. Bone or clinical outcomes need a separate suitably designed study."
+    },
+    "interpretation": [
+      "Windows are proposed analysis design, not validated onset times.",
+      "A skipped outcome is missing, not no effect.",
+      "A scan/save is not an exposure.",
+      "Retain no-change, worsening and withdrawal observations.",
+      "Self-reported benefit and raw symptom change are distinct.",
+      "No automatic public confidence upgrade; account for repeated measures, selection, missingness and multiple comparisons.",
+      "No public catalogue row contains personal health observations.",
+      "Shared meals and multiple simultaneous candidates create joint exposures; never credit every ingredient independently for one outcome."
+    ],
+    "private_attempt_record": {
+      "fields": [
+        "hypothesis_instance_id",
+        "tag_id",
+        "rulebook_version",
+        "mode",
+        "private_user_or_study_pseudonym",
+        "consent_scope_reference",
+        "offered_at",
+        "started_at_or_null",
+        "stopped_at_or_null",
+        "response_state",
+        "stop_reason_or_null",
+        "linked_exposure_ids",
+        "linked_outcome_ids"
+      ],
+      "modes": [
+        "personal_tracking",
+        "consented_population_research"
+      ],
+      "rules": [
+        "May exist without an exposure to represent not_tried or declined.",
+        "Population research requires its own current consent reference and study pseudonym; personal tracking does not imply study enrolment.",
+        "Research refusal is not itself a health research record to export.",
+        "Keep identity linkage outside public foods and outside analysis exports."
+      ]
+    },
+    "response_state_owner": "private_attempt_record; preserve state transitions and their times rather than overwriting history",
+    "required_bowel_companion_measures": {
+      "applies_to": [
+        "soluble_fibre_option",
+        "kiwifruit_bowel_candidate",
+        "prunes_bowel_candidate",
+        "kefir_bowel_candidate",
+        "fermented_milk_gut_candidate",
+        "hydration_bowel_candidate"
+      ],
+      "measures": [
+        "stool_frequency",
+        "stool_form",
+        "straining",
+        "bloating_severity",
+        "gas_severity",
+        "abdominal_pain",
+        "loose_stools_or_diarrhoea",
+        "stop_reason"
+      ],
+      "rules": [
+        "Offer paired tolerance checks; unanswered remains missing and must not prevent the user logging food.",
+        "Do not classify a bowel exposure as beneficial from frequency alone when companion tolerance outcomes are missing.",
+        "More stools are not automatically better. Stool-form categories have a desired range, not a monotonically improving direction."
+      ]
+    },
+    "measure_definitions": {
+      "symptom_severity": {
+        "scale": "none/mild/moderate/severe with versioned anchors",
+        "direction": "lower_is_less_severe",
+        "missing": null,
+        "validation_status": "product_checkin_not_validated_diagnostic_instrument"
+      },
+      "stool_frequency": {
+        "scale": "count per stated recall window",
+        "direction": "context_dependent",
+        "missing": null
+      },
+      "stool_form": {
+        "scale": "versioned user-selected form categories",
+        "direction": "range_not_more_is_better",
+        "missing": null
+      },
+      "meal_satisfaction": {
+        "scale": "versioned satisfaction response",
+        "direction": "personal_preference",
+        "missing": null
+      },
+      "dietary_coverage": {
+        "scale": "known/estimated/unknown contribution from compatible food data",
+        "direction": "towards_appropriate_target_not_unlimited",
+        "missing": null
+      }
+    }
+  },
+  "meal_and_pattern_candidates": [
+    {
+      "id": "satisfying_meal",
+      "label": "Supported protein-and-fibre meal or snack",
+      "candidate_tag_ids": [
+        "satisfying_option"
+      ],
+      "assignment_granularity": "meal",
+      "note": "The existing nutrient rules must independently qualify."
+    },
+    {
+      "id": "easy_meal",
+      "label": "Simple meal or suitable ready meal",
+      "candidate_tag_ids": [
+        "easy_regular_meal_candidate"
+      ],
+      "assignment_granularity": "meal",
+      "note": "Use credible preparation/access information and existing food requirements."
+    },
+    {
+      "id": "plants_and_ferments",
+      "label": "Varied plants and tolerated fermented foods over time",
+      "candidate_tag_ids": [
+        "plant_ferment_stress_pattern_candidate"
+      ],
+      "assignment_granularity": "dietary_pattern",
+      "note": "An individual food can be a component; it cannot stand in for the whole pattern."
+    },
+    {
+      "id": "mediterranean_pattern",
+      "label": "Mediterranean-style eating pattern",
+      "candidate_tag_ids": [
+        "mediterranean_mood_pattern_candidate"
+      ],
+      "assignment_granularity": "dietary_pattern",
+      "note": "Record overall pattern and replacements, not an effect attributed to one olive or nut."
+    }
+  ],
+  "study_match_contract": {
+    "fields": [
+      "source_id",
+      "population_match",
+      "preparation_match",
+      "dose_match",
+      "duration_match",
+      "comparator_relevance"
+    ],
+    "match_values": [
+      "similar",
+      "different",
+      "unknown",
+      "not_applicable"
+    ],
+    "rule": "A shared food name does not imply matched exposure or effect. Unknown metadata cannot support a dose-matched claim; study amounts are never default servings."
+  },
+  "deployment": {
+    "classifier_version": "womens-food-candidates-v1-2026-10-08",
+    "mode": "candidate_review",
+    "automatic_score_changes": false,
+    "research_collection_active": false,
+    "note": "production_enabled allows candidate discovery only; draft review_state does not imply verified symptom benefit. Meal/pattern definitions are not assigned to isolated products."
+  }
+}

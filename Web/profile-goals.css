@@ -1,0 +1,84 @@
+/* Eight profile groups and calendar-week additions use the existing theme and controls. */
+.profile-group { margin-block: 20px; }
+.profile-group h2 { margin-top: 0; }
+.profile-group h3 { margin-block: 18px 8px; font-size: 1rem; }
+.profile-group p { overflow-wrap: anywhere; }
+.profile-group .nc-choice-field,.profile-group .nc-tag-field,.profile-group .nc-number-field { margin-block: 16px; }
+.profile-target-list { margin: 12px 0; }
+.profile-target-list div { display:flex; justify-content:space-between; gap:16px; padding-block:12px; border-bottom:1px solid var(--n-border); }
+.profile-target-list dd { margin:0; font-weight:700; text-align:right; }
+.n-week-range { margin:0 20px 12px; color:var(--n-plant-text); font-size:.875rem; }
+.n-week-nutrient { margin-block:20px; padding:20px; background:var(--n-surface); border:1px solid var(--n-border); border-radius:24px; }
+.n-week-nutrient h2 { font-size:1.25rem; margin:0; }
+.n-week-nutrient .profile-section-heading { align-items:start; flex-wrap:wrap; }
+.n-week-nutrient-total { font-size:1rem; color:var(--n-ink); }
+.n-week-nutrient-total strong { font-size:2rem; color:var(--n-accent); }
+.n-week-nutrient-total span { display:block; color:var(--n-muted); }
+.n-week-nutrient-days { list-style:none; margin:0; padding:0; }
+.n-week-nutrient-days li { display:grid; grid-template-columns:3em minmax(0,1fr); gap:12px; padding-block:10px; border-bottom:1px solid var(--n-border); }
+.n-week-nutrient-days li>span { font-weight:600; }
+.n-week-nutrient-days small { display:block; color:var(--n-muted); margin-block:4px; }
+.n-week-nutrient-days b { display:block; font-weight:600; }
+.n-week-nutrient .n-track { background:var(--n-progress-track); }
+.n-week-nutrient .n-track>span { background:var(--n-progress-fill); }
+.n-target-goal .n-target-link { display:block; min-height:44px; padding-inline:0; }
+@media(max-width:350px){.n-week-nutrient{padding:16px}.profile-target-list div{flex-wrap:wrap}.profile-target-list dd{text-align:start}}
+@media(prefers-contrast:more){.n-week-nutrient,.profile-target-list div,.n-week-nutrient-days li{border-color:var(--n-strong-border)}}
+
+/* Section editing reuses the approved cards and controls. */
+.profile-group > .profile-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.profile-group > .profile-section-heading h2 { margin:0; min-width:0; overflow-wrap:normal; }
+.profile-section-edit { flex:0 0 auto; min-height:44px; min-width:44px; }
+.profile-save-status { min-height:1.5em; }
+#nutrition-profile-form .food-form-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr)); }
+#nutrition-profile-form .nc-stepper-value { min-width:0; overflow-wrap:normal; word-break:normal; }
+#nutrition-profile-form .nc-stepper-value strong { white-space:nowrap; }
+#nutrition-profile-form .nc-number-display > button { min-width:64px; }
+
+/* Nutrition targets share the tracking palette without changing brand or score colours. */
+.profile-target-list [class*="n-metric-"] dt::before,
+.profile-metric-field > .nc-number-field > .form-label::before,
+.profile-metric-field > .nc-choice-field > .form-label::before {
+  content:""; display:inline-block; width:.7em; height:.7em; margin-inline-end:.5em;
+  border-radius:50%; background:var(--n-metric); vertical-align:baseline;
+}
+.profile-metric-field .nc-stepper > button:not(:disabled) {
+  border-color:var(--n-metric); border-bottom-width:3px; color:var(--n-ink);
+  background:var(--n-surface);
+  background:color-mix(in srgb,var(--n-metric) 15%,var(--n-surface));
+}
+.profile-metric-field .nc-choice[aria-pressed="true"] {
+  border-color:var(--n-metric); color:var(--n-ink);
+  background:var(--n-selected-surface);
+  background:color-mix(in srgb,var(--n-metric) 15%,var(--n-surface));
+}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[value="protein"]){--n-metric:var(--n-metric-protein)}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[value="calories"]){--n-metric:var(--n-metric-energy)}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[value="carbs"]){--n-metric:var(--n-metric-carbs)}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[value="fat"]){--n-metric:var(--n-metric-fat)}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[value="fibre"]){--n-metric:var(--n-metric-fibre)}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[value="plants"]){--n-metric:var(--n-metric-plants)}
+.profile-group[data-profile-group="tracking"] .nc-tag:has(input[name="tracking"]){border-bottom:3px solid var(--n-metric)}
+
+/* Older food-pattern objective cards use the same metric colours. */
+.food-metrics button[class*="n-metric-"] { border-top:3px solid var(--n-metric); }
+.food-metrics button[class*="n-metric-"] .metric-icon {
+  color:var(--n-ink); background:var(--n-surface);
+  background:color-mix(in srgb,var(--n-metric) 18%,var(--n-surface));
+  box-shadow:inset 0 -3px var(--n-metric);
+}
+
+.collection-hero.n-metric-plants progress { color:var(--n-metric); accent-color:var(--n-metric); }
+.collection-hero.n-metric-plants progress::-webkit-progress-value { background:var(--n-metric); }
+.collection-hero.n-metric-plants progress::-moz-progress-bar { background:var(--n-metric); }
+.collection-hero.n-metric-plants .collection-orb { border-color:var(--n-metric); }
+
+.profile-target-mode { display:flex; flex-wrap:wrap; gap:4px 12px; align-items:center; margin-block:-4px 16px; }
+.profile-target-mode > span { flex:1 1 180px; }
+.profile-target-mode > button { min-height:44px; text-align:start; white-space:normal; overflow-wrap:normal; }
+.profile-target-methods p { overflow-wrap:normal; }
+
+.profile-target-summary { margin-block:16px; }
+.profile-target-summary > p { overflow-wrap:normal; }
+.profile-automatic-review > summary { min-height:44px; padding-block:10px; font-weight:600; color:var(--n-accent); }
+.profile-automatic-review > .button { width:100%; white-space:normal; }

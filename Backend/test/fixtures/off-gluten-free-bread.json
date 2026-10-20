@@ -1,0 +1,34 @@
+{
+  "source": "Open Food Facts public UK extract",
+  "sourceURL": "https://world.openfoodfacts.org/product/00731515",
+  "licenceURL": "https://opendatacommons.org/licenses/odbl/1-0/",
+  "product": {
+    "code": "00731515",
+    "product_name": "GLUTEN FREE WHITE LOAF",
+    "countries_tags": [
+      "en:france",
+      "en:united-kingdom"
+    ],
+    "categories_tags": [
+      "en:plant-based-foods-and-beverages",
+      "en:plant-based-foods",
+      "en:cereals-and-potatoes",
+      "en:specific-products",
+      "en:cereals-and-their-products",
+      "en:products-for-specific-diets",
+      "en:breads",
+      "en:products-without-gluten",
+      "en:gluten-free-breads"
+    ],
+    "labels_tags": [
+      "en:no-gluten"
+    ],
+    "ingredients_text": "Gluten Free Flour (Tapioca Starch, Potato Starch, Cornflour, Rice Flour), Water, Sunflower Oil, Bamboo Fibre, Stabiliser: E464, Xanthan Gum, Dried Egg White, Sugar, Yeast (Yeast, Vitamin D Yeast), Humectant: Glycerol, Psyllium Husk Powder, Salt, Fermented Maize Starch, Calcium, Vitamins (Niacin, Pantothenic Acid, Vitamin B6, Riboflavin, Folic Acid).",
+    "allergens_tags": [
+      "en:eggs"
+    ],
+    "traces_tags": [],
+    "nutriments": {},
+    "last_modified_t": 1777467702
+  }
+}
