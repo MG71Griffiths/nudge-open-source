@@ -2,7 +2,7 @@
 
 Nudge is an iPhone food diary built with SwiftUI and shared JavaScript nutrition rules. Photograph food or labels, scan barcodes, review nutrient estimates and a food score, tag ingredients, and add confirmed intake to your diary. History shows analysis progress. Photo results are estimates; review food identity, ingredients and portions before saving. Nudge supports general nutrition awareness, not diagnosis or treatment.
 
-This source release contains the current 0.1.1 (37) app. Original code and documentation are available under the [MIT licence](LICENSE), copyright 2026 Stephanie Griffiths. Food datasets, icons and other third-party material keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). An App Store release is separate from source publication. This repository does not claim App Store approval or availability.
+This source release contains the current 0.1.1 (38) app. Original code and documentation are available under the [MIT licence](LICENSE), copyright 2026 Stephanie Griffiths. Food datasets, icons and other third-party material keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). An App Store release is separate from source publication. This repository does not claim App Store approval or availability.
 
 ## Build an independent copy
 
