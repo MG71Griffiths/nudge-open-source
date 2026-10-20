@@ -8,7 +8,7 @@ struct AccountAuthorization {
 }
 
 enum AccountError: LocalizedError, Equatable {
-    case unavailable, network, invalidResponse, storage, invalidEmail, invalidCodeFormat, invalidCode, signInRequired, rateLimited, deletionUnavailable, deletionFailed
+    case unavailable, network, invalidResponse, storage, invalidEmail, passwordRequired, passwordTooLong, invalidCredentials, invalidCodeFormat, invalidCode, signInRequired, rateLimited, deletionUnavailable, deletionFailed
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +17,9 @@ enum AccountError: LocalizedError, Equatable {
         case .invalidResponse: "The account service returned a response Nudge could not verify. Try again later."
         case .storage: "Nudge could not access its secure account storage. Unlock your iPhone and try again."
         case .invalidEmail: "Enter a valid email address."
+        case .passwordRequired: "Enter your password, or choose Email me a code."
+        case .passwordTooLong: "That password is too long. Choose Email me a code to sign in."
+        case .invalidCredentials: "That email and password were not accepted. Check them, or choose Email me a code."
         case .invalidCodeFormat: "Enter the complete code from your email: 6–10 digits, with no letters or spaces between digits."
         case .invalidCode: "That code was not accepted or has expired. Check the code or request a new one."
         case .signInRequired: "Your account session has ended. Sign in again to analyse photos."
@@ -355,6 +358,28 @@ struct AccountHTTPResponse {
         pendingEmail = email
     }
 
+    /// Uses the ordinary provider password grant. The password is neither saved
+    /// in the account session nor forwarded to Nudge's backend.
+    func signInWithPassword(email: String, password: String) async throws {
+        let email = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard Self.validEmail(email) else { throw AccountError.invalidEmail }
+        guard !password.isEmpty else { throw AccountError.passwordRequired }
+        // Do not trim, normalize or truncate passwords: spaces may be intentional.
+        guard password.utf8.count <= 4_096 else { throw AccountError.passwordTooLong }
+        cancelSignIn()
+        let generation = operationGeneration
+        guard let config = try await fetchConfiguration(), let providerURL = config.url else { throw AccountError.unavailable }
+        try checkOperation(generation)
+        let response = try await providerRequest(config, path: "token", query: "grant_type=password",
+                                                 body: ["email": email, "password": password])
+        try checkOperation(generation)
+        guard response.statusCode == 200 else {
+            if [400, 401, 403, 422].contains(response.statusCode) { throw AccountError.invalidCredentials }
+            throw Self.providerError(response.statusCode)
+        }
+        try installSession(response.data, providerURL: providerURL, expectedEmail: email, generation: generation)
+    }
+
     nonisolated static func normalizedCode(_ input: String) throws -> String {
         // Bound pasted text before trimming. Never filter arbitrary text into a
         // different code, convert to a number, or discard leading zeroes.
@@ -378,7 +403,16 @@ struct AccountHTTPResponse {
             if response.statusCode == 400 || response.statusCode == 401 || response.statusCode == 403 { throw AccountError.invalidCode }
             throw Self.providerError(response.statusCode)
         }
-        let selected = try decodeSession(response.data, providerURL: providerURL, expectedEmail: email)
+        try installSession(response.data, providerURL: providerURL, expectedEmail: email, generation: generation)
+    }
+
+    private func installSession(_ data: Data, providerURL: URL, expectedEmail: String, generation: Int) throws {
+        try checkOperation(generation)
+        let selected: AccountSession
+        do { selected = try decodeSession(data, providerURL: providerURL, expectedEmail: expectedEmail) }
+        catch { throw sanitize(error) }
+        // Commit durable credentials before changing the selected account. A
+        // failed save leaves the previous account and its capture ownership intact.
         try store.save(selected)
         credentialTask?.cancel(); credentialTask = nil; credentialTaskID = nil
         session = selected
@@ -538,6 +572,7 @@ struct AccountHTTPResponse {
     private let activity = UIActivityIndicatorView(style: .medium)
     private let message = UILabel()
     private let email = UITextField()
+    private let password = UITextField()
     private let code = UITextField()
     private var task: Task<Void, Never>?
     private var busy = false
@@ -580,12 +615,16 @@ struct AccountHTTPResponse {
         activity.hidesWhenStopped = true
         activity.color = NudgeTheme.accent
         activity.accessibilityIdentifier = "account-progress"
-        email.placeholder = "Email address"; email.keyboardType = .emailAddress; email.textContentType = .emailAddress
+        email.placeholder = "Email address"; email.keyboardType = .emailAddress; email.textContentType = .username
         email.autocapitalizationType = .none; email.autocorrectionType = .no; email.borderStyle = .roundedRect
         email.accessibilityIdentifier = "account-email"
+        password.placeholder = "Password"; password.isSecureTextEntry = true; password.textContentType = .password
+        password.autocapitalizationType = .none; password.autocorrectionType = .no; password.spellCheckingType = .no
+        password.smartQuotesType = .no; password.smartDashesType = .no; password.borderStyle = .roundedRect
+        password.accessibilityIdentifier = "account-password"
         code.placeholder = "Code from email"; code.keyboardType = .numberPad; code.textContentType = .oneTimeCode
         code.borderStyle = .roundedRect; code.accessibilityIdentifier = "account-code"
-        for field in [email, code] {
+        for field in [email, password, code] {
             field.font = .preferredFont(forTextStyle: .body)
             field.adjustsFontForContentSizeCategory = true
             field.backgroundColor = NudgeTheme.surface
@@ -624,13 +663,29 @@ struct AccountHTTPResponse {
                     self.run(progress: "Verifying your code…") { [weak self] in guard let self else { return }; try await self.manager.verifyCode(enteredCode); self.code.text = ""; self.notice = "You’re signed in. Ready to scan." }
                 }
                 addButton("Send a new code") { [weak self] in self?.run(progress: "Sending your code…") { [weak self] in guard let self else { return }; try await self.manager.sendCode(email: pending); self.code.text = ""; self.notice = "A new sign-in code has been requested." } }
-                addButton("Use another email") { [weak self] in guard let self else { return }; self.manager.cancelSignIn(); self.code.text = ""; self.notice = nil; self.noticeIsError = false; self.render() }
+                addButton("Use another email or password") { [weak self] in guard let self else { return }; self.manager.cancelSignIn(); self.code.text = ""; self.password.text = ""; self.notice = nil; self.noticeIsError = false; self.render() }
             } else {
                 if email.text?.isEmpty != false { email.text = status["email"] as? String }
-                stack.addArrangedSubview(email)
+                stack.addArrangedSubview(email); stack.addArrangedSubview(password)
+                addButton("Sign in with password", identifier: "account-sign-in-password") { [weak self] in
+                    guard let self else { return }
+                    let enteredEmail = self.email.text ?? "", enteredPassword = self.password.text ?? ""
+                    self.password.text = ""
+                    self.run(progress: "Signing in…") { [weak self] in
+                        guard let self else { return }
+                        try await self.manager.signInWithPassword(email: enteredEmail, password: enteredPassword)
+                        self.notice = "You’re signed in. Ready to scan."
+                    }
+                }
+                let alternative = UILabel(); alternative.numberOfLines = 0
+                alternative.font = .preferredFont(forTextStyle: .subheadline); alternative.adjustsFontForContentSizeCategory = true
+                alternative.textColor = NudgeTheme.muted
+                alternative.text = "New here, or no password? Sign in with a code sent to your email."
+                stack.addArrangedSubview(alternative)
                 addButton("Email me a code", identifier: "account-send-code") { [weak self] in
                     guard let self else { return }
                     let enteredEmail = self.email.text ?? ""
+                    self.password.text = ""
                     self.run(progress: "Sending your code…") { [weak self] in guard let self else { return }; try await self.manager.sendCode(email: enteredEmail); self.notice = "Check your email for your Nudge sign-in code." }
                 }
                 if status["email"] != nil { addButton("Sign out on this iPhone") { [weak self] in self?.run { [weak self] in guard let self else { return }; self.notice = try await self.manager.signOut() } } }
@@ -644,7 +699,7 @@ struct AccountHTTPResponse {
     }
 
     private func addButton(_ title: String, destructive: Bool = false, identifier: String? = nil, action: @escaping () -> Void) {
-        let primary = identifier == "account-verify" || identifier == "account-send-code" || title == "Try again"
+        let primary = identifier == "account-verify" || identifier == "account-sign-in-password" || title == "Try again"
         let button = NudgeButton(title, variant: destructive ? .destructive : primary ? .primary : .secondary)
         button.accessibilityIdentifier = identifier
         button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
@@ -671,6 +726,8 @@ struct AccountHTTPResponse {
             }
             guard let self else { return }
             self.busy = false
+            self.password.text = ""
+            self.task = nil
             self.activity.stopAnimating()
             if !Task.isCancelled {
                 self.render()
@@ -697,11 +754,11 @@ struct AccountHTTPResponse {
     }
 
     private func close() {
-        task?.cancel(); manager.cancelSignIn(); code.text = ""
+        task?.cancel(); manager.cancelSignIn(); code.text = ""; password.text = ""
         dismiss(animated: true) { [onChange] in onChange() }
     }
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        task?.cancel(); manager.cancelSignIn(); code.text = ""; onChange()
+        task?.cancel(); manager.cancelSignIn(); code.text = ""; password.text = ""; onChange()
     }
 }
 

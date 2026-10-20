@@ -1,30 +1,26 @@
-# Source release verification — 0.1.1 (38)
+# Source release verification — 0.1.1 (39)
 
-Checked on 20 October 2026 against the sanitised source tree. App Store approval and public app availability are separate from source publication.
+Checked on 20 October 2026. Source publication does not imply App Store approval, public app availability or a working hosted service for an independently configured copy.
 
-Build38 changes the Xcode build number and adds a packaging phase that excludes two unused development reference images from the built app. The public source already excluded those images. The phase declares exactly those two output paths, runs after resource copying, preserves script sandboxing, and verifies their absence. Swift, Web, backend, scoring, tests, generated adapters, privacy declarations, licences and all distributed asset bytes are unchanged from source release37.
+Build39 adds ordinary email/password authentication alongside the existing emailed-code flow. The only production runtime change is AccountFeature.swift; the project changes only both build-number values from 38 to 39. The two-image packaging exclusion remains intact. Two focused account-check files are included. Shared Web/backend/scoring logic, privacy declarations, distributed artwork and third-party licence notices are unchanged from source38.
 
-Focused build38 checks:
+Authentication evidence:
 
-- Package/project/resource/plist checks passed with build38 metadata.
-- The exported packaging script passed a temporary-copy check: it removed only the two synthetic excluded paths, preserved every other Web file byte-for-byte, and passed a second run with the paths already absent.
-- Both build configurations use version38; the example bundle identifier and blank signing team remain in place.
-- All 68 source-pin entries and output hashes across the three generated manifests still match. All original artwork hashes still match their provenance records.
-- The 540-file tree preserves the previous public file allowlist. Pattern scanning found no known credential/owner patterns; credential-looking URLs in negative security tests remain documented synthetic rejection fixtures. Pattern scanning is bounded, not a proof that arbitrary sensitive content can never exist.
+- A bounded Mac Catalyst harness compiled the exact production AccountFeature.swift and NudgeTheme.swift with the included synthetic harness. It passed 90 assertions across seven groups, with source hashes unchanged before and after execution.
+- Coverage includes exact password handling, validated provider destination, bounded requests, generic errors, durable-save failure, restored sessions, password/password and password/OTP races, concurrent refresh and sign-out, cancellation, OTP regression, and actual UIKit controls for secure input, duplicate submission, error display, switching and dismissal.
+- An independent read-only review found no actionable auth/session/UI defect. Cancellation during configuration fetch and an in-flight OTP verification superseded by password sign-in were inspected through their shared post-await generation guards; those two specific interleavings were not separately executed by the harness.
+- The harness uses fake HTTP and memory credential storage. It is not a live-provider login, real Keychain, screenshot, simulator or physical-device authentication test. No reviewer email, real password, session token or operational account is included.
 
-Separately, the signed production archive and exported App Store distribution package were verified as build38. Their 126 bundled Web files match the frozen production source after excluding exactly the two reference images; signature, privacy-manifest and absence-of-test-host checks passed. This verifies the production packaging fix, not an independent compile of the exported configuration or Apple review approval.
+Public export checks:
 
-Validation inherited from the unchanged build37 source, not rerun for this packaging-only update:
+- Package/project/resource/plist and independent service configuration checks passed for build39.
+- The transformed account source and included Swift harness passed parser checks; the shell harness passed syntax checking. Parser success is not independent native type checking.
+- The auth implementation is retained exactly apart from the pre-existing independent backend/Keychain configuration adaptations. The public backend defaults to a reserved .invalid hostname, uses the example app identifier and has no signing team.
+- All 68 generated source-pin entries and bundle hashes, plus all twelve artwork provenance hashes, match. No shared-source rebuild was required for the native-only auth change.
+- All unchanged public files match source38. The source/privacy/URL audit retains separate licence notices and synthetic negative-security fixtures. Known-pattern scanning is bounded, not a proof that arbitrary sensitive content can never exist.
 
-- All 108 Web/shared test-suite scripts passed with external fetch/http/https requests denied and synthetic fixtures.
-- Backend suite: 830 tests passed; zero failed, cancelled or skipped.
-- Export configuration checks passed: all eight administrator commands reject a missing destination, and malformed/untrusted origins are rejected before credential access.
-- All three generated JavaScript tools rebuilt successfully; ChatGPT and fast-capture builders passed their `--check` modes.
-- Nine Swift files changed for export configuration passed parser checks; all twelve included Python files passed syntax checks. Parsing is not native type checking or a device test.
-- Dependency inventory: 36 development/build packages recorded, each with licence metadata. Installed dependencies are not distributed.
+Unchanged runtime coverage inherited from source37/38, not rerun for this native-only update: 830 backend tests and all 108 Web/shared test-suite scripts passed, with external network calls denied. Export configuration previously verified all eight administrator commands reject absent or unsafe destinations before accessing credentials. Those administrator implementations and tests remain byte-for-byte unchanged.
 
-The independent unsigned native Release build for source37 was cancelled to avoid competing with App Store archive and screenshot compilation on the same Mac. It did not complete, so no independent native compile pass is claimed for this exported tree. No additional native compilation was attempted for the unchanged app source in this update. The README retains a clean-checkout build command.
+No separate native compile of the sanitised export was run for this release. The prior independent source37 compile was cancelled for shared-Mac resource scheduling and did not establish a compile pass. The README and focused harness retain commands for an independent checkout. Production signed archive, App Store processing and installation are separate release checks.
 
-The native privacy manifest still includes Health and Device ID collection declarations. The allowlisted export contains no private Git history, credentials, signing material, device backups or personal captures. Owner endpoints and identifiers require independent configuration. Original generated artwork provenance and hashes remain in ASSET_PROVENANCE.json; food data and icon notices retain their separate licences.
-
-Live email delivery, account lifecycle, model eligibility, food recognition, a fork's hosted service and real-device behaviour were not exercised by source-export validation. The source defaults to unconfigured origins and cannot reuse the original operator's credentials.
+Live email delivery, account lifecycle, provider eligibility, food recognition, a fork’s hosted service and real-device behaviour were not exercised by this source-export validation. The source cannot reuse the original operator’s credentials.

@@ -2,7 +2,7 @@
 
 Nudge is an iPhone food diary built with SwiftUI and shared JavaScript nutrition rules. Photograph food or labels, scan barcodes, review nutrient estimates and a food score, tag ingredients, and add confirmed intake to your diary. History shows analysis progress. Photo results are estimates; review food identity, ingredients and portions before saving. Nudge supports general nutrition awareness, not diagnosis or treatment.
 
-This source release contains the current 0.1.1 (38) app. Original code and documentation are available under the [MIT licence](LICENSE), copyright 2026 Stephanie Griffiths. Food datasets, icons and other third-party material keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). An App Store release is separate from source publication. This repository does not claim App Store approval or availability.
+This source release contains the current 0.1.1 (39) app. Original code and documentation are available under the [MIT licence](LICENSE), copyright 2026 Stephanie Griffiths. Food datasets, icons and other third-party material keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). An App Store release is separate from source publication. This repository does not claim App Store approval or availability.
 
 ## Build an independent copy
 
@@ -18,9 +18,13 @@ xcodebuild -project Nudge.xcodeproj -scheme Nudge \
 
 Keep the whole tree together: native JavaScriptCore adapters and the backend share `Web/core/`. Nutrition values, diary logic and scores are not separate native implementations. The offline runner uses synthetic fixtures, blocks external fetch/http/https calls, clears provider credential variables and writes ignored logs under `.local/`. It does not deploy, send login emails, or call an AI provider. Simulator compilation requires a working simulator SDK; native runtime checks are also available under `tools/check-*.sh`.
 
+The focused account harness is available as `tools/check-native-account.sh` on a Mac with Xcode and Mac Catalyst support. It compiles the account and theme sources with synthetic HTTP responses and memory session storage, then exercises authentication and the actual UIKit controls headlessly. It does not contact a live provider or access real Keychain credentials.
+
 ## Configure services
 
 The native backend and image mirror default to the reserved `configure-nudge-backend.invalid` hostname. Set `NudgeBackendURL` in `Nudge/Info.plist` to your own HTTPS origin, then follow [Backend/README.md](Backend/README.md). Replace the example support/privacy destinations and public food-provider contact URLs before distributing your copy. No owner credentials, private data, Git history, deployment receipts or signing material are included.
+
+Nudge account sign-in supports an existing email/password account or an emailed sign-in code. New users can use the code option. The app does not provide a password-creation or password-reset form. Passwords are sent only to the configured authentication provider; they are not stored in the diary or account session. Session tokens use iOS Keychain. Configure and verify your own authentication provider and email delivery. No shared demo account or reviewer credentials are distributed.
 
 Optional **Sign in with ChatGPT** is implemented. Eligible accounts can authorise direct photo analysis from the iPhone to OpenAI. Connection credentials stay in iOS Keychain; the diary and ChatGPT conversation history are not sent with a photo request. OpenAI controls plan eligibility and available models. Each capture retains its selected service/account/model; a failed connection does not silently switch to another provider. A separately configured backend serves account, catalogue, contribution and voice features. ChatGPT plan usage does not pay for that backend's API or transcription costs.
 
