@@ -4,6 +4,7 @@ import SwiftUI
 struct NudgeApp: App {
     var body: some Scene {
         WindowGroup {
+          Group {
             #if DEBUG && targetEnvironment(simulator)
             if let raw = ProcessInfo.processInfo.environment["NUDGE_ONBOARDING_UI_FIXTURE"], let id = UUID(uuidString: raw) {
                 NativeOnboardingUITestFixture(id: id)
@@ -17,6 +18,8 @@ struct NudgeApp: App {
             #else
             NudgeScreen()
             #endif
+          }
+          .preferredColorScheme(.light)
         }
     }
 }

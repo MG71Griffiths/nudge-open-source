@@ -26,7 +26,6 @@ struct NativeTodayView: View {
                             Image(systemName: "circle.dotted.circle").font(.title2)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(cycle["estimated"] as? Bool == true ? "Cycle support · Estimated " + (cycle["name"] as? String ?? "phase").lowercased() : "Cycle support").font(.headline)
-                                Text(cycle["estimated"] as? Bool == true ? cycle["label"] as? String ?? "Your phase, check-in and food ideas" : cycle["reason"] as? String ?? "Your phase, check-in and food ideas").font(.subheadline)
                             }
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
@@ -51,29 +50,20 @@ struct NativeTodayView: View {
                         }.buttonStyle(.plain).foregroundStyle(Color(uiColor: NudgeTheme.accent))
                             .trackingControl("today-diary")
                     }
-                    Text("Little steps. A healthier you.").foregroundStyle(Color(uiColor: NudgeTheme.muted))
                 }
                 if !NativeTrackingDisplay.rows(model["compactMetrics"]).isEmpty {
                     NativeCompactNutritionPanel(items: NativeTrackingDisplay.rows(model["compactMetrics"]),
                                                 fatSources: NativeTrackingDisplay.object(model["fatSources"]))
                 } else {
                     NativeTrackingCard {
-                        Text("Choose what you’d like to track").font(.title3.bold())
-                        Text("Your profile sets starting targets for your daily goals.")
-                            .foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                        Button("Review targets", action: store.showProfile).buttonStyle(NudgeButtonStyle())
+                        Text("Set your targets").font(.title3.bold())
+                        Button("My profile", action: store.showProfile).buttonStyle(NudgeButtonStyle())
                     }
                 }
                 HStack(alignment: .center) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("From your logged meals").font(.caption)
-                        if selectedDay == NativeTrackingDisplay.dayKey(Date()), let label = model["targetModeLabel"] as? String, !label.isEmpty {
-                            Text(label).font(.caption)
-                        }
-                    }.foregroundStyle(Color(uiColor: NudgeTheme.muted))
                     Spacer(minLength: 10)
                     Button(action: store.showProfile) {
-                        Text("Review targets").font(.subheadline.weight(.semibold))
+                        Label("Targets", systemImage: "slider.horizontal.3").font(.subheadline.weight(.semibold))
                             .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
                     }
                         .trackingControl("today-targets")
@@ -83,26 +73,20 @@ struct NativeTodayView: View {
                 Button(action: store.showAmbassadors) {
                     HStack(spacing: 12) {
                         Image(systemName: "trophy.fill").font(.title2)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("The helpful bunch").font(.headline)
-                            Text("Your ambassador points & leaderboard").font(.subheadline)
-                        }
+                        Text("The helpful bunch").font(.headline)
                         Spacer(minLength: 0)
                         Image(systemName: "chevron.right")
                     }
                 }.buttonStyle(NudgeButtonStyle(variant: .secondary)).trackingControl("today-ambassadors")
                 if !weeklyMetrics.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Your week with Nudge").font(.title2.bold())
-                        Text(weekLabel(model) + " · Mon–Sun").font(.subheadline)
-                            .foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    }
-                    ForEach(weeklyMetrics.indices, id: \.self) { index in weeklyCard(weeklyMetrics[index], model: model) }
-                    DisclosureGroup("About your progress") {
-                        Text("Rings fill as food is logged. Percentages can exceed 100%; the number shows the full amount. Sugar and saturated-fat rings show reference amounts used, not health achievements or goals to reach. Unlogged days stay blank and zero means a recorded zero. Partial totals include only known values. Personal targets use saved dates; adult food-label references are general comparisons. Plant variety counts each named plant once per day and once across the whole week. Daily counts are not added together.")
-                            .font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                            .padding(.top, 10)
-                    }.tint(Color(uiColor: NudgeTheme.accent))
+                    DisclosureGroup {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text(weekLabel(model)).font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                            ForEach(weeklyMetrics.indices, id: \.self) { index in weeklyCard(weeklyMetrics[index], model: model) }
+                        }.padding(.top, 12)
+                    } label: {
+                        Label("This week", systemImage: "chart.bar.fill").font(.title3.bold())
+                    }.tint(Color(uiColor: NudgeTheme.accent)).trackingControl("today-week-details")
                 }
                 Button("Add from My foods") { _ = store.perform("showSaved") }
                     .buttonStyle(NudgeButtonStyle(variant: .secondary))
@@ -179,9 +163,12 @@ struct NativeTodayView: View {
 
     @ViewBuilder private func budgetNotice(_ budget: [String: Any]) -> some View {
         if let status = budget["state"] as? String, ["over", "under"].contains(status) {
-            Text("Targets don’t match. Your macro targets total \(NativeTrackingDisplay.numberLabel(NativeTrackingDisplay.number(budget["macroKcal"]) ?? 0, digits: 0)) kcal against \(NativeTrackingDisplay.numberLabel(NativeTrackingDisplay.number(budget["energyKcal"]) ?? 0, digits: 0)) kcal. Review targets to make them consistent.")
-                .font(.subheadline).padding(16).background(Color(uiColor: NudgeTheme.warningSurface), in: RoundedRectangle(cornerRadius: 18))
-                .foregroundStyle(Color(uiColor: NudgeTheme.warningText))
+            Button(action: store.showProfile) {
+                Label("Check your targets", systemImage: "exclamationmark.triangle")
+                    .font(.subheadline.weight(.semibold)).frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
+                    .padding(.horizontal, 16).background(Color(uiColor: NudgeTheme.warningSurface), in: RoundedRectangle(cornerRadius: 18))
+            }.buttonStyle(.plain).foregroundStyle(Color(uiColor: NudgeTheme.warningText))
+                .accessibilityLabel("Check your targets. Macro targets total \(NativeTrackingDisplay.numberLabel(NativeTrackingDisplay.number(budget["macroKcal"]) ?? 0, digits: 0)) kilocalories against \(NativeTrackingDisplay.numberLabel(NativeTrackingDisplay.number(budget["energyKcal"]) ?? 0, digits: 0)) kilocalories.")
         }
     }
 
@@ -207,26 +194,27 @@ struct NativeCompactNutritionPanel: View {
                 ForEach(items.indices, id: \.self) { index in
                     let item = items[index]
                     let amountOnly = !NativeTrackingDisplay.hasTarget(item)
+                    let recordedAmount = NativeTrackingDisplay.hasLoggedAmount(item)
                     VStack(spacing: 6) {
                         ZStack {
-                            Circle().stroke(NativeTrackingDisplay.color(item).opacity(amountOnly ? 0.35 : 0.17), lineWidth: 6)
-                            Circle().trim(from: 0, to: min(1, NativeTrackingDisplay.ratio(item) ?? 0))
-                                .stroke(NativeTrackingDisplay.color(item), style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
+                            // A saved amount without a denominator is active, but
+                            // must never look like invented percentage completion.
+                            if amountOnly && recordedAmount {
+                                Circle().fill(NativeTrackingDisplay.color(item).opacity(0.12))
+                            }
+                            Circle().stroke(NativeTrackingDisplay.color(item).opacity(amountOnly && recordedAmount ? 0.5 : 0.17), lineWidth: 6)
+                            if let ratio = NativeTrackingDisplay.ratio(item), ratio > 0 {
+                                Circle().trim(from: 0, to: min(1, ratio))
+                                    .stroke(NativeTrackingDisplay.color(item), style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                    .rotationEffect(.degrees(-90))
+                            }
                             Text(NativeTrackingDisplay.ringLabel(item)).font(.caption.weight(.bold))
                                 .monospacedDigit().minimumScaleFactor(0.65).lineLimit(1).padding(4)
                         }.frame(width: typeSize.isAccessibilitySize ? 84 : 60, height: typeSize.isAccessibilitySize ? 84 : 60)
                         Text(NativeTrackingDisplay.title(item) + (item["period"] as? String == "week" ? " · week" : ""))
                             .font(.caption.weight(.semibold)).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                        Text(NativeTrackingDisplay.summaryAmount(item)).font(.caption2).monospacedDigit()
-                            .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                        if amountOnly, item["recorded"] as? Bool == true, NativeTrackingDisplay.number(item["value"]) != nil {
-                            Text("Logged amount").font(.caption2).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                        } else if let role = NativeTrackingDisplay.targetRoleLabel(item) {
-                            Text(NativeTrackingDisplay.isConsumptionReference(item) ? "Reference used" : role).font(.caption2).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                        }
-                        if let note = NativeTrackingDisplay.note(item), item["key"] as? String != "plants" || NativeTrackingDisplay.number(item["value"]) == nil || (NativeTrackingDisplay.number(item["unknown"]) ?? 0) > 0 {
-                            Text(note).font(.caption2).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                        if !amountOnly {
+                            Text(NativeTrackingDisplay.summaryAmount(item)).font(.caption2).monospacedDigit()
                                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                         }
                     }.frame(maxWidth: .infinity).padding(.vertical, 3)
@@ -234,24 +222,39 @@ struct NativeCompactNutritionPanel: View {
                         .trackingControl("nutrition-ring-\(item["key"] as? String ?? "unknown")")
                 }
             }
-            if !referenceNotes.isEmpty {
-                DisclosureGroup("About these rings") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(referenceNotes, id: \.self) { Text($0).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)) }
-                        if items.contains(where: { $0["referenceKind"] as? String == "adult_label" }) {
-                            Text("Adult food-label references: 90 g total sugars and 20 g saturated fat per day. These are general comparisons, not personal prescriptions.").font(.caption)
-                            Link("NHS: food-label reference intakes", destination: URL(string: "https://www.nhsinform.scot/healthy-living/food-and-nutrition/food-packaging/food-labelling/")!).font(.caption)
+            DisclosureGroup {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Coloured amounts are logged food. Arcs show the share of a saved target or reference; no arc is calculated without one. ≥ means some nutrition is missing.")
+                        .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                    ForEach(items.indices, id: \.self) { index in
+                        let item = items[index]
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(NativeTrackingDisplay.title(item)).font(.caption.weight(.semibold))
+                            Text(NativeTrackingDisplay.targetLabel(item)).font(.caption)
+                            if let note = NativeTrackingDisplay.note(item) {
+                                Text(note).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                            }
+                            if item["estimated"] as? Bool == true {
+                                Text("Includes estimates").font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                            }
                         }
-                    }.padding(.top, 8)
-                }
-            }
-            if !NativeTrackingDisplay.rows(fatSources["rows"]).isEmpty {
-                NativeFatSourcesPanel(model: fatSources)
-            }
-            if let dayPlants {
-                Text("\(NativeTrackingDisplay.numberLabel(dayPlants, digits: 0)) different plant types eaten today")
-                    .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-            }
+                    }
+                    ForEach(referenceNotes, id: \.self) { Text($0).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)) }
+                    if items.contains(where: { $0["referenceKind"] as? String == "adult_label" }) {
+                        Text("Adult food-label references: 90 g total sugars and 20 g saturated fat per day. These are comparisons, not goals to reach.").font(.caption)
+                        Link("NHS: food-label reference intakes", destination: URL(string: "https://www.nhsinform.scot/healthy-living/food-and-nutrition/food-packaging/food-labelling/")!).font(.caption)
+                    }
+                    if !NativeTrackingDisplay.rows(fatSources["rows"]).isEmpty {
+                        NativeFatSourcesPanel(model: fatSources)
+                    }
+                    if let dayPlants {
+                        Text("\(NativeTrackingDisplay.numberLabel(dayPlants, digits: 0)) plant types today").font(.caption)
+                    }
+                }.padding(.top, 8)
+            } label: {
+                Label("Details", systemImage: "info.circle").font(.caption.weight(.semibold))
+                    .frame(minHeight: 36)
+            }.trackingControl("nutrition-details")
         }
     }
 
@@ -1672,6 +1675,11 @@ enum NativeTrackingDisplay {
     /// Target visibility is independent of whether any intake has been recorded.
     static func hasTarget(_ item: [String: Any]) -> Bool {
         item["targetKnown"] as? Bool != false && (number(item["target"]) ?? 0) > 0
+    }
+    /// A known saved amount can be shown as active without inventing a target.
+    static func hasLoggedAmount(_ item: [String: Any]) -> Bool {
+        item["recorded"] as? Bool == true && item["future"] as? Bool != true
+            && number(item["rawValue"] ?? item["value"]) != nil
     }
     static func summaryAmount(_ item: [String: Any]) -> String {
         hasTarget(item) ? total(item) : valueLabel(item)

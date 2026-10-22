@@ -62,4 +62,3 @@
 html.n-large-text .n-diet-food{flex-basis:210px;}html.n-large-text .n-diet-metric{flex-wrap:wrap;}html.n-large-text .n-diet-quality-row{grid-template-columns:25px minmax(0,1fr);gap:9px;}html.n-large-text .n-diet-quality-row>strong{grid-column:2;}html.n-large-text .n-diet-day{flex-wrap:wrap;}
 html.n-large-text .n-diet-recipes{grid-template-columns:1fr;}
 @media(max-width:360px){.n-diet .nf-dial-value strong{font-size:3.5rem;}.n-diet .nf-dial-value{padding-top:52px;}.n-diet-trend{padding:17px 12px;}.n-diet-quality-row{padding:16px 13px;gap:9px;}}
-@media(prefers-color-scheme:dark){.n-diet .n-score-red{background:var(--n-score-red-surface);color:var(--n-score-red-text);}}

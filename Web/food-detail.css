@@ -1,6 +1,6 @@
 /* Approved food-detail composition within the existing WKWebView app. */
 .nf-detail {--nf-bg:var(--n-canvas);--nf-paper:var(--n-surface);--nf-ink:var(--n-ink);--nf-muted:var(--n-muted);--nf-line:var(--n-border);--nf-purple:var(--n-accent);--nf-action:var(--n-primary-fill);--nf-action-ink:var(--n-primary-text);--nf-lilac:var(--n-selected-surface);--nf-lime:var(--n-plant-surface);--nf-green:var(--n-plant-text);--nf-fill:var(--n-plant-text);--nf-amber:var(--n-warning-text);--nf-amber-bg:var(--n-warning-surface);--nf-shadow:var(--n-shadow);color:var(--nf-ink);background:var(--nf-bg);font-size:.875rem;line-height:1.45;overflow-wrap:anywhere;}
-@media(prefers-color-scheme:dark){.nf-detail{--nf-bg:var(--n-canvas);--nf-paper:var(--n-surface);--nf-ink:var(--n-ink);--nf-muted:var(--n-muted);--nf-line:var(--n-border);--nf-purple:var(--n-accent);--nf-action:var(--n-primary-fill);--nf-lilac:var(--n-selected-surface);--nf-lime:var(--n-plant-surface);--nf-green:var(--n-plant-text);--nf-fill:var(--n-plant-text);--nf-amber:var(--n-warning-text);--nf-amber-bg:var(--n-warning-surface);--nf-shadow:var(--n-shadow);}}
+
     .nf-detail *{box-sizing:border-box;}
     .nf-detail button,.nf-detail select,.nf-detail input{font:inherit;touch-action:manipulation;}
     .nf-detail button{color:inherit;}
@@ -238,7 +238,7 @@
 .n-large-text .nf-detail .nf-alternative-card{grid-template-columns:42px minmax(0,1fr);flex-basis:94%;min-height:120px;}
 .n-large-text .nf-detail .nf-alternative-value{grid-column:2;justify-self:start;}
 @media(max-width:359px){.nf-detail .nf-alternative-card{grid-template-columns:34px minmax(0,1fr) auto;gap:7px;padding:10px;}.nf-detail .nf-alternative-card img,.nf-detail .nf-alternative-image{width:34px;height:48px;}.nf-detail .nf-alternative-value{padding:7px 5px;}}
-@media(prefers-color-scheme:dark){.nf-detail .nf-band-monthly{color:var(--n-score-red-text);}}
+
 @media(prefers-reduced-motion:reduce){.nf-detail .nf-alternative-track{scroll-behavior:auto;}}
 .nf-detail .nf-recall{display:flex;align-items:flex-start;gap:8px;padding:12px;border:2px solid currentColor;border-radius:14px;background:var(--nf-amber-bg);color:var(--nf-amber);font-size:.8125rem;margin:0 0 14px;}
 .nf-detail .nf-recall>svg{width:20px;height:20px;flex-shrink:0;}.nf-detail .nf-recall strong{font-size:.875rem;}.nf-detail .nf-recall p{font-size:.75rem;line-height:1.5;margin:6px 0 0;}

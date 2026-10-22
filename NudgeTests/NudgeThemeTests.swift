@@ -18,13 +18,13 @@ final class NudgeThemeTests: XCTestCase {
     func testNativeSemanticTextAndMeaningfulGraphicsMeetContrastInBothAppearances() {
         for style in [UIUserInterfaceStyle.light, .dark] {
             let traits = UITraitCollection(userInterfaceStyle: style)
-            for (text, surface) in [(NudgeTheme.ink,NudgeTheme.canvas),(NudgeTheme.muted,NudgeTheme.canvas),(NudgeTheme.accent,NudgeTheme.surface),(NudgeTheme.accent,NudgeTheme.selectedSurface),(NudgeTheme.primaryText,NudgeTheme.primaryFill),(NudgeTheme.plantText,NudgeTheme.plantSurface),(NudgeTheme.errorText,NudgeTheme.errorSurface),(NudgeTheme.warningText,NudgeTheme.warningSurface)] {
+            for (text, surface) in [(NudgeTheme.ink,NudgeTheme.canvas),(NudgeTheme.muted,NudgeTheme.canvas),(NudgeTheme.accent,NudgeTheme.surface),(NudgeTheme.accent,NudgeTheme.selectedSurface),(NudgeTheme.primaryText,NudgeTheme.primaryFill),(NudgeTheme.diaryActionText,NudgeTheme.diaryAction),(NudgeTheme.plantText,NudgeTheme.plantSurface),(NudgeTheme.errorText,NudgeTheme.errorSurface),(NudgeTheme.warningText,NudgeTheme.warningSurface)] {
                 XCTAssertGreaterThanOrEqual(contrast(text, surface, traits), 4.5)
             }
             XCTAssertGreaterThanOrEqual(contrast(NudgeTheme.strongBorder, NudgeTheme.surface, traits), 3)
             XCTAssertGreaterThanOrEqual(contrast(NudgeTheme.progressFill, NudgeTheme.progressTrack, traits), 3)
         }
-        XCTAssertNotEqual(NudgeTheme.canvas.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light)), NudgeTheme.canvas.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark)))
+        XCTAssertEqual(NudgeTheme.canvas.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light)), NudgeTheme.canvas.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark)))
     }
     func testSharedNativeButtonHasWrappingTitlesDistinctDisabledAndPressedStates() {
         let button = NudgeButton("Photograph the nutrition and ingredients label", variant: .primary)

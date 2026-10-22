@@ -62,6 +62,94 @@ assert.equal(R.record(r,state,options).record.nutritionSnapshot.carbohydrate.por
 const meal={type:'meal',productName:'Smoothie',nutrients:{},meal:{name:'Smoothie',portion:{amount:900,unit:'g'},ingredients:[],plants:[],nutrients:nutrients({energyKcal:600,protein:30,carbohydrate:80,fat:20})}};
 r=R.prepare({kind:'analysis',extraction:meal,confirmationId:'smoothie'},state,options);assert.equal(R.model(r,state,options).measures.some(x=>x.id==='cup'),false);r=R.update(r,{batchVolumeMl:1000},state,options);r=R.update(r,{measureId:'cup'},state,options);r=R.update(r,{quantity:1},state,options);m=R.model(r,state,options);assert.equal(n(m,'energyKcal').value,150);assert.equal(n(m,'carbohydrate').value,20);
 
+// Photo shortcuts use one explicit photo basis, not a remembered grams/ml
+// override or recipe yield. Choosing a half updates all nutrients exactly once.
+{
+  const source={kind:'analysis',extraction:clone(meal),confirmationId:'photo-shortcut'},before=JSON.stringify(source);
+  const whole=R.prepare(source,state,options);
+  assert.equal(R.model(whole,state,options).photoPortion.fraction,1);
+  let selected=R.update(whole,{mealPortion:{amount:450,unit:'g'}},state,options);
+  selected=R.update(selected,{batchServings:4},state,options);
+  selected=R.update(selected,{photoFraction:.5},state,options);
+  let model=R.model(selected,state,options);
+  assert.equal(model.photoPortion.fraction,.5);assert.equal(model.quantity,.5);assert.equal(model.draft.batchServings,1);
+  assert.equal(model.amount,450);assert.equal(model.draft.mealPortion,null);
+  for(const [key,value] of Object.entries({energyKcal:300,protein:15,carbohydrate:40,fat:10}))assert.equal(n(model,key).value,value);
+  const first=R.record(selected,state,options);assert.equal(first.ok,true);assert.equal(first.record.portionAmount,450);
+  assert.equal(first.record.sourceMeta.photoPortions,'0.5');assert.equal(first.record.sourceMeta.mealWholePortion,undefined);
+  selected=R.update(selected,{photoFraction:1},state,options);model=R.model(selected,state,options);
+  assert.equal(model.amount,900);assert.equal(n(model,'energyKcal').value,600);
+  assert.equal(JSON.stringify(source),before,'Photo choices cannot mutate source evidence');
+  const unscaled=R.update(whole,{mealPortion:{amount:500,unit:'ml'}},state,options);
+  assert.equal(R.model(unscaled,state,options).photoPortion.fraction,null,'A separate volume cannot claim a known photo share');
+  const reset=R.model(R.update(unscaled,{photoFraction:.5},state,options),state,options);
+  assert.equal(reset.amount,450);assert.equal(reset.amountUnit,'g');assert.equal(n(reset,'energyKcal').value,300);
+  for(const value of [0,-1,9,'bad',null])assert.equal(R.model(R.update(whole,{photoFraction:value},state,options),state,options).valid,false);
+  const numeric=R.model(R.update(R.update(whole,{mealPortion:{amount:450,unit:'g'}},state,options),{quantity:.25},state,options),state,options);
+  assert.equal(numeric.amount,225);assert.equal(n(numeric,'energyKcal').value,150,'Numeric amount cannot retain a stale whole-portion weight');
+  const savedPhoto=R.model({kind:'entry',entry:first.record,confirmationId:'saved-photo'},state,options);
+  assert.equal(savedPhoto.photoPortion,null,'A saved half-portion must not be labelled as the whole original photo');
+  const readd=R.record(R.update({kind:'entry',entry:first.record,confirmationId:'saved-half'}, {quantity:.5},state,options),state,options);
+  assert.equal(readd.ok,true);assert.equal(readd.record.portions,.5);assert.equal(readd.record.nutritionSnapshot.energyKcal.portion,300);
+  assert.equal(readd.record.portions*readd.record.nutritionSnapshot.energyKcal.portion,150,'Half a saved half portion is a quarter of the original photo');
+  // Old diary photos may contain a previously saved half without recording
+  // its original photo multiplier. Editing cannot rename that basis as whole.
+  const legacy=clone(first.record);delete legacy.sourceMeta.photoPortions;
+  legacy.sourceMeta.mealComposition=[component('Saved photographed food',450,{energyKcal:200/3,protein:10/3,carbohydrate:80/9,fat:20/9})];
+  const legacyBefore=JSON.stringify(legacy),legacyState={foodLog:{entries:[legacy]},nutritionProfile:{}};
+  let legacyEdit=R.update({kind:'entry',entryId:legacy.id},{editSavedCalculation:true},legacyState,options);
+  assert.equal(legacyEdit.kind,'analysis');assert.equal(R.model(legacyEdit,legacyState,options).photoPortion,null);
+  assert.equal(R.model(legacyEdit,legacyState,options).measures.find(m=>m.id==='serving').label,'Share of saved estimate');
+  assert.equal(R.model(legacyEdit,legacyState,options).guidance,'1 means the full saved estimate; 0.5 means half.');
+  near(n(R.model(legacyEdit,legacyState,options),'energyKcal').value,300);
+  legacyEdit=R.update(legacyEdit,{photoFraction:1},legacyState,options);
+  near(n(R.model(legacyEdit,legacyState,options),'energyKcal').value,300);
+  legacyEdit=R.update(legacyEdit,{quantity:.5},legacyState,options);
+  near(n(R.model(legacyEdit,legacyState,options),'energyKcal').value,150);
+  const legacySaved=R.record(legacyEdit,legacyState,options);assert.equal(legacySaved.ok,true);
+  assert.equal(legacySaved.record.sourceMeta.photoPortionBasis,'saved_portion');near(legacySaved.record.nutritionSnapshot.energyKcal.portion,150);
+  const reopenedLegacyState={foodLog:{entries:[legacySaved.record]},nutritionProfile:{}};
+  const reopenedLegacy=R.update({kind:'entry',entryId:legacySaved.record.id},{editSavedCalculation:true},reopenedLegacyState,options);
+  assert.equal(R.model(reopenedLegacy,reopenedLegacyState,options).photoPortion,null,'Saving a new multiplier cannot invent an original photo basis');
+  const legacyReopenedModel=R.model(reopenedLegacy,reopenedLegacyState,options);
+  assert.equal(legacyReopenedModel.quantity,.5,'The retained ingredient calculation stays the internal basis');
+  assert.equal(legacyReopenedModel.measures.find(m=>m.id==='serving').label,'Share of saved estimate');
+  assert.equal(legacyReopenedModel.guidance,'1 means the full saved estimate; 0.5 means half.');
+  assert.equal(legacyReopenedModel.quantityUnit,'of full estimate');
+  const legacyVolume=R.model(R.update(reopenedLegacy,{mealPortion:{amount:200,unit:'ml'}},reopenedLegacyState,options),reopenedLegacyState,options);
+  assert.ok(legacyVolume.mealBuilder.portionExplanation.includes('saved ingredient amounts'));
+  assert.ok(!legacyVolume.mealBuilder.portionExplanation.includes('photographed'));
+  assert.ok(legacyReopenedModel.mealBuilder.options.every(o=>!o.label.startsWith('Photo estimate')),'Measured legacy options cannot invent a photo basis');
+  near(n(R.model(reopenedLegacy,reopenedLegacyState,options),'energyKcal').value,150);
+  assert.equal(JSON.stringify(legacy),legacyBefore,'Opening and editing cannot mutate a stored legacy record');
+  const proven=clone(first.record);proven.sourceMeta.mealComposition=[component('Photographed food',900,{energyKcal:200/3,protein:10/3,carbohydrate:80/9,fat:20/9})];
+  const knownSavedState={foodLog:{entries:[proven]},nutritionProfile:{}};
+  const knownEdit=R.update({kind:'entry',entryId:proven.id},{editSavedCalculation:true},knownSavedState,options);
+  assert.equal(R.model(knownEdit,knownSavedState,options).photoPortion.fraction,.5,'A proven saved half retains the original photo basis');
+  near(n(R.model(R.update(knownEdit,{photoFraction:1},knownSavedState,options),knownSavedState,options),'energyKcal').value,600);
+  for(const multiplier of [undefined,null,'',0,-1,9,'NaN',true,[],['0.5'],'0x1']) {
+    const malformed=clone(proven);malformed.sourceMeta.photoPortions=multiplier;
+    const badState={foodLog:{entries:[malformed]},nutritionProfile:{}};
+    const editing=R.update({kind:'entry',entryId:malformed.id},{editSavedCalculation:true},badState,options);
+    assert.equal(R.model(editing,badState,options).photoPortion,null,'Malformed legacy multiplier cannot prove the photo basis: '+String(multiplier));
+  }
+  for(const marker of ['original_photo','saved_portion-bogus',true,{basis:'saved_portion'}]) {
+    const malformed=clone(legacy);malformed.sourceMeta.photoPortionBasis=marker;
+    const cleaned=s.WmdFoodLog.clean({entries:[malformed]}).entries[0];
+    assert.equal(cleaned.sourceMeta.photoPortionBasis,undefined,'Only the explicit saved_portion marker survives cleaning');
+    const badState={foodLog:{entries:[cleaned]},nutritionProfile:{}};
+    const editing=R.update({kind:'entry',entryId:cleaned.id},{editSavedCalculation:true},badState,options);
+    assert.equal(R.model(editing,badState,options).photoPortion,null,'An arbitrary basis marker cannot replace a proven photo multiplier');
+  }
+  const freshPhoto=R.record({kind:'analysis',entryId:legacySaved.record.id,extraction:clone(meal),confirmationId:'fresh-photo-basis'},reopenedLegacyState,options);
+  assert.equal(freshPhoto.ok,true);assert.equal(freshPhoto.record.sourceMeta.photoPortionBasis,undefined,'A real fresh photo analysis establishes its own basis');
+  assert.equal(freshPhoto.record.nutritionSnapshot.energyKcal.portion,600);
+  const recipeBefore=R.prepare({kind:'analysis',extraction:pie,confirmationId:'recipe-shortcut-exclusion'},state,options);
+  assert.equal(R.model(recipeBefore,state,options).photoPortion,null);
+  assert.equal(R.model(R.update(recipeBefore,{photoFraction:.5},state,options),state,options).recipe.selectedFraction,1,'Photo shortcuts cannot rescale a whole recipe or its separate side');
+  assert.equal(R.model({kind:'product',product,confirmationId:'product-shortcut-exclusion'},state,options).photoPortion,null);
+}
+
 // Estimate labels follow values actually used, including saved values when no
 // rating is available. A retained but unused proposal is not model nutrition.
 {

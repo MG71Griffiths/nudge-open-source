@@ -77,8 +77,7 @@ final class SmartFoodCameraTests: XCTestCase {
         let jpeg = try XCTUnwrap(UIGraphicsImageRenderer(size: CGSize(width: 40, height: 40)).image { context in
             UIColor.orange.setFill(); context.fill(CGRect(x: 0, y: 0, width: 40, height: 40))
         }.jpegData(compressionQuality: 0.8))
-        let headings = ["Point at a barcode, food or meal", "Photo saved. Add a recipe or ingredients?",
-            "Next, add nutritional information?", "One more useful detail?", "4 photos ready to analyse"]
+        let headings = ["Scan a barcode or take a photo", "1 photo ready", "2 photos ready", "3 photos ready", "4 photos ready"]
         func descendants(_ view: UIView) -> [UIView] { [view] + view.subviews.flatMap(descendants) }
         for count in 0...4 {
             let camera = SmartFoodCameraViewController(images: Array(repeating: jpeg, count: count))
@@ -89,7 +88,9 @@ final class SmartFoodCameraTests: XCTestCase {
             let counter = try XCTUnwrap(controls.first { $0.accessibilityIdentifier == "smart-camera-count" } as? UILabel)
             XCTAssertEqual(heading.text, headings[count])
             XCTAssertEqual(detail.text, CameraPhotoGuidance.message(photoCount: count).detail)
-            XCTAssertEqual(counter.text, count == 0 ? "Scan 1 of 4" : "\(count) of 4 photos")
+            XCTAssertEqual(counter.text, "\(count)/4")
+            XCTAssertEqual(counter.accessibilityLabel, "\(count) of 4 photos")
+            XCTAssertTrue(detail.isHidden)
             XCTAssertEqual(detail.alpha, 1); XCTAssertFalse(detail.accessibilityElementsHidden)
             XCTAssertEqual(heading.textColor, .white); XCTAssertEqual(detail.textColor, .white)
             XCTAssertEqual(heading.superview?.backgroundColor?.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light)).cgColor.alpha, 1)
@@ -204,6 +205,22 @@ final class SmartFoodCameraTests: XCTestCase {
         XCTAssertFalse(gate.observe("87654321", at: start.addingTimeInterval(11.7)), "Empty metadata never overrides the session latch")
         gate.allowExplicitRescan()
         XCTAssertTrue(gate.observe("87654321", at: start.addingTimeInterval(11.8)))
+    }
+
+    @MainActor
+    func testUpwardSwipeAndOpenActionOnlyExpandPreparedProduct() throws {
+        let card = CameraProductSummaryView()
+        let swipe = try XCTUnwrap(card.gestureRecognizers?.compactMap { $0 as? UISwipeGestureRecognizer }.first)
+        XCTAssertEqual(swipe.direction, .up)
+        XCTAssertTrue(swipe.delegate === card)
+        var actions: [String] = []
+        card.onAction = { action, _ in actions.append(action) }
+        for status in ["loading", "error", "needs_label", "ready"] {
+            card.update(try XCTUnwrap(CameraProductSummary(object: ["status":status, "compact":true, "name":"Fixture food"])))
+            _ = card.perform(NSSelectorFromString("expand"))
+        }
+        XCTAssertEqual(actions, ["expand"], "Loading and failed lookups cannot open a different or unfinished product")
+        XCTAssertEqual(card.accessibilityCustomActions?.first?.name, "Open product")
     }
 
     @MainActor

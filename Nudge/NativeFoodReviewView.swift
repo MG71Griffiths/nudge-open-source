@@ -39,27 +39,28 @@ struct NativeFoodReviewView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         rating(model)
+                        nutrition(model)
+                            .background(GeometryReader { geometry in
+                                Color.clear.preference(key: CaptureReviewFramesKey.self,
+                                    value: CaptureReviewFrames(nutrition: geometry.frame(in: .global),
+                                        eventID: store.review["eventId"] as? String))
+                            })
                         labelRecovery(model)
-                        if let product = store.review["product"] as? [String: Any] {
-                            NativeProductContextView(product: product,
-                                profile: store.state["nutritionProfile"] as? [String: Any] ?? [:],
-                                avoidMilk: store.state["avoidMilk"] as? Bool == true,
-                                alternativesFirst: true,
-                                onRecallAssessment: { store.applyRecallAssessment(product: product, assessment: $0) },
-                                onOpen: store.openProductFacts)
-                        }
                         allergyNotice(model)
-                        ForEach(model["evidenceWarnings"] as? [String] ?? [], id: \.self) { notice($0, error: false) }
+                        if let warnings = model["evidenceWarnings"] as? [String], !warnings.isEmpty {
+                            DisclosureGroup("Check food details") {
+                                ForEach(warnings, id: \.self) { notice($0, error: false) }
+                            }.font(.subheadline.weight(.semibold)).reviewCard()
+                        }
                         if let errors = model["errors"] as? [String], !errors.isEmpty {
                             ForEach(errors, id: \.self) { notice($0, error: true) }
                         }
-                        productRecovery
                         recipeChoices(model)
-                        recipeOptions(model)
+                        portion(model).id("review-portion")
                         if let builder = model["mealBuilder"] as? [String: Any] {
                             NativeMealIngredientPicker(model: builder, canAnalyse: store.reviewHasPhotos,
                                 isAnalysing: store.mealRefinementSubmitting || store.loading, statusMessage: store.mealRefinementMessage,
-                                analysisServiceText: "New analyses: " + store.photoAnalysisServiceText + " Saved pending analyses keep their original account and service.",
+                                analysisServiceText: store.photoAnalysisServiceText,
                                 onDraftChange: { mealDraft.patch = $0; if !hasPendingMealChanges { hasPendingMealChanges = true } }, onApply: applyMealDraft,
                                 onDiscardDraft: { mealDraft.patch = nil; hasPendingMealChanges = false },
                                 onAnalyse: {
@@ -68,44 +69,21 @@ struct NativeFoodReviewView: View {
                                     return true
                                 }, onSearch: { store.project("mealIngredientSearch", ["query": $0]) })
                                 .id(string(model, "confirmationId"))
-                                .id(dictionary(model, "recipe").isEmpty ? "review-portion" : "review-ingredients")
+                                .id("review-ingredients")
                         }
-                        if !dictionary(model, "recipe").isEmpty || dictionary(model, "mealBuilder").isEmpty {
-                            portion(model).id("review-portion")
-                        }
-                        nutrition(model)
-                            .background(GeometryReader { geometry in
-                                Color.clear.preference(key: CaptureReviewFramesKey.self,
-                                    value: CaptureReviewFrames(nutrition: geometry.frame(in: .global),
-                                        eventID: store.review["eventId"] as? String))
-                            })
-                        DisclosureGroup("Date") {
+                        DisclosureGroup("Date · " + NativeTrackingDisplay.dateLabel(string(dictionary(model, "draft"), "day"), format: "EEE d MMM")) {
                             timing(model).padding(.top, 12)
                         }
                         .font(.subheadline.weight(.semibold)).reviewCard()
-                        planning(model)
-                        if dictionary(model, "mealBuilder").isEmpty { ingredients(model) }
-                        if !rows(model, "components").isEmpty {
-                            if dictionary(model, "mealBuilder").isEmpty { componentEditor(model) }
-                            else { DisclosureGroup("Ingredient sources and amounts · optional") { componentEditor(model).padding(.top, 12) }.reviewCard() }
+                        if let product = store.review["product"] as? [String: Any] {
+                            NativeProductContextView(product: product,
+                                profile: store.state["nutritionProfile"] as? [String: Any] ?? [:],
+                                avoidMilk: store.state["avoidMilk"] as? Bool == true,
+                                alternativesFirst: true,
+                                onRecallAssessment: { store.applyRecallAssessment(product: product, assessment: $0) },
+                                onOpen: store.openProductFacts)
                         }
-                        if bool(model, "canEditSavedCalculation") {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Button("Edit saved ingredient calculation") { change(["editSavedCalculation": true]) }
-                                    .buttonStyle(NudgeButtonStyle(variant: .secondary))
-                                Text(isSavedFoodReview
-                                     ? "Recalculate from your saved ingredient sources. Existing diary entries keep their original values."
-                                     : "Recalculate a review draft from your saved ingredient sources. Your diary changes when you save.")
-                                    .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                            }.reviewCard()
-                        }
-                        DisclosureGroup("Edit food details") { detailsEditor(model).padding(.top, 12) }
-                            .font(.subheadline.weight(.semibold)).reviewCard()
-                        Text(isSavedFoodReview
-                             ? "Save your ingredients and portion for next time. Add this food to your diary when you eat it."
-                             : "Confirm the ingredients and amount match what you ate. Missing nutrition stays unknown.")
-                            .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                        sources(model)
+                        reviewDetails(model)
                     }
                     .padding(16).frame(maxWidth: 620).frame(maxWidth: .infinity)
                 }
@@ -140,6 +118,26 @@ struct NativeFoodReviewView: View {
             Button("Close", role: .cancel) { store.analysisFailure = nil }
         } message: { Text(store.analysisFailure ?? "Your photos are still available.") }
         .onChange(of: string(model, "confirmationId")) { _ in mealDraft.patch = nil; hasPendingMealChanges = false }
+    }
+
+    private func reviewDetails(_ model: [String: Any]) -> some View {
+        DisclosureGroup("Details & sources") {
+            VStack(alignment: .leading, spacing: 16) {
+                productRecovery
+                recipeOptions(model)
+                planning(model)
+                if dictionary(model, "mealBuilder").isEmpty { ingredients(model) }
+                if !rows(model, "components").isEmpty {
+                    DisclosureGroup("Ingredient amounts") { componentEditor(model).padding(.top, 12) }
+                }
+                if bool(model, "canEditSavedCalculation") {
+                    Button("Edit saved ingredient calculation") { change(["editSavedCalculation": true]) }
+                        .buttonStyle(NudgeButtonStyle(variant: .secondary))
+                }
+                DisclosureGroup("Edit food details") { detailsEditor(model).padding(.top, 12) }
+                sources(model)
+            }.padding(.top, 12)
+        }.font(.subheadline.weight(.semibold)).reviewCard()
     }
 
     private func recordCaptureVisibility(_ frames: CaptureReviewFrames) {
@@ -247,7 +245,7 @@ struct NativeFoodReviewView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "fork.knife")
                     let amount = number(model, "amount").map(format) ?? modelValue(model["quantity"])
-                    Text("Portion" + (amount.isEmpty ? "" : " · " + amount + " " + string(model, "amountUnit", fallback: selectedMeasure(model))))
+                    Text(portionLabel(model, fallback: amount.isEmpty ? "Portion" : amount + " " + string(model, "amountUnit", fallback: selectedMeasure(model))))
                         .multilineTextAlignment(.leading)
                     Spacer(minLength: 0)
                     Text("Edit").fontWeight(.semibold)
@@ -261,10 +259,10 @@ struct NativeFoodReviewView: View {
                 .disabled(!bool(model, "valid") && !hasPendingMealChanges)
                 .reviewControl("native-review-save-changes")
             }
-            Button((bool(model, "editing") ? "Save to " : "Add to ") + NativeTrackingDisplay.dateLabel(string(dictionary(model, "draft"), "day"), format: "EEE d MMM")) {
+            Button(diaryActionTitle(model)) {
                 if applyMealDraft() { _ = store.perform("reviewConfirm") }
             }
-            .buttonStyle(NudgeButtonStyle(variant: isSavedFoodReview ? .secondary : .primary))
+            .buttonStyle(NudgeButtonStyle(variant: .diary))
             .disabled(!bool(model, "valid") && !hasPendingMealChanges)
             .reviewControl("native-review-confirm")
         }
@@ -281,9 +279,7 @@ struct NativeFoodReviewView: View {
         if string(extraction, "type") == "product", number(dictionary(model, "score"), "value") == nil,
            bool(extraction, "needsClearerPhoto") || recovery.contains(where: { ["nutrition", "ingredients"].contains(string($0, "field")) }) {
             VStack(alignment: .leading, spacing: 10) {
-                Text("Add nutrition and ingredient labels").font(.headline)
-                Text("The available photos do not provide enough label information for a nutrition rating.")
-                    .font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                Text("Label needed to rate").font(.headline)
                 Button("Photograph labels") { store.startCamera(repair: true) }
                     .buttonStyle(NudgeButtonStyle(variant: .secondary))
                     .disabled(store.loading)
@@ -295,12 +291,12 @@ struct NativeFoodReviewView: View {
     @ViewBuilder private var productRecovery: some View {
         if store.review["product"] is [String: Any] {
             if store.recoveringProduct {
-                HStack(spacing: 10) { ProgressView(); Text("Checking for missing product facts…").font(.subheadline) }
+                HStack(spacing: 10) { ProgressView(); Text("Checking product facts…").font(.subheadline) }
                     .reviewCard()
             } else if let message = store.productRecoveryMessage, !message.isEmpty {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(message).font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    Button("Try checking product facts again") { store.retryProductRecovery() }
+                    Button("Try again") { store.retryProductRecovery() }
                         .buttonStyle(NudgeButtonStyle(variant: .secondary))
                         .accessibilityIdentifier("native-review-retry-recovery")
                 }.reviewCard()
@@ -315,13 +311,17 @@ struct NativeFoodReviewView: View {
         let traces = allergy["traces"] as? [String] ?? []
         if !conflicts.isEmpty || !contains.isEmpty || !traces.isEmpty || bool(allergy, "unknown") || !(allergy["manufacturing"] as? [String] ?? []).isEmpty {
             VStack(alignment: .leading, spacing: 8) {
-                Label("Ingredients and allergens", systemImage: "exclamationmark.triangle").font(.headline)
+                Label("Allergens", systemImage: "exclamationmark.triangle").font(.headline)
                 ForEach(conflicts, id: \.self) { Text($0).font(.subheadline.weight(.semibold)) }
                 if !contains.isEmpty { Text("Contains: " + contains.joined(separator: ", ")).font(.subheadline) }
                 if !traces.isEmpty { Text("May contain: " + traces.joined(separator: ", ")).font(.subheadline) }
-                if bool(allergy, "unknown") { Text("Some ingredient or allergen information is missing.").font(.subheadline) }
-                ForEach(allergy["manufacturing"] as? [String] ?? [], id: \.self) { Text($0).font(.caption) }
-                Text(string(allergy, "advice")).font(.caption)
+                if bool(allergy, "unknown") { Text("Allergens unconfirmed").font(.subheadline) }
+                DisclosureGroup("Allergen details") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(allergy["manufacturing"] as? [String] ?? [], id: \.self) { Text($0) }
+                        if !string(allergy, "advice").isEmpty { Text(string(allergy, "advice")) }
+                    }.font(.caption).padding(.top, 6)
+                }.font(.caption)
             }
             .foregroundStyle(Color(uiColor: NudgeTheme.warningText))
             .padding(18).frame(maxWidth: .infinity, alignment: .leading)
@@ -348,28 +348,29 @@ struct NativeFoodReviewView: View {
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(number(score, "value").map { (0...100).contains($0) } == true
-                         ? (directional ? "Nudge score" : "Nudge nutrition rating") : "Nutrition rating unavailable").font(.headline)
+                         ? "Nudge score" : "Not rated").font(.headline)
                     if isEstimatedScore(score) {
                         estimateBadge(string(score, "status").contains("provisional") ? "Estimated · provisional" : "Estimated")
                             .accessibilityIdentifier("native-review-score-estimated")
                     }
-                    if !directional, !string(model, "scoreStatus").isEmpty { Text(string(model, "scoreStatus")).font(.caption) }
-                    let reason = string(score, "reason")
-                    if !reason.isEmpty { Text(reason).font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted)) }
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
             let method = string(score, "methodId", fallback: string(score, "methodVersion"))
             let version = string(score, "version")
             if directional {
-                DisclosureGroup("How this rating works") {
+                DisclosureGroup("About this score") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("A practical guide based on available nutrition and food information. Our scoring improves over time.")
+                        let reason = string(score, "reason")
+                        if !reason.isEmpty { Text(reason) }
+                        Text("A guide based on available food and nutrition information.")
                         ForEach(score["assumptions"] as? [String] ?? [], id: \.self) { Text($0) }
                     }.font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)).padding(.top, 6)
                 }.font(.caption).multilineTextAlignment(.leading)
             } else if method == "nudge_nutrition_v0_3" {
-                DisclosureGroup("How this rating works") {
+                DisclosureGroup("About this score") {
                     VStack(alignment: .leading, spacing: 8) {
+                        let reason = string(score, "reason")
+                        if !reason.isEmpty { Text(reason) }
                         Text("Based on Nutri-Score 2023. Nudge displays A as 100, B as 75, C as 50, D as 25 and E as 0.")
                         Text("This is a score out of 100, not a percentage of how healthy a food is. Estimates are labelled. Cycle suitability and portion guidance are separate.")
                         if let evidence = score["provider"] as? [String: Any], evidence["source"] as? String == "Open Food Facts" {
@@ -377,9 +378,13 @@ struct NativeFoodReviewView: View {
                         }
                     }.font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)).padding(.top, 6)
                 }.font(.caption).multilineTextAlignment(.leading)
-            } else if !method.isEmpty {
-                Text(method + (version.isEmpty ? "" : " · v" + version))
-                    .font(.caption2).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+            } else if !method.isEmpty || !string(score, "reason").isEmpty {
+                DisclosureGroup("About this score") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if !string(score, "reason").isEmpty { Text(string(score, "reason")) }
+                        if !method.isEmpty { Text(method + (version.isEmpty ? "" : " · v" + version)).font(.caption2) }
+                    }.font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)).padding(.top, 6)
+                }.font(.caption)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading).reviewCard()
@@ -421,8 +426,6 @@ struct NativeFoodReviewView: View {
         let choices = rows(model, "recipeChoices")
         if !choices.isEmpty {
             panel("Which ingredients did you use?") {
-                Text("Choose one ingredient from each alternative in the recipe. Nutrition updates for your selected share.")
-                    .font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted))
                 ForEach(choices, id: \.nativeReviewID) { choice in
                     VStack(alignment: .leading, spacing: 10) {
                         Text(string(choice, "title")).font(.subheadline.weight(.semibold))
@@ -447,7 +450,7 @@ struct NativeFoodReviewView: View {
                             }
                         }
                         if selected.isEmpty {
-                            Text("Not included in the total until you choose.")
+                            Text("Choose to include")
                                 .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
                         }
                     }.padding(.vertical, 6)
@@ -459,9 +462,9 @@ struct NativeFoodReviewView: View {
     private func nutrition(_ model: [String: Any]) -> some View {
         let explanation = string(model, "nutritionExplanation")
         let partialRecipe = !explanation.isEmpty && rows(model, "nutrients").contains { bool($0, "partial") }
-        return panel(partialRecipe ? "Partial recipe nutrition" : "Nutrition for your selected amount") {
+        return panel(partialRecipe ? "Nutrition · partial" : "Nutrition") {
             if bool(model, "nutritionEstimated") {
-                estimateBadge("Estimated nutrition")
+                estimateBadge("Estimated")
                     .accessibilityIdentifier("native-review-nutrition-estimated")
             }
             let recipe = dictionary(model, "recipe")
@@ -470,11 +473,6 @@ struct NativeFoodReviewView: View {
                     .font(.subheadline.weight(.semibold))
                     .accessibilityIdentifier("native-review-recipe-nutrition-share")
             }
-            if !explanation.isEmpty {
-                Text(explanation).font(.subheadline.weight(.semibold))
-                    .foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    .accessibilityIdentifier("native-review-recipe-nutrition-explanation")
-            }
             let metrics = rows(model, "compactMetrics")
             if let energy = metrics.first(where: { string($0, "key") == "energy" }) { nutritionLine(energy) }
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), alignment: .top), count: textSize.isAccessibilitySize ? 1 : 2), alignment: .leading, spacing: 18) {
@@ -482,11 +480,21 @@ struct NativeFoodReviewView: View {
             }
             let plants = dictionary(model, "plantSummary")
             if let total = number(plants, "total"), let added = number(plants, "newCount") {
-                Text("\(format(total)) plant types in this food · \(format(added)) new to the destination week.")
+                Label("\(format(total)) plants · \(format(added)) new this week", systemImage: "leaf")
                     .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             }
-            let source = string(model, "targetModeLabel")
-            if !source.isEmpty { Text(source).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)) }
+            if !explanation.isEmpty || metrics.contains(where: { number($0, "target") == nil }) {
+                DisclosureGroup("Nutrition details") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        if !explanation.isEmpty {
+                            Text(explanation).accessibilityIdentifier("native-review-recipe-nutrition-explanation")
+                        }
+                        ForEach(metrics.filter { number($0, "target") == nil }, id: \.nativeReviewKey) { metric in
+                            Text(string(metric, "title") + ": " + string(metric, "targetReason", fallback: "Target unavailable"))
+                        }
+                    }.font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)).padding(.top, 8)
+                }.font(.caption)
+            }
         }
     }
 
@@ -523,15 +531,8 @@ struct NativeFoodReviewView: View {
                     Capsule().fill(color).frame(width: geometry.size.width * min(1, max(0, number(nutrient, "ratio") ?? 0)))
                 }
             }.frame(height: 6).accessibilityHidden(true)
-            let targetLabel = string(nutrient, "targetLabel", fallback: "Target")
-            Text(target == nil && !targetLabel.localizedCaseInsensitiveContains("unavailable") ? targetLabel + " unavailable" : targetLabel)
-                .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-            if target == nil, let reason = nutrient["targetReason"] as? String, !reason.isEmpty {
-                Text(reason).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
             if (number(nutrient, "unknown") ?? 0) > 0 {
-                Text(number(nutrient, "value") == nil ? "Nutrition unavailable" : "Partial · known amounts only")
+                Text(number(nutrient, "value") == nil ? "Nutrition unavailable" : "Partial")
                     .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             }
         }
@@ -542,7 +543,14 @@ struct NativeFoodReviewView: View {
     private func portion(_ model: [String: Any]) -> some View {
         let draft = dictionary(model, "draft")
         let recipe = dictionary(model, "recipe")
-        return panel("How much are you having?") {
+        return panel("Your portion") {
+            let photo = dictionary(model, "photoPortion")
+            if !photo.isEmpty {
+                VStack(spacing: 10) {
+                    photoPortionShortcut("This photo estimate", fraction: 1, model: model)
+                    photoPortionShortcut("Half of photo estimate", fraction: 0.5, model: model)
+                }
+            }
             if !recipe.isEmpty && !bool(recipe, "userEdited") {
                 DisclosureGroup(string(model, "nutritionExplanation").isEmpty ? "Whole dish nutrition" : "Whole dish nutrition · incomplete") {
                     VStack(alignment: .leading, spacing: 8) {
@@ -571,9 +579,28 @@ struct NativeFoodReviewView: View {
                 NativeReviewNumberField(title: "Fraction of the dish", value: modelValue(recipe["selectedFraction"]), unit: "of 1 whole dish") {
                     change(["recipeFraction": $0])
                 }
-                Text("Recipe ingredients scale to your share. Any photographed sides stay separate; ingredient weight is not cooked dish weight.")
+                Text("Sides stay separate. Ingredient weights are uncooked.")
                     .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             }
+            if !photo.isEmpty || !recipe.isEmpty {
+                DisclosureGroup("Other amount") { numericPortion(model).padding(.top, 10) }
+                    .font(.subheadline)
+            } else { numericPortion(model) }
+            if bool(model, "isMeal") && recipe.isEmpty {
+                DisclosureGroup("Batch and volume") {
+                    VStack(alignment: .leading, spacing: 12) {
+                        NativeReviewNumberField(title: "Servings in the full batch", value: modelValue(draft["batchServings"]), unit: "servings") { change(["batchServings": $0]) }
+                        NativeReviewNumberField(title: "Measured full batch volume", value: modelValue(draft["batchVolumeMl"]), unit: "ml · optional") { change(["batchVolumeMl": $0]) }
+                        Text("Enter volume only if measured. Cups use 250 ml; half a UK pint is approximately 284 ml. Grams are not converted to ml.")
+                            .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                    }.padding(.top, 10)
+                }
+            }
+        }
+    }
+
+    private func numericPortion(_ model: [String: Any]) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
             Picker("Measure", selection: Binding(get: { string(model, "measureId") }, set: { change(["measureId": $0]) })) {
                 ForEach(rows(model, "measures"), id: \.nativeReviewID) { measure in
                     Text(string(measure, "label")).tag(string(measure, "id"))
@@ -581,7 +608,7 @@ struct NativeFoodReviewView: View {
             }
             .pickerStyle(.menu).frame(minHeight: 48)
             .accessibilityIdentifier("native-review-measure")
-            NativeReviewNumberField(title: "Amount eaten", value: modelValue(model["quantity"]), unit: selectedMeasure(model)) {
+            NativeReviewNumberField(title: string(model, "kind") == "entry" && string(model, "measureId") == "serving" ? "Number of saved portions" : "Amount", value: modelValue(model["quantity"]), unit: string(model, "quantityUnit", fallback: selectedMeasure(model))) {
                 change(["quantity": $0])
             }
             let quantity = number(model, "quantity") ?? Double(string(model, "quantity")) ?? 0
@@ -596,17 +623,7 @@ struct NativeFoodReviewView: View {
             if let amount = number(model, "amount"), !string(model, "amountUnit").isEmpty {
                 Text("\(format(amount)) \(string(model, "amountUnit")) selected").font(.subheadline.weight(.semibold))
             }
-            Text(string(model, "guidance")).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-            if bool(model, "isMeal") && recipe.isEmpty {
-                DisclosureGroup("Batch and volume") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        NativeReviewNumberField(title: "Servings in the full batch", value: modelValue(draft["batchServings"]), unit: "servings") { change(["batchServings": $0]) }
-                        NativeReviewNumberField(title: "Measured full batch volume", value: modelValue(draft["batchVolumeMl"]), unit: "ml · optional") { change(["batchVolumeMl": $0]) }
-                        Text("Enter volume only if measured. Cups use 250 ml; half a UK pint is approximately 284 ml. Grams are not converted to ml.")
-                            .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    }.padding(.top, 10)
-                }
-            }
+            if !string(model, "guidance").isEmpty { Text(string(model, "guidance")).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)) }
         }
     }
 
@@ -743,6 +760,40 @@ struct NativeFoodReviewView: View {
                 }
             }
         }
+    }
+
+    private func portionLabel(_ model: [String: Any], fallback: String) -> String {
+        guard let fraction = number(dictionary(model, "photoPortion"), "fraction") else { return fallback }
+        if fraction == 1 { return "This photo estimate" }
+        if fraction == 0.5 { return "Half of photo estimate" }
+        return format(fraction) + " × photo estimate"
+    }
+
+    private func diaryActionTitle(_ model: [String: Any]) -> String {
+        if bool(model, "editing") { return "Save diary changes" }
+        if let fraction = number(dictionary(model, "photoPortion"), "fraction") {
+            if fraction == 1 { return "Add this photo estimate" }
+            if fraction == 0.5 { return "Add half of photo estimate" }
+            return "Add selected photo estimate"
+        }
+        return "Add to diary"
+    }
+
+    private func photoPortionShortcut(_ title: String, fraction: Double, model: [String: Any]) -> some View {
+        let selected = number(dictionary(model, "photoPortion"), "fraction") == fraction
+        return Button {
+            if applyMealDraft() { change(["photoFraction": fraction]) }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                Text(title).font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
+            }.frame(maxWidth: .infinity, minHeight: 48).padding(.horizontal, 12)
+                .foregroundStyle(Color(uiColor: selected ? NudgeTheme.diaryAction : NudgeTheme.ink))
+                .background(Color(uiColor: selected ? NudgeTheme.diaryAction : NudgeTheme.canvas).opacity(selected ? 0.1 : 1), in: RoundedRectangle(cornerRadius: 14))
+        }.buttonStyle(.plain)
+            .accessibilityAddTraits(selected ? .isSelected : [])
+            .accessibilityIdentifier(fraction == 1 ? "native-review-photo-whole" : "native-review-photo-half")
     }
 
     private func portionShortcut(_ label: String, value: Double, current: Double?, field: String) -> some View {

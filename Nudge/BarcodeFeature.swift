@@ -1721,8 +1721,16 @@ struct ProductSearchCategory: Identifiable, Equatable, Hashable {
             ("juice", "Fruit juice", ["en:fruit-juices", "en:fruit-nectars"], "drop"),
             ("drinks", "Drinks", ["en:beverages"], "cup.and.saucer")
         ]
-        return rows.enumerated().map { index, row in
-            Self(id: row.0, title: row.1, tags: row.2, symbol: row.3, colourIndex: index % 6)
+        // Category identity, rather than list position, determines its colour.
+        let colours: [String: Int] = [
+            "fruit": 1, "vegetables": 5, "salad": 5, "dairy": 3, "eggs": 2, "cheese": 2,
+            "yoghurt": 0, "meat": 1, "fish": 3, "alternatives": 5, "bakery": 2, "ready": 4,
+            "pulses": 5, "pasta": 2, "rice": 2, "cereals": 2, "nuts": 5, "frozen": 3,
+            "tins": 4, "snacks": 1, "desserts": 0, "icecream": 4, "chocolate": 0,
+            "sauces": 1, "spreads": 0, "baking": 2, "juice": 1, "drinks": 4
+        ]
+        return rows.map { row in
+            Self(id: row.0, title: row.1, tags: row.2, symbol: row.3, colourIndex: colours[row.0] ?? 3)
         }
     }()
 }

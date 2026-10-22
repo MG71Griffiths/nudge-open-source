@@ -84,7 +84,7 @@
     let options=volume?[{label:'250 ml',amount:250,unit:'ml'},{label:'500 ml',amount:500,unit:'ml'},...(context.kind==='soup'?[]:[{label:'UK pint',amount:detail().HALF_UK_PINT_ML*2,unit:'ml'}])]:
       (snack?[30,50,100]:breakfast?[150,250,350]:[250,400,500]).map(amount=>({label:amount+' g',amount,unit:'g'}));
     const base=r.extraction?.meal?.portion||(r.entry?{amount:r.entry.portionAmount,unit:r.entry.portionUnit}:null);
-    if(positive(base?.amount)&&base.amount<=5000&&['g','ml'].includes(base.unit)&&!options.some(o=>o.amount===base.amount&&o.unit===base.unit))options.unshift({label:'Photo estimate · '+Number(base.amount.toFixed(1))+' '+base.unit,amount:base.amount,unit:base.unit});
+    if(positive(base?.amount)&&base.amount<=5000&&['g','ml'].includes(base.unit)&&!options.some(o=>o.amount===base.amount&&o.unit===base.unit))options.unshift({label:(r.kind==='entry'?'Saved portion':knownPhotoPortionBasis(r)?'Photo estimate':'Saved estimate')+' · '+Number(base.amount.toFixed(1))+' '+base.unit,amount:base.amount,unit:base.unit});
     return {options,defaultUnit:volume?'ml':'g',step:snack?10:25,portionKind:volume?(context.kind==='soup'?'soup':'drink'):snack?'snack':'meal'};
   }
   function mealBuilder(r){
@@ -96,7 +96,7 @@
     const portions=mealPortionOptions(r,context);
     return {selected,confirmed:r.draft.mealIngredientsConfirmed===true||selected.length>0,catalogue,allIngredients,maximum:40,portion:r.draft.mealPortion||meta.mealWholePortion||null,...portions,
       explanation:'Ideas for '+(context.name||'your meal')+'. Tap only what you used; these are editable suggestions.',
-      portionExplanation:r.draft.mealPortion?.nutritionScaled===false?'Your whole portion is recorded. Nutrition keeps the photographed ingredient amounts; grams and ml are not interchangeable.':'Choose the amount you ate or drank. These are editable amounts, not a recommended serving.'};
+      portionExplanation:r.draft.mealPortion?.nutritionScaled===false?'Your whole portion is recorded. Nutrition keeps the '+(r.kind==='entry'||!knownPhotoPortionBasis(r)?'saved':'photographed')+' ingredient amounts; grams and ml are not interchangeable.':'Choose the amount you ate or drank. These are editable amounts, not a recommended serving.'};
   }
   function applyMealIngredients(r,value){
     if(!mealBuilderEligible(r))return;
@@ -151,8 +151,26 @@
     const fraction=compatible?amount/original.amount:r.draft.amount;
     if(compatible&&(fraction<.0001||fraction>8)){r.draft.inputError='Choose an amount up to eight photographed portions.';return;}
     r.draft.mealPortion={amount,unit,source:'user',nutritionScaled:compatible};
+    delete r.draft.photoFractionSelected;
     if(compatible){r.draft.amount=fraction;r.draft.measureId='serving';r.draft.quantity=fraction;}
     r.draft.portionConfirmed=true;r.draft.quantityError='';
+  }
+  function knownPhotoPortionBasis(r){
+    if(!r.editingSavedCalculation)return true;
+    const meta=r.entry?.sourceMeta||{},scale=num(meta.photoPortions);
+    return meta.photoPortionBasis!=='saved_portion'&&positive(scale)&&scale<=8;
+  }
+  function selectPhotoFraction(r,value){
+    // Photo choices refer to the analysed photo basis. A recipe's whole dish
+    // and an existing diary entry's saved portion are different bases.
+    if(r.kind!=='analysis'||r.extraction?.type!=='meal'||usableRecipe(r.extraction.meal?.recipeCalculation)||!knownPhotoPortionBasis(r))return;
+    const fraction=num(value),info=mealMeasures(r);
+    if(!positive(fraction)||fraction<info.minimum||fraction>info.maximum){r.draft.inputError='Choose an amount within the photo estimate range.';return;}
+    r.draft.amount=fraction;r.draft.quantity=fraction;r.draft.measureId='serving';r.draft.batchServings=1;
+    r.draft.portionConfirmed=true;r.draft.quantityError='';
+    // Do not retain a separate grams/ml override for a newly chosen photo share.
+    r.draft.mealPortion=null;r.draft.photoFractionSelected=true;
+    delete r.extraction.meal.userPortion;
   }
   function analysis(){return root.NudgeAnalysisResult.create({
     names:(...args)=>root.WmdFoodLog.names(...args),
@@ -244,7 +262,7 @@
   function editSavedCalculation(r){
     const entry=r.entry,meta=entry?.sourceMeta,components=meta?.mealComposition;
     if(r.kind!=='entry'||(!Array.isArray(components)&&meta?.nutritionEstimate!=='photo'))return r;
-    const scale=Number(meta.photoPortions),baseScale=scale>0&&scale<=8?scale:1,amount=r.draft.amount*baseScale;
+    const scale=num(meta.photoPortions),baseScale=positive(scale)&&scale<=8?scale:1,amount=r.draft.amount*baseScale;
     // Meal ingredients were saved as a comma-separated list. Restore that
     // entire confirmed list, not just its botanical subset: choosing a recipe
     // alternative must retain the other ingredient and allergen declarations.
@@ -272,6 +290,16 @@
   function mealMeasures(r){
     const base=r.kind==='entry'?{amount:r.entry?.portionAmount,unit:r.entry?.portionUnit}:r.extraction?.meal?.portion;
     const measures=detail().mealMeasures(base,{servings:r.draft.batchServings,volumeMl:r.draft.batchVolumeMl});
+    const savedCalculation=r.editingSavedCalculation&&!knownPhotoPortionBasis(r);
+    if(r.kind==='entry'||savedCalculation){
+      const basis=savedCalculation?'saved ingredient calculation':'saved portion';
+      measures.options=measures.options.map(measure=>measure.id==='serving'?{...measure,
+        label:savedCalculation?'Share of saved estimate':measures.servings===1?'saved portion':'share of saved portion',
+        plural:savedCalculation?'shares of saved estimate':'saved portions',...(savedCalculation?{quantityUnit:'of full estimate'}:{}),
+        description:savedCalculation?(measures.servings===1?'1 means the full saved estimate; 0.5 means half.':'One of '+measures.servings+' shares of the full saved estimate'):measures.servings===1?'One full '+basis:'One of '+measures.servings+' shares of the '+basis}:
+        measure.id==='batch'?{...measure,label:savedCalculation?'Saved estimate':basis,plural:basis+'s',description:savedCalculation?'The full saved estimate':'The full '+basis}:
+        {...measure,description:measure.description.replace('analysed',savedCalculation?'saved estimate’s':'saved')});
+    }
     if(r.kind==='entry'&&r.legacyProductMultiple)measures.maximum=Math.max(measures.maximum,r.legacyProductMultiple);
     const recipe=r.extraction?.meal?.recipeCalculation;
     if(usableRecipe(recipe)&&recipe.applied&&!recipe.userEdited){
@@ -302,6 +330,7 @@
     r.draft.inputError='';
     if(Object.hasOwn(patch,'mealIngredients'))applyMealIngredients(r,patch.mealIngredients);
     if(Object.hasOwn(patch,'mealPortion')&&!r.draft.inputError)applyMealPortion(r,patch.mealPortion);
+    if(Object.hasOwn(patch,'photoFraction')&&!r.draft.inputError)selectPhotoFraction(r,patch.photoFraction);
     const d=r.draft,e=r.extraction,p=r.product;
     for(const key of ['name','brand','day','slot'])if(Object.hasOwn(patch,key)){
       const value=text(patch[key],key==='brand'?80:100);d[key]=value;
@@ -325,7 +354,11 @@
         if(portion){d.portion=portion;d.quantityError='';}else d.quantityError='Enter a positive amount up to 5,000 g or ml.';
       }else{
         const info=r.kind==='entry'||e?.type==='meal'?mealMeasures(r):null,measure=info?selectedMeasure(r):null,amount=value===null?null:value*(measure?.factor||1);
-        if(amount!==null&&amount>=(info?.minimum||.1)&&amount<=(info?.maximum||5000)){d.amount=amount;d.portionConfirmed=true;d.quantityError='';}
+        if(amount!==null&&amount>=(info?.minimum||.1)&&amount<=(info?.maximum||5000)){
+          d.amount=amount;d.portionConfirmed=true;d.quantityError='';
+          const base=r.kind==='entry'?{amount:r.entry?.portionAmount,unit:r.entry?.portionUnit}:e?.meal?.portion;
+          if(d.mealPortion?.nutritionScaled===true&&positive(base?.amount)&&base.unit===d.mealPortion.unit)d.mealPortion.amount=base.amount*amount;
+        }
         else d.quantityError='Enter a positive amount within the displayed portion range.';
       }
     }
@@ -525,6 +558,7 @@
     return {version:VERSION,kind:r.kind,title:d.name||'Review your food',draft:d,editing:Boolean(r.entryId),image:r.photos?.[0]||root.WmdFoodLog.entryImage?.(oldEntry(r,state)||r.entry)||r.thumbnail||root.NudgeProductEvidence.publicProductImage(p)||r.entry?.sourceMeta?.repertoireImage||'',
       ...(root.NudgeToday?.compactReview?root.NudgeToday.compactReview(state,d.day,snap,plants,r.entryId,options.today||d.day,p?detail().plants(p).known:plants.length>0||d.plantSelectionConfirmed||d.mealIngredientsConfirmed&&d.mealIngredients.length===0||r.entry?.sourceMeta?.plantKnowledge==='known'||Boolean((r.extraction?.ingredients||r.entry?.ingredients)?.text&&!(r.extraction?.ingredients||r.entry?.ingredients)?.needsReview)):{}),
       mealBuilder:builder,
+      photoPortion:meal&&!usableRecipe(r.extraction.meal?.recipeCalculation)&&knownPhotoPortionBasis(r)?{fraction:d.mealPortion?.nutritionScaled===false?null:d.amount}:null,
       score,scoreStatus:score?.methodId==='nudge_nutrition_v0_4'&&score?.value!=null?'Nudge score':root.NudgeFrequency?.legacy(score)?'Historical rating':score?.status==='estimated_rough'?'Rough estimate':score?.estimated||/^estimated/.test(score?.status||'')?(/provisional/.test(score?.status||'')?'Estimated · provisional rating':'Estimated rating'):/provisional/.test(score?.status||'')?'Provisional rating':score?.value!=null?'Nudge nutrition rating':'Rating unavailable',
       // Use applied nutrient provenance, not the presence of an unused model
       // proposal or score availability. Saved entries keep their own snapshot.
@@ -537,7 +571,7 @@
       editableNutrients:fields.map(([key,title,unit])=>({key,title,unit,value:p?detail().value(p,key):r.extraction?r.extraction.nutrients?.[key]?.value??null:root.NudgeComposition.intakeNutrient(r.entry||{},key).partial?null:root.NudgeComposition.intakeNutrient(r.entry||{},key).value})),
       nutritionEditBasis:p?'per 100 '+(p.basisUnit||'g'):entry?'per saved portion':meal?'per analysed portion':r.extraction?.basis||'unknown',
       basis:p?.basisUnit||r.extraction?.basis||'',nutritionPreparation:p?.nutritionPreparation||r.extraction?.nutritionPreparation||'unknown',servingSize:r.extraction?.servingSize||null,
-      measures:info.options,measureId:p?d.portion.measureId:d.measureId||d.unit,quantity:d.quantity,step:measure?.step||1,
+      measures:info.options,measureId:p?d.portion.measureId:d.measureId||d.unit,quantity:d.quantity,quantityUnit:measure?.quantityUnit||measure?.label||'',step:measure?.step||1,
       minimum:p ? .1/(measure?.factor||1):(info.minimum||.1)/(measure?.factor||1),maximum:p?5000/(measure?.factor||1):(info.maximum||5000)/(measure?.factor||1),
       amount:amount||null,amountUnit:d.mealPortion?.unit||(p?d.portion.unit:entry?r.entry?.portionUnit:meal?r.extraction.meal?.portion?.unit:d.unit),
       guidance:p?detail().measures(p).guidance:measure?.description||'Nutrition scales from the printed label basis.',
@@ -576,6 +610,12 @@
       const draft={...d,confirmationId:r.confirmationId,context:r.context||{},mealBatchVolumeMl:d.batchVolumeMl,portionLabel:'portion',portionSource:'estimated',portionBase:d.amount};
       const selection={measureId:d.measureId||'serving',fraction:d.amount,batchServings:d.batchServings,batchVolumeMl:d.batchVolumeMl,baseAmount:e.meal?.portion?.amount??null,baseUnit:e.meal?.portion?.unit??null};
       result=a.buildRecord({extraction:e,old,amount:d.amount,unit:e.type==='meal'?'portion':d.unit,day:d.day,draft,selection,profile:profile(state),avoidMilk:state.avoidMilk,entries:entries(state),retrievedAt:now});
+      if(e.type==='meal'){
+        // A newly written multiplier does not prove the original photo basis
+        // of an old saved portion. Retain that distinction through save/reopen.
+        if(!knownPhotoPortionBasis(r))result.sourceMeta.photoPortionBasis='saved_portion';
+        else if(!r.editingSavedCalculation)delete result.sourceMeta.photoPortionBasis;
+      }
       if(e.metadata?.localLabel?.version==='local-food-label-v1')result.sourceMeta.localLabelEvidence=clone(e.metadata.localLabel);
       result.day=d.day;result.slot=d.slot;result.sourceMeta.scanEventId=eventId;
       result=a.repairProductRecord(result,old,e,{previousProduct:r.previousProduct,corrections:d.corrections,profile:profile(state),avoidMilk:state.avoidMilk,entries:entries(state)});
@@ -602,6 +642,7 @@
         result.portionAmount=d.mealPortion.amount;result.portionUnit=d.mealPortion.unit;
         result.sourceMeta.mealWholePortion=clone(d.mealPortion);
       }
+      else if(d.photoFractionSelected)delete result.sourceMeta.mealWholePortion;
     }
     if(r.kind!=='product'){
       result.plants=reviewPlants(r);

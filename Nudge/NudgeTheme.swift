@@ -4,13 +4,12 @@ import UIKit
 /// Positive Energy v3.1 semantic roles from the approved tokens.json.
 /// Camera scrims, system sheets and safety/score meanings remain independent.
 enum NudgeTheme {
-    static func color(_ light: UInt32, _ dark: UInt32) -> UIColor {
-        UIColor { traits in
-            let value = traits.userInterfaceStyle == .dark ? dark : light
-            return UIColor(red: CGFloat((value >> 16) & 255) / 255,
-                           green: CGFloat((value >> 8) & 255) / 255,
-                           blue: CGFloat(value & 255) / 255, alpha: 1)
-        }
+    // Light-only for this release. Retain the alternate tokens for a future
+    // appearance review, without allowing system traits to recolour the app.
+    static func color(_ light: UInt32, _: UInt32) -> UIColor {
+        UIColor(red: CGFloat((light >> 16) & 255) / 255,
+                green: CGFloat((light >> 8) & 255) / 255,
+                blue: CGFloat(light & 255) / 255, alpha: 1)
     }
     static let canvas = color(0xF8F7F2, 0x1B202A)
     static let surface = color(0xFFFFFF, 0x282F3D)
@@ -23,6 +22,9 @@ enum NudgeTheme {
     static let primaryFill = color(0xF3C950, 0xF3CE68)
     static let primaryText = color(0x26334E, 0x26334E)
     static let primaryEdge = color(0xC79A2D, 0xC09A3E)
+    static let diaryAction = color(0x12633A, 0x12633A)
+    static let diaryActionText = UIColor.white
+    static let diaryActionEdge = color(0x0D4A2B, 0x0D4A2B)
     static let progressFill = color(0x5876CB, 0xA6B8ED)
     static let progressTrack = color(0xE6EAF5, 0x3D4A66)
     static let plantSurface = color(0xE2F1E9, 0x2B443B)
@@ -95,7 +97,7 @@ enum NudgeTheme {
     }
 }
 
-enum NudgeButtonVariant { case primary, secondary, destructive, camera }
+enum NudgeButtonVariant { case primary, diary, secondary, destructive, camera }
 
 /// Shared native action treatment. Uses real control state and Dynamic Type;
 /// no fixed title height, animation or global gesture interception.
@@ -118,10 +120,11 @@ final class NudgeButton: UIButton {
     }
     override func updateConfiguration() {
         guard var config = configuration else { return }
-        let primary = variant == .primary
+        let diary = variant == .diary
+        let primary = variant == .primary || diary
         let camera = variant == .camera
-        config.baseForegroundColor = !isEnabled ? NudgeTheme.muted : primary ? NudgeTheme.primaryText : variant == .destructive ? NudgeTheme.errorText : camera ? NudgeTheme.cameraText : NudgeTheme.accent
-        config.background.backgroundColor = !isEnabled ? NudgeTheme.progressTrack : primary ? NudgeTheme.primaryFill : variant == .destructive ? NudgeTheme.errorSurface : camera ? NudgeTheme.cameraScrim : isSelected || isHighlighted || isFocused ? NudgeTheme.selectedSurface : NudgeTheme.surface
+        config.baseForegroundColor = !isEnabled ? NudgeTheme.muted : diary ? NudgeTheme.diaryActionText : primary ? NudgeTheme.primaryText : variant == .destructive ? NudgeTheme.errorText : camera ? NudgeTheme.cameraText : NudgeTheme.accent
+        config.background.backgroundColor = !isEnabled ? NudgeTheme.progressTrack : diary ? NudgeTheme.diaryAction : primary ? NudgeTheme.primaryFill : variant == .destructive ? NudgeTheme.errorSurface : camera ? NudgeTheme.cameraScrim : isSelected || isHighlighted || isFocused ? NudgeTheme.selectedSurface : NudgeTheme.surface
         config.cornerStyle = .fixed
         config.background.cornerRadius = NudgeTheme.controlRadius
         config.background.strokeWidth = primary || camera ? 0 : isSelected || isFocused || traitCollection.accessibilityContrast == .high ? 2 : 1
@@ -135,7 +138,7 @@ final class NudgeButton: UIButton {
             return output
         }
         configuration = config
-        layer.shadowColor = NudgeTheme.primaryEdge.resolvedColor(with: traitCollection).cgColor
+        layer.shadowColor = (diary ? NudgeTheme.diaryActionEdge : NudgeTheme.primaryEdge).resolvedColor(with: traitCollection).cgColor
         layer.shadowOpacity = primary && isEnabled ? 1 : 0
         layer.shadowRadius = 0
         layer.shadowOffset = CGSize(width: 0, height: isHighlighted ? 1 : NudgeTheme.primaryDepth)
@@ -166,15 +169,16 @@ struct NudgeButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     @Environment(\.colorSchemeContrast) private var contrast
     func makeBody(configuration: Configuration) -> some View {
-        let primary = variant == .primary
+        let diary = variant == .diary
+        let primary = variant == .primary || diary
         configuration.label
             .font(.headline).multilineTextAlignment(.center)
-            .foregroundStyle(Color(uiColor: !enabled ? NudgeTheme.muted : primary ? NudgeTheme.primaryText : NudgeTheme.accent))
+            .foregroundStyle(Color(uiColor: !enabled ? NudgeTheme.muted : diary ? NudgeTheme.diaryActionText : primary ? NudgeTheme.primaryText : NudgeTheme.accent))
             .padding(.horizontal, 20).padding(.vertical, 14)
             .frame(maxWidth: .infinity, minHeight: NudgeTheme.buttonHeight)
             .contentShape(Rectangle())
-            .background(RoundedRectangle(cornerRadius: NudgeTheme.controlRadius).fill(Color(uiColor: !enabled ? NudgeTheme.progressTrack : primary ? NudgeTheme.primaryFill : configuration.isPressed ? NudgeTheme.selectedSurface : NudgeTheme.surface))
-                .shadow(color: primary && enabled ? Color(uiColor: NudgeTheme.primaryEdge) : .clear, radius: 0, x: 0, y: configuration.isPressed ? 1 : NudgeTheme.primaryDepth))
+            .background(RoundedRectangle(cornerRadius: NudgeTheme.controlRadius).fill(Color(uiColor: !enabled ? NudgeTheme.progressTrack : diary ? NudgeTheme.diaryAction : primary ? NudgeTheme.primaryFill : configuration.isPressed ? NudgeTheme.selectedSurface : NudgeTheme.surface))
+                .shadow(color: primary && enabled ? Color(uiColor: diary ? NudgeTheme.diaryActionEdge : NudgeTheme.primaryEdge) : .clear, radius: 0, x: 0, y: configuration.isPressed ? 1 : NudgeTheme.primaryDepth))
             .overlay(RoundedRectangle(cornerRadius: NudgeTheme.controlRadius).stroke(Color(uiColor: contrast == .increased ? NudgeTheme.strongBorder : NudgeTheme.border), lineWidth: primary ? 0 : 1))
             .offset(y: primary && configuration.isPressed ? 3 : 0)
     }

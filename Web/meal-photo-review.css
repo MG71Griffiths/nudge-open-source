@@ -23,4 +23,3 @@
 .n-meal-sources>p{padding:0 16px 12px;}
 html.n-large-text .n-meal-metrics{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;}html.n-large-text .n-meal-product-head{align-items:start;}html.n-large-text .n-meal-review-actions{grid-template-columns:1fr;}
 @media(max-width:359px){.n-meal-product-head{grid-template-columns:68px minmax(0,1fr);gap:11px;}.n-meal-product-photo{width:68px;height:87px;}}
-@media(prefers-color-scheme:dark){.n-photo-analysis-panel{background:linear-gradient(0deg,var(--n-progress-track) 65%,transparent);}}

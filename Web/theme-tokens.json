@@ -179,5 +179,9 @@
     "darkOverrides": {
       "fat": "#ACBEFF"
     }
-  }
+  },
+  "supportedAppearances": [
+    "light"
+  ],
+  "appearancePolicy": "Light only, requested by user 22 October 2026. Dark tokens retained for future review but not applied."
 }

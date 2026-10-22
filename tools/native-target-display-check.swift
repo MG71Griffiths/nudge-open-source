@@ -85,10 +85,26 @@ struct NativeTargetDisplayChecks {
         try check(NativeTrackingDisplay.description(salt).contains("Upper limit: 6 g"), "Salt accessible comparison")
         let raw = changed(energy, ["target": 100, "value": 100, "rawValue": 99.95])
         try check(NativeTrackingDisplay.completion(raw) == "99%", "Rounded amount does not announce premature completion")
+        for key in ["protein", "carbs", "fat"] {
+            let logged: [String: Any] = ["key": key, "unit": "g", "recorded": true, "value": 12.5, "rawValue": 12.5, "target": NSNull(), "targetKnown": true]
+            try check(NativeTrackingDisplay.hasLoggedAmount(logged), key + ": amount-only circle is active after logging")
+            try check(!NativeTrackingDisplay.hasTarget(logged), key + ": active logged amount does not invent a target")
+            try check(NativeTrackingDisplay.ratio(logged) == nil, key + ": active logged amount does not invent a percentage")
+            try check(NativeTrackingDisplay.ringLabel(logged) == "12.5g", key + ": known amount remains visible")
+            try check(NativeTrackingDisplay.hasLoggedAmount(changed(logged, ["unknown": 1])), key + ": partial known amount is active")
+            try check(NativeTrackingDisplay.ringLabel(changed(logged, ["unknown": 1])) == "≥ 12.5g", key + ": partial amount remains qualified")
+            try check(NativeTrackingDisplay.hasLoggedAmount(changed(logged, ["value": 0, "rawValue": 0])), key + ": recorded zero differs from no food")
+            try check(!NativeTrackingDisplay.hasLoggedAmount(changed(logged, ["recorded": false])), key + ": no colour activation before logging")
+            try check(!NativeTrackingDisplay.hasLoggedAmount(changed(logged, ["future": true])), key + ": future data never activates circle")
+            try check(!NativeTrackingDisplay.hasLoggedAmount(changed(logged, ["value": NSNull(), "rawValue": NSNull()])), key + ": unknown nutrition never activates circle")
+            let withTarget = changed(logged, ["target": 25])
+            try check(NativeTrackingDisplay.ratio(withTarget) == 0.5, key + ": actual target restores proportional arc")
+            try check(NativeTrackingDisplay.ringLabel(withTarget) == "50%", key + ": actual target restores percentage")
+        }
         for invalid: Any in [NSNull(), true, false, Double.nan, Double.infinity, -1, "30"] {
             try check(NativeTrackingDisplay.number(invalid) == nil, "Invalid numeric values do not become nutrition")
             try check(!NativeTrackingDisplay.hasTarget(changed(energy, ["target": invalid])), "Invalid target is not shown as a denominator")
         }
-        print("TARGET_DISPLAY_CHECK_RESULT {\"checks\":\(checks),\"groups\":[\"eight nutrients before logging\",\"unknown intake with known targets\",\"zero partial and future intake\",\"missing-input and manual-clear reasons\",\"historical and zero targets\",\"reference and limit semantics\",\"precision and invalid numbers\"]}")
+        print("TARGET_DISPLAY_CHECK_RESULT {\"checks\":\(checks),\"groups\":[\"eight nutrients before logging\",\"unknown intake with known targets\",\"zero partial and future intake\",\"missing-input and manual-clear reasons\",\"historical and zero targets\",\"reference and limit semantics\",\"precision and invalid numbers\",\"active logged macro amounts without invented targets\"]}")
     }
 }

@@ -34,6 +34,7 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
     private(set) var loggingDay = ""
     private(set) var loggingMeal = ""
     private var generation = UUID()
+    private var pendingCameraNavigation: UUID?
     private var eventID = UUID().uuidString
     private(set) var photoEventID = UUID().uuidString
     private var persistedPhotoRevision: Int?
@@ -114,7 +115,7 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
     }
     /// Shared lifecycle entry for presentation and isolated camera-flow tests.
     func prepare(_ selected: SmartFoodCameraViewController, repair: Bool = false) {
-        generation = UUID(); cancelContext()
+        generation = UUID(); pendingCameraNavigation = nil; cancelContext()
         store?.analysisFailure = nil; store?.missingProductBarcode = nil; store?.loading = false
         barcodePending = false; scannedProduct = nil; scanSummary = nil
         repairReview = repair ? store?.review : nil
@@ -193,7 +194,7 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
     func cancelAnalysis() { generation = UUID(); store?.loading = false; resume() }
     func foodCamera(_ camera: SmartFoodCameraViewController, found barcode: String) {
         let decodedAt = CaptureClock.now
-        guard self.camera === camera else { return }
+        guard self.camera === camera, pendingCameraNavigation == nil else { return }
         cancelContext(); generation = UUID(); barcodeGeneration = generation
         scannedProduct = nil; scanSummary = nil; repairReview = nil
         // A repeated observation cannot create another pending lookup for the
@@ -473,13 +474,18 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
     }
     /// A successful save or explicit Close ends the draft; navigation only suspends it.
     func complete() {
-        generation = UUID(); cancelContext(); store?.loading = false
+        generation = UUID(); pendingCameraNavigation = nil; cancelContext(); store?.loading = false
         camera?.closeCapture(); camera?.dismiss(animated: true); camera = nil
         repairReview = nil; scannedProduct = nil; scanSummary = nil; barcodePending = false
         persistedPhotoRevision = nil
         loggingDay = ""; loggingMeal = ""
     }
     private func suspendForNavigation(_ selected: SmartFoodCameraViewController, afterDismiss: @escaping () -> Void) {
+        // A swipe and a tap can arrive during the same UIKit dismissal. Keep
+        // one destination until it finishes, without submitting another scan.
+        guard pendingCameraNavigation == nil else { return }
+        let navigation = UUID()
+        pendingCameraNavigation = navigation
         generation = UUID(); cancelContext(discardAlternatives: false); store?.loading = false
         let suspendedGeneration = generation
         if barcodePending, scanSummary == nil {
@@ -489,7 +495,9 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
         // SwiftUI must not present/dismiss the review sheet while its UIKit
         // camera is still leaving. A replaced/closed camera cannot navigate later.
         dismissForNavigation(selected) { [weak self, weak selected] in
-            guard let self, let selected, self.camera === selected,
+            guard let self, self.pendingCameraNavigation == navigation else { return }
+            self.pendingCameraNavigation = nil
+            guard let selected, self.camera === selected,
                   self.generation == suspendedGeneration else { return }
             afterDismiss()
         }
@@ -504,7 +512,7 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
         suspendForNavigation(camera) { [weak self] in self?.store?.showFoodLibrary(mode: mode, day: day, meal: meal) }
     }
     func foodCamera(_ camera: SmartFoodCameraViewController, summaryAction action: String, alternativeID: String?) {
-        guard self.camera === camera, !camera.isCaptureInFlight else { return }
+        guard self.camera === camera, !camera.isCaptureInFlight, pendingCameraNavigation == nil else { return }
         if action == "next" {
             generation = UUID(); cancelContext()
             scannedProduct = nil; scanSummary = nil; repairReview = nil
@@ -538,7 +546,7 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
             cancelAllPhotoAnalyses()
             automaticRetriesPaused = false
             store?.cancelProductRecovery()
-            generation = UUID(); cancelContext(); store?.loading = false
+            generation = UUID(); pendingCameraNavigation = nil; cancelContext(); store?.loading = false
             camera?.closeCapture(); camera = nil
         }
         resumePending()

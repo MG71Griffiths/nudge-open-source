@@ -93,7 +93,7 @@ struct NativeMealIngredientPicker: View {
         self.analysisServiceText = analysisServiceText
         self.onDraftChange = onDraftChange; self.onApply = onApply; self.onDiscardDraft = onDiscardDraft; self.onAnalyse = onAnalyse; self.onSearch = onSearch
         _draft = State(initialValue: NativeMealIngredientPickerDraft(selected: model["selected"] as? [String] ?? []))
-        _isEditing = State(initialValue: model["confirmed"] as? Bool != true)
+        _isEditing = State(initialValue: false)
         let portion = model["portion"] as? [String: Any] ?? [:]
         _amount = State(initialValue: (portion["amount"] as? NSNumber)?.doubleValue)
         _unit = State(initialValue: portion["unit"] as? String ?? model["defaultUnit"] as? String ?? "g")
@@ -168,12 +168,8 @@ struct NativeMealIngredientPicker: View {
                         .mealIngredientControl("native-meal-confirmed-ingredient-" + name)
                 }
             }.accessibilityIdentifier("native-meal-confirmed-ingredients")
-            if let amount {
-                Text("Whole portion: \(amount.formatted(.number.precision(.fractionLength(0...1)))) \(unit)")
-                    .font(.subheadline).accessibilityIdentifier("native-meal-confirmed-portion")
-            }
-            Button("Edit ingredients & portion") {
-                browseAll = true
+            Button(selected.isEmpty ? "Choose ingredients" : "Edit ingredients") {
+                browseAll = confirmed
                 isEditing = true
             }
             .buttonStyle(NudgeButtonStyle(variant: .secondary))
@@ -183,20 +179,20 @@ struct NativeMealIngredientPicker: View {
 
     private var editor: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(model["explanation"] as? String ?? "").font(.subheadline)
+            Text("Tap what’s in your food.").font(.subheadline)
             if !selected.isEmpty {
-                Text("Selected ingredients").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                Text("Selected").font(.subheadline.weight(.semibold)).accessibilityAddTraits(.isHeader)
                 chips(selected.map { ["name": $0] })
                     .accessibilityIdentifier("native-meal-selected-ingredients")
             }
-            TextField("Search the full food catalogue", text: $draft.search)
+            TextField("Add an ingredient", text: $draft.search)
                 .textFieldStyle(.roundedBorder)
                 .autocorrectionDisabled()
                 .focused($ingredientSearchFocused)
                 .mealIngredientControl("native-meal-ingredient-search")
             if !query.isEmpty && draft.completedSearch == query {
-                if draft.searchTotal == 0 { Text("No catalogue match yet. You can add your own ingredient name.").font(.caption) }
-                else if draft.searchTotal > draft.searchItems.count { Text("Showing \(draft.searchItems.count) of \(draft.searchTotal) matches. Keep typing to narrow it down.").font(.caption) }
+                if draft.searchTotal == 0 { Text("No match. Add your own below.").font(.caption) }
+                else if draft.searchTotal > draft.searchItems.count { Text("\(draft.searchTotal) matches · keep typing").font(.caption) }
             }
             chips(filtered)
             if let name = customName {
@@ -206,7 +202,7 @@ struct NativeMealIngredientPicker: View {
                 .buttonStyle(NudgeButtonStyle(variant: .secondary))
                 .disabled(selected.count >= 40)
                 .accessibilityIdentifier("native-meal-add-custom-ingredient")
-                Text("Adds the name only. Nutrition still needs analysis.")
+                Text("Name only · analyse for nutrition.")
                     .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             }
             if query.isEmpty {
@@ -215,8 +211,9 @@ struct NativeMealIngredientPicker: View {
                     .accessibilityIdentifier("native-meal-browse-ingredients")
             }
             if selected.count >= 40 { Text("40 ingredients selected — remove one to add another.").font(.caption) }
-            Text("Whole portion").font(.headline)
-            Text("One amount for everything you ate or drank.")
+            DisclosureGroup("Measured weight or volume") {
+                VStack(alignment: .leading, spacing: 12) {
+            Text("Use a measured total, if you know it.")
                 .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 105))], spacing: 10) {
                 ForEach(Array(portionOptions.enumerated()), id: \.offset) { _, option in
@@ -240,20 +237,21 @@ struct NativeMealIngredientPicker: View {
             }
             Text(model["portionExplanation"] as? String ?? "").font(.caption)
                 .foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                }.padding(.top, 8)
+            }.font(.subheadline)
             if canAnalyse {
-                Text(analysisServiceText).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    .accessibilityIdentifier("native-meal-analysis-service")
-                Button("Analyse") { _ = onAnalyse() }
+                Button("Update analysis") { _ = onAnalyse() }
                     .buttonStyle(NudgeButtonStyle()).disabled(selected.isEmpty || isAnalysing)
                     .accessibilityIdentifier("native-meal-analyse-ingredients")
-                Text("Track the analysis in History. Add it to your diary when you’re ready.")
-                    .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                DisclosureGroup("Analysis details") {
+                    Text(analysisServiceText).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                        .accessibilityIdentifier("native-meal-analysis-service")
+                }.font(.caption)
             } else {
                 Button("Confirm ingredients") { if onApply() { finishEditing() } }
                     .buttonStyle(NudgeButtonStyle()).disabled(!dirty)
                     .accessibilityIdentifier("native-meal-apply-ingredients")
-                Text("Updates this meal’s ingredients and portion. A saved photo is needed for AI analysis.")
-                    .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+
             }
             if confirmed {
                 Button("Cancel changes") {

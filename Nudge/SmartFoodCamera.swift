@@ -186,11 +186,11 @@ struct SmartCaptureState {
 enum CameraPhotoGuidance {
     static func message(photoCount: Int) -> (heading: String, detail: String) {
         switch photoCount {
-        case ...0: return ("Point at a barcode, food or meal", "Barcodes open a result automatically.")
-        case 1: return ("Photo saved. Add a recipe or ingredients?", "Photograph the recipe or product ingredients, if available.")
-        case 2: return ("Next, add nutritional information?", "Photograph the nutrition label, if available.")
-        case 3: return ("One more useful detail?", "Add the portion size, pack size or another angle.")
-        default: return ("4 photos ready to analyse", "Tap Analyse when you’re ready.")
+        case ...0: return ("Scan a barcode or take a photo", "")
+        case 1: return ("1 photo ready", "")
+        case 2: return ("2 photos ready", "")
+        case 3: return ("3 photos ready", "")
+        default: return ("4 photos ready", "")
         }
     }
 }
@@ -509,6 +509,11 @@ final class CameraProductSummaryView: UIView, UIGestureRecognizerDelegate, UIScr
         let expandTap = UITapGestureRecognizer(target: self, action: #selector(expand))
         expandTap.delegate = self; expandTap.cancelsTouchesInView = false
         addGestureRecognizer(expandTap)
+        let expandSwipe = UISwipeGestureRecognizer(target: self, action: #selector(expand))
+        expandSwipe.direction = .up
+        expandSwipe.delegate = self
+        addGestureRecognizer(expandSwipe)
+        scroll.panGestureRecognizer.require(toFail: expandSwipe)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -536,13 +541,26 @@ final class CameraProductSummaryView: UIView, UIGestureRecognizerDelegate, UIScr
     private func button(_ title: String, action: String, alternativeID: String? = nil, filled: Bool = false) -> UIButton {
         let button = NudgeButton(title, variant: filled ? .primary : .secondary)
         button.accessibilityIdentifier = "camera-summary-" + action
-        button.addAction(UIAction { [weak self] _ in self?.onAction?(action, alternativeID) }, for: .touchUpInside)
+        button.addAction(UIAction { [weak self] _ in
+            if action == "expand" { self?.expand() }
+            else { self?.onAction?(action, alternativeID) }
+        }, for: .touchUpInside)
         return button
     }
     func update(_ summary: CameraProductSummary) {
         displayedSummary = summary
+        accessibilityCustomActions = summary.status == .ready
+            ? [UIAccessibilityCustomAction(name: "Open product", target: self, selector: #selector(accessibilityExpand))] : nil
         compactName = nil
         for view in stack.arrangedSubviews { stack.removeArrangedSubview(view); view.removeFromSuperview() }
+        if summary.status == .ready {
+            let handle = UIView(); handle.backgroundColor = NudgeTheme.border; handle.layer.cornerRadius = 2.5
+            handle.widthAnchor.constraint(equalToConstant: 36).isActive = true
+            handle.heightAnchor.constraint(equalToConstant: 5).isActive = true
+            let grip = UIStackView(arrangedSubviews: [handle]); grip.axis = .vertical; grip.alignment = .center
+            grip.isAccessibilityElement = false
+            stack.addArrangedSubview(grip)
+        }
         let dismiss = UIButton(type: .system)
         dismiss.setImage(UIImage(systemName: "xmark"), for: .normal)
         dismiss.tintColor = NudgeTheme.ink
@@ -564,6 +582,8 @@ final class CameraProductSummaryView: UIView, UIGestureRecognizerDelegate, UIScr
         if summary.compact { updateCompact(summary); return }
         let name = label(summary.name.isEmpty ? "Your product" : summary.name, style: .headline)
         name.accessibilityIdentifier = "camera-summary-name"
+        name.accessibilityHint = summary.status == .ready ? "Use Open product for the full card." : nil
+        name.accessibilityCustomActions = accessibilityCustomActions
         let identity = UIStackView(arrangedSubviews: [name, label(summary.brand, style: .subheadline, color: NudgeTheme.muted)])
         identity.axis = .vertical; identity.spacing = 4
         let availableWidth = superview?.bounds.width ?? bounds.width
@@ -615,6 +635,8 @@ final class CameraProductSummaryView: UIView, UIGestureRecognizerDelegate, UIScr
         let name = label(summary.name.isEmpty ? "Your product" : summary.name, style: .headline)
         compactName = name
         name.accessibilityIdentifier = "camera-summary-name"
+        name.accessibilityHint = summary.status == .ready ? "Use Open product for the full card." : nil
+        name.accessibilityCustomActions = accessibilityCustomActions
         let identity = UIStackView(arrangedSubviews: [name])
         identity.axis = .vertical; identity.spacing = 3
         if !summary.brand.isEmpty { identity.addArrangedSubview(label(summary.brand, style: .caption1, color: NudgeTheme.muted)) }
@@ -652,7 +674,6 @@ final class CameraProductSummaryView: UIView, UIGestureRecognizerDelegate, UIScr
             actions.axis = traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? .vertical : .horizontal
             stack.addArrangedSubview(actions)
             addAlternatives(summary)
-            stack.addArrangedSubview(label("Ready for the next barcode", style: .caption1, color: NudgeTheme.muted))
         }
         if summary.status != .loading {
             UIAccessibility.post(notification: .announcement, argument: name.text)
@@ -715,14 +736,23 @@ final class CameraProductSummaryView: UIView, UIGestureRecognizerDelegate, UIScr
         targetContentOffset.pointee.x = min(maximum, max(0, (targetContentOffset.pointee.x / step).rounded() * step))
     }
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+        guard displayedSummary?.status == .ready else { return false }
         var touched = touch.view
         while let view = touched, view !== self {
             if view is UIControl { return false }
+            if view is UIScrollView, view !== scroll { return false }
             touched = view.superview
         }
         return true
     }
-    @objc private func expand() { onAction?("expand", nil) }
+    @objc private func expand() {
+        guard displayedSummary?.status == .ready else { return }
+        onAction?("expand", nil)
+    }
+    @objc private func accessibilityExpand() -> Bool {
+        guard displayedSummary?.status == .ready else { return false }
+        expand(); return true
+    }
 }
 
 private final class FoodCameraPreview: UIView {
@@ -1029,6 +1059,7 @@ final class SmartFoodCameraViewController: UIViewController, PHPickerViewControl
     private let voiceRedoButton = UIButton(type: .system)
     private let voiceRemoveButton = UIButton(type: .system)
     private let voiceActions = UIStackView()
+    private let voicePanel = UIStackView()
     private let voiceDraft: VoiceMemoDraft
     private var voiceInteraction = VoiceMemoInteraction()
     private let voicePermissionRequest: (@escaping (Bool) -> Void) -> Void
@@ -1326,14 +1357,14 @@ final class SmartFoodCameraViewController: UIViewController, PHPickerViewControl
             button.addTarget(self, action: action, for: .touchUpInside)
             voiceActions.addArrangedSubview(button)
         }
-        let voicePanel = UIStackView(arrangedSubviews: [voiceStatusLabel, voiceActions, voiceNoticeLabel])
+        [voiceStatusLabel, voiceActions, voiceNoticeLabel].forEach(voicePanel.addArrangedSubview)
         voicePanel.backgroundColor = NudgeTheme.color(0x17212E, 0x17212E)
         voicePanel.layer.cornerRadius = 14
         voicePanel.isLayoutMarginsRelativeArrangement = true
         voicePanel.layoutMargins = UIEdgeInsets(top: 8, left: 8, bottom: 8, right: 8)
         voicePanel.axis = .vertical; voicePanel.spacing = 4
-        configureFoodLibraryButton(enterCodeButton, title: "Enter code", symbol: "barcode", action: #selector(enterCodeTapped), identifier: "smart-camera-enter-code")
-        enterCodeButton.configuration?.image = nil
+        configureFoodLibraryButton(enterCodeButton, title: "", symbol: "barcode", action: #selector(enterCodeTapped), identifier: "smart-camera-enter-code")
+        enterCodeButton.accessibilityLabel = "Enter a barcode manually"
         enterCodeButton.configuration?.contentInsets = NSDirectionalEdgeInsets(top: 6, leading: 6, bottom: 6, trailing: 6)
         enterCodeButton.configuration?.titleLineBreakMode = .byWordWrapping
         enterCodeButton.titleLabel?.numberOfLines = 0
@@ -1513,10 +1544,12 @@ final class SmartFoodCameraViewController: UIViewController, PHPickerViewControl
         // thumbnail controls. Keep their state and render it in viewDidLoad.
         guard isViewLoaded else { return }
         let count = state.images.count
-        countLabel.text = count == 0 ? "Scan 1 of 4" : "\(count) of 4 photos"
+        countLabel.text = "\(count)/4"
+        countLabel.accessibilityLabel = "\(count) of 4 photos"
         let guidance = CameraPhotoGuidance.message(photoCount: count)
         statusLabel.text = message ?? captureStorageError ?? requestedPanelHint ?? guidance.heading
         hintLabel.text = guidance.detail
+        hintLabel.isHidden = guidance.detail.isEmpty
         captureButton.accessibilityLabel = "Take photo"
         let busy = enteringBarcode || state.capturing || state.importing || state.analysing || suspendedForResult || !summaryCard.isHidden || voiceInteraction.active
         cameraSession.setBarcodeDetectionEnabled(visible && !enteringBarcode && !state.closed && !suspendedForResult && !productLocked && !photosOnly &&
@@ -1561,6 +1594,7 @@ final class SmartFoodCameraViewController: UIViewController, PHPickerViewControl
         refreshVoiceControls()
     }
     private func refreshVoiceControls() {
+        voicePanel.isHidden = !voiceInteraction.active && !voiceDraft.hasMemo
         voiceActions.axis = traitCollection.preferredContentSizeCategory.isAccessibilityCategory ? .vertical : .horizontal
         let unavailable = state.closed || state.capturing || state.importing || state.analysing || suspendedForResult || !summaryCard.isHidden
         voiceButton.isEnabled = !unavailable

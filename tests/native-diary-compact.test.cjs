@@ -164,6 +164,35 @@ test('profile saves recalculate automatic values synchronously, retain manual ov
   assert.equal(metric(b.project('reviewModel'),'protein')?.target,144);
 });
 
+test('logged protein carbs and fat keep their known progress through incomplete food, portions and restart',()=>{
+  const a=boot();saveProfile(a);
+  add(a,'known','2026-10-07',[],.5);
+  const partial=entry('partial','2026-10-07',[],2);
+  partial.energyPerPortion=null;partial.proteinPerPortion=null;partial.fibrePerPortion=null;
+  partial.nutritionSnapshot=Object.fromEntries(['protein','carbohydrate','fat'].map(key=>[key,{unit:'g',portion:null,portionStatus:'partial',knownPortionSubtotal:3,knownContributions:1,unknownContributions:1}]));
+  assert.equal(a.perform('setReview',{kind:'entry',entry:partial,confirmationId:'partial',day:'2026-10-07'}).ok,true);
+  assert.equal(a.perform('reviewConfirm').ok,true);
+  const unknown={...entry('unknown','2026-10-07'),energyPerPortion:null,proteinPerPortion:null,fibrePerPortion:null,nutritionSnapshot:{}};
+  assert.equal(a.perform('setReview',{kind:'entry',entry:unknown,confirmationId:'unknown',day:'2026-10-07'}).ok,true);
+  assert.equal(a.perform('reviewConfirm').ok,true);
+  for(const session of [a,a.restart()]){
+    const before=JSON.stringify(session.snapshot().state),writes=session.writes.length;
+    for(const view of ['today','diary']){
+      const m=session.project(view,{day:'2026-10-07',presentation:true});
+      for(const [key,total] of [['protein',16],['carbs',31],['fat',11]]){
+        const item=metric(m,key);
+        assert.equal(item.rawValue,total,key+' retains its known subtotal');
+        assert.equal(item.recorded,true);assert.equal(item.unknown,2);assert.equal(item.estimated,true);
+        assert.ok(item.target>0);assert.ok(item.ratio>0,key+' has a visible proportional arc');
+        assert.equal(item.ratio,Math.min(1,total/item.target));
+        assert.equal(item.percent,Math.round(total/item.target*100));
+      }
+    }
+    assert.equal(JSON.stringify(session.snapshot().state),before,'Displaying progress does not alter saved food');
+    assert.equal(session.writes.length,writes,'Displaying progress does not write storage');
+  }
+});
+
 test('personal details without activity explain missing energy and macro targets on Today, weekly rows and food review',()=>{
   const a=boot(),first=saveProfile(a,{...profile,activity:'unknown'});
   add(a,'logged-food','2026-10-07');

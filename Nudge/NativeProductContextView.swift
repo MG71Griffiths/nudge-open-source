@@ -28,15 +28,23 @@ struct NativeProductContextView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            if current && !alternativesOnly && recallFirst { recall }
+            if current && !alternativesOnly && recallFirst { recallPresentation }
             if current && (model.canOfferAlternatives || alternativesOnly) { alternatives }
-            if current && !alternativesOnly && !recallFirst { recall }
+            if current && !alternativesOnly && !recallFirst { recallPresentation }
         }
         .foregroundStyle(ink)
         .task(id: identity) {
             await model.load(product: product, profile: profile, avoidMilk: avoidMilk, selectedStore: shop, forceAlternatives: alternativesOnly, onRecallAssessment: onRecallAssessment)
         }
         .onDisappear { model.cancel() }
+    }
+
+    @ViewBuilder private var recallPresentation: some View {
+        if model.hasRecallWarning { recall }
+        else {
+            DisclosureGroup(model.recallLoading ? "Checking recalls…" : "Recall check") { recall.padding(.top, 8) }
+                .font(.subheadline.weight(.semibold))
+        }
     }
 
     private var recall: some View {
@@ -86,9 +94,7 @@ struct NativeProductContextView: View {
 
     private var alternatives: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(model.selectedStore.map { "Better at \($0.title)" } ?? "Better alternatives").font(.title2.bold())
-            Text(model.selectedStore.map { "Comparable UK products listed at \($0.title), with a higher Nudge rating. Your saved food requirements apply." } ?? "Comparable UK products with a higher Nudge rating. Your saved food requirements apply.")
-                .font(.subheadline).foregroundStyle(muted)
+            Text(model.selectedStore.map { "Better at \($0.title)" } ?? "Try these instead").font(.title3.bold())
             if !model.canOfferAlternatives {
                 Text(model.alternativesSnapshot.message).font(.subheadline).foregroundStyle(muted)
             } else if model.alternativesSnapshot.status == .loading {
@@ -97,10 +103,12 @@ struct NativeProductContextView: View {
                 if model.rows.isEmpty { Text(model.alternativesSnapshot.message).font(.subheadline).foregroundStyle(muted) }
                 if !model.rows.isEmpty { NativeProductAlternativesCarousel(rows: model.rows, onOpen: onOpen) }
                 if !model.rows.isEmpty {
-                    Text("From the Nudge catalogue · Availability in your shop is not confirmed.").font(.caption).foregroundStyle(muted)
-                    if !model.alternativeSources.isEmpty { Text("Product data: " + model.alternativeSources.joined(separator: ", ")).font(.caption).foregroundStyle(muted) }
+                    DisclosureGroup("About these alternatives") {
+                        Text("Higher-rated similar foods. Your saved requirements apply. Shop availability is unconfirmed.")
+                        if !model.alternativeSources.isEmpty { Text("Data: " + model.alternativeSources.joined(separator: ", ")) }
+                    }.font(.caption).foregroundStyle(muted)
                 }
-                Button(model.rows.isEmpty ? "Try alternatives again" : "Refresh alternatives") { model.findAlternatives(refresh: true) }
+                Button(model.rows.isEmpty ? "Try again" : "Refresh") { model.findAlternatives(refresh: true) }
                     .buttonStyle(NudgeButtonStyle(variant: .secondary))
             } else {
                 Button("Find alternatives") { model.findAlternatives() }.buttonStyle(NudgeButtonStyle(variant: .secondary))
@@ -136,7 +144,7 @@ struct NativeProductAlternativesCarousel: View {
         let barcode = product["barcode"] as? String
         let value = row["value"] as? Int
         let image = row["imageURL"] as? String ?? product["displayImageURL"] as? String ?? product["imageURL"] as? String ?? ""
-        let accessibleName = [name, brand, value.map { "Nudge rating \($0) percent" } ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
+        let accessibleName = [name, brand, value.map { "Nudge rating \($0) out of 100" } ?? ""].filter { !$0.isEmpty }.joined(separator: ", ")
         return Button { onOpen(product) } label: {
             VStack(alignment: .leading, spacing: 8) {
                 NativeStoredFoodImage(source: image, placeholder: "shippingbox", barcode: barcode, maximumPixelSize: 384)

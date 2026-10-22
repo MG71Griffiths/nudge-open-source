@@ -2,9 +2,13 @@
 
 Nudge is an iPhone food diary built with SwiftUI and shared JavaScript nutrition rules. Photograph food or labels, scan barcodes, review nutrient estimates and a food score, tag ingredients, and add confirmed intake to your diary. History shows analysis progress. Photo results are estimates; review food identity, ingredients and portions before saving. Nudge supports general nutrition awareness, not diagnosis or treatment.
 
-This source release contains the 0.1.1 (45) app source. Original code and documentation are available under the [MIT licence](LICENSE), copyright 2026 Stephanie Griffiths. Food datasets, icons and other third-party material keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). An App Store release is separate from source publication. This repository does not claim App Store approval or availability.
+This source release contains the 0.1.1 (46) app source. Original code and documentation are available under the [MIT licence](LICENSE), copyright 2026 Stephanie Griffiths. Food datasets, icons and other third-party material keep their own licences; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). An App Store release is separate from source publication. This repository does not claim App Store approval or availability.
 
 First-run setup has five stages: email sign-in, personal details, activity and goals, target review, and optional ChatGPT connection. Height and weight offer cm/ft-and-inches and kg/stone-and-pounds, with the preferred display units retained. Existing measurements, targets and diary records are preserved. Known target values remain visible when no intake has been logged or a nutrient amount is unknown; missing targets show what information is needed. Custom or agreed targets and past target history remain authoritative.
+
+Build46 keeps food screens in a light appearance, uses consistent category colours, and simplifies Home and product cards while retaining nutrient values, targets and visible warnings. Swipe up on a ready camera result or tap Open to view the full food card. Diary actions use a consistent green style.
+
+Photo portions distinguish “This photo estimate” from “Half of photo estimate”; custom amounts remain available. Older saved estimates without a proven original photo scale use “Share of saved estimate” instead. Their values are preserved without inventing a whole-photo basis or migrating existing records. Recipe and diary portion meanings remain separate.
 
 ## Build an independent copy
 

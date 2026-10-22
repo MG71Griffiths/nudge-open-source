@@ -11,24 +11,6 @@
           "alpha": "1.000"
         }
       }
-    },
-    {
-      "idiom": "universal",
-      "appearances": [
-        {
-          "appearance": "luminosity",
-          "value": "dark"
-        }
-      ],
-      "color": {
-        "color-space": "srgb",
-        "components": {
-          "red": "0x1B",
-          "green": "0x20",
-          "blue": "0x2A",
-          "alpha": "1.000"
-        }
-      }
     }
   ],
   "info": {
