@@ -164,6 +164,23 @@ test('profile saves recalculate automatic values synchronously, retain manual ov
   assert.equal(metric(b.project('reviewModel'),'protein')?.target,144);
 });
 
+test('personal details without activity explain missing energy and macro targets on Today, weekly rows and food review',()=>{
+  const a=boot(),first=saveProfile(a,{...profile,activity:'unknown'});
+  add(a,'logged-food','2026-10-07');
+  const today=a.project('today');
+  assert.equal(metric(today,'protein').target,120);assert.equal(metric(today,'fibre').target,30);
+  assert.equal(metric(today,'energy').target,null);assert.equal(metric(today,'energy').targetReason,'Add activity');
+  for(const key of ['carbs','fat'])assert.equal(metric(today,key).targetReason,'Add activity to estimate energy');
+  assert.equal(today.weekEnergy.days.find(x=>x.day==='2026-10-07').targetReason,'Add activity');
+  a.perform('setReview',{kind:'product',product:complete,confirmationId:'review-targets'});
+  assert.equal(metric(a.project('reviewModel'),'energy').targetReason,'Add activity');
+  a.advance(86400000);saveProfile(a,{...first,activity:'moderate'});
+  assert.equal(metric(a.project('today'),'energy').target,2550);
+  assert.equal(metric(a.project('today'),'energy').targetReason,null);
+  assert.equal(metric(a.project('diary',{day:'2026-10-07'}),'energy').targetReason,'Add activity');
+  assert.equal(metric(a.project('diary',{day:'2026-10-06'}),'energy').targetReason,'Historical target not recorded');
+});
+
 test('photo reference cleaning rejects arbitrary paths and blobs while retaining only four valid private refs',()=>{
   const a=boot();a.perform('recordHistory',{id:'photo-history',kind:'product',status:'ready',product:complete,photos:[photoA,photoB,'file:///private/secret','nudge-photo:../../secret.jpg','data:image/jpeg;base64,YWJj']});
   assert.deepEqual(a.snapshot().history.events[0].photos,[photoA,photoB]);assert.equal(a.project('history').rows[0].imageURL,photoA);

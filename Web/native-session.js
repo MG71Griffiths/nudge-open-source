@@ -12,9 +12,31 @@ window.NudgeNativeSession = (() => {
   const initial=()=>({version:1,nutritionProfile:NudgeNutrition.clean(),cycleSupport:NudgeCycle.clean(),motionEnabled:true,focus:'food',goal:5,easier:false,avoidMilk:false,completions:{},recalls:[],sampleServings:[],profile:{},foodLog:WmdFoodLog.initial()});
   const save=()=>{try{if(readFailed)throw Error();storage.setItem(mainKey,JSON.stringify(state));nativeDiagnostic('storage','saved',JSON.stringify({store:'main',operation:'write',entryCount:state.foodLog?.entries?.length||0,durable:true}));return true;}catch{message='This change could not be saved. Your earlier diary is unchanged.';nativeDiagnostic('storage','save_failed','{}');return false;}};
   const diary=()=>NudgeDiary.create({getState:()=>state,save,cleanEntry:r=>WmdFoodLog.clean({entries:[r]}).entries[0]});
+  function repairMissingProfileTargets(){
+    if(!state.nutritionProfile?.saved)return;
+    // Native startup bypasses the browser's target reconciliation. Repair a
+    // saved profile only when it has an eligible missing target we can fill.
+    // The same draft migration preserves earlier accepted targets and plants;
+    // manual clears, clinical plans and missing inputs never trigger a repair.
+    const profile=NudgeNutrition.draft(state.nutritionProfile,state.profile,state.foodLog.plantGoal);
+    const suggestions=NudgeNutrition.automaticSuggestions(profile);
+    const missing=NudgeNutrition.automaticMetrics.some(metric=>profile[NudgeNutrition.targetFields[metric]]===null&&profile.targetModes?.[metric]!=='manual'&&suggestions[metric].value!==null);
+    if(!missing)return;
+    const result=NudgeNutrition.reconcileAutomaticTargets(profile,today());
+    if(!result.changed)return;
+    const previous=state;
+    state={...state,nutritionProfile:result.profile};
+    const plantGoal=result.profile.weeklyPlantTarget;
+    if([10,20,30].includes(plantGoal)&&state.foodLog.plantGoal!==plantGoal)state.foodLog={...state.foodLog,plantGoal};
+    if(!save()){
+      state=previous;
+      message='Automatic targets could not be saved. Your saved details and targets are unchanged; please try again.';
+    }
+  }
   function init(options={}){
     try { const raw=storage.getItem(mainKey);state=raw?JSON.parse(raw):initial();if(!state||state.version!==1||typeof state!=='object'||Array.isArray(state)||!Array.isArray(state.foodLog?.entries))throw Error(); }
     catch {state=initial();readFailed=true;message='Your saved diary could not be opened. It has been kept unchanged.';return snapshot(null,undefined,options.nativeHistory===true);}
+    repairMissingProfileTargets();
     history=createNudgeHistory({getState:()=>state,view,escapeHtml:String,todayKey:today,render:noOp,navigate:noOp,showToast,save,showDialog:noOp,closeDialog:noOp,recipeBy:NudgeRecipeCatalogue.byId});
     repertoire=createNudgeRepertoire({getState:()=>state,view,todayKey:today,render:noOp,navigate:noOp,escapeHtml:String,showToast,showDialog:noOp,history});
     return snapshot(null,undefined,options.nativeHistory===true);

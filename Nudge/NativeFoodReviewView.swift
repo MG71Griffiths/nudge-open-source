@@ -526,6 +526,10 @@ struct NativeFoodReviewView: View {
             let targetLabel = string(nutrient, "targetLabel", fallback: "Target")
             Text(target == nil && !targetLabel.localizedCaseInsensitiveContains("unavailable") ? targetLabel + " unavailable" : targetLabel)
                 .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+            if target == nil, let reason = nutrient["targetReason"] as? String, !reason.isEmpty {
+                Text(reason).font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if (number(nutrient, "unknown") ?? 0) > 0 {
                 Text(number(nutrient, "value") == nil ? "Nutrition unavailable" : "Partial · known amounts only")
                     .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))

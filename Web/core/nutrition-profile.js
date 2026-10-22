@@ -133,11 +133,27 @@
       plants:p.schemaVersion>=2?p.weeklyPlantTarget:p.saved&&[10,20,30].includes(plantGoal)?plantGoal:null};
     const record=targetRecord(p.targetHistory,day);
     const modes=record?record.targetModes||{}:p.targetModes||{};
+    const details=record?record.targetSourceDetails||{}:p.targetSourceDetails||{};
+    const suggestions=day===today?automaticSuggestions(p):null;
     const out={};
     for(const metric of [...automaticMetrics,'dailyPlants']){
       const dated=p.targetHistory.length?targetFromRecord(record,metric):{value:day===today?current[metric]??null:null,known:day===today};
       const value=typeof dated.value==='number'&&Number.isFinite(dated.value)&&dated.value>0?dated.value:null;
-      out[metric]={...dated,value,mode:modes[metric]||(value!==null?'manual':null),targetRole:['calories','carbs','fat'].includes(metric)?'reference':'goal',targetLabel:['calories','carbs','fat'].includes(metric)?'Reference':'Target'};
+      const mode=modes[metric]||(value!==null?'manual':null);
+      let reason=null;
+      if(value===null){
+        if(!dated.known)reason='Historical target not recorded';
+        else if(dated.value===0)reason='No percentage for a zero target';
+        else if(mode==='manual')reason='Target left unset';
+        else {
+          reason=details[metric]?.reason||(suggestions?.[metric]?.value===null?suggestions[metric].reason:null)||(day===today?p.saved?'Review your targets':'Add your personal details':'Target not set for this date');
+          // Explain the actual missing input for dependent macros, using only
+          // this date's recorded provenance, never today's details for the past.
+          const energyReason=details.calories?.reason||(suggestions?.calories?.value===null?suggestions.calories.reason:null);
+          if(['carbs','fat'].includes(metric)&&/^Complete your energy profile/.test(reason)&&/^Add /.test(energyReason||''))reason=energyReason+' to estimate energy';
+        }
+      }
+      out[metric]={...dated,value,reason,mode,targetRole:['calories','carbs','fat'].includes(metric)?'reference':'goal',targetLabel:['calories','carbs','fat'].includes(metric)?'Reference':'Target'};
     }
     // A daily pacing guide uses only a weekly goal recorded for this date.
     // It is a display comparison, never a new saved target or a weekly sum.

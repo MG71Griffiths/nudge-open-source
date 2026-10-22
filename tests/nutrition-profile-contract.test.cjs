@@ -82,3 +82,34 @@ test('missing inputs and agreed nutrition contexts remain distinct from zero',()
     assert.equal(agreed.fibreTarget,25);
   }
 });
+
+test('missing target reasons identify separate activity inputs without inventing a target',()=>{
+  const p=n.saveDraft({...profile(),activity:'unknown'},n.clean(),day),targets=n.effectiveTargets(p,day,day).targets;
+  assert.equal(targets.protein.value,125);assert.equal(targets.fibre.value,30);
+  assert.equal(targets.calories.value,null);assert.equal(targets.calories.reason,'Add activity');
+  for(const metric of ['fat','carbs']){
+    assert.equal(targets[metric].value,null);assert.equal(targets[metric].reason,'Add activity to estimate energy');
+  }
+  const next=n.saveDraft({...p,activity:'moderate'},p,'2026-10-06');
+  const completed=n.effectiveTargets(next,'2026-10-06','2026-10-06').targets;
+  assert.equal(completed.calories.value,2650);assert.equal(completed.calories.reason,null);
+  assert.equal(completed.fat.value,88);assert.equal(completed.carbs.value,340);
+  const historical=n.effectiveTargets(next,day,'2026-10-06').targets;
+  assert.equal(historical.calories.value,null);assert.equal(historical.calories.reason,'Add activity','Historic explanation uses its own recorded inputs');
+  assert.equal(historical.fat.reason,'Add activity to estimate energy');
+  assert.equal(n.effectiveTargets(next,'2026-10-04','2026-10-06').targets.calories.reason,'Historical target not recorded');
+});
+
+test('missing reasons distinguish deliberate clears, zero, medical plans and unavailable history',()=>{
+  const automatic=n.saveDraft(profile(),n.clean(),day);
+  const manual=n.saveDraft({...automatic,target:null,fatTarget:0},automatic,day);
+  const targets=n.effectiveTargets(manual,day,day).targets;
+  assert.equal(targets.protein.reason,'Target left unset');assert.equal(targets.fat.reason,'No percentage for a zero target');
+  assert.equal(targets.carbs.value,null);assert.equal(targets.carbs.reason,'Complete your protein and fat targets');
+  for(const care of ['clinical','glp1']){
+    const p=n.saveDraft({...profile(),care},n.clean(),day);
+    assert.equal(n.effectiveTargets(p,day,day).targets.calories.reason,'Use your agreed nutrition plan');
+  }
+  const earlier={...automatic,targetHistory:[{effectiveFrom:day,targets:{calories:null},targetModes:{calories:'automatic'}}]};
+  assert.equal(n.effectiveTargets(earlier,day,'2026-10-06').targets.calories.reason,'Target not set for this date','Do not infer historical missing-input reasons from current details');
+});

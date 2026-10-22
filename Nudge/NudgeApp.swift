@@ -5,7 +5,9 @@ struct NudgeApp: App {
     var body: some Scene {
         WindowGroup {
             #if DEBUG && targetEnvironment(simulator)
-            if ProcessInfo.processInfo.environment["NUDGE_SEARCH_UI_FIXTURE"] == "1" {
+            if let raw = ProcessInfo.processInfo.environment["NUDGE_ONBOARDING_UI_FIXTURE"], let id = UUID(uuidString: raw) {
+                NativeOnboardingUITestFixture(id: id)
+            } else if ProcessInfo.processInfo.environment["NUDGE_SEARCH_UI_FIXTURE"] == "1" {
                 NativeSearchInteractionUITestFixture()
             } else if let raw = ProcessInfo.processInfo.environment["NUDGE_HISTORY_UI_FIXTURE"], let id = UUID(uuidString: raw) {
                 NativeHistoryUITestFixture(id: id)
@@ -20,6 +22,27 @@ struct NudgeApp: App {
 }
 
 #if DEBUG && targetEnvironment(simulator)
+/// A separate store and completion preference for repeatable first-run UI checks.
+/// This route is absent from all physical-device and release builds.
+private struct NativeOnboardingUITestFixture: View {
+    @StateObject private var store: NativeAppStore
+    @AppStorage private var completed: Bool
+    init(id: UUID) {
+        let name = "NudgeOnboardingUITest-" + id.uuidString
+        let disk = NudgeDataStore(directory: FileManager.default.temporaryDirectory.appendingPathComponent(name))
+        _store = StateObject(wrappedValue: NativeAppStore(store: disk))
+        _completed = AppStorage(wrappedValue: false, "completed", store: UserDefaults(suiteName: name)!)
+    }
+    var body: some View {
+        NativeAppShell(store: store)
+            .fullScreenCover(isPresented: Binding(get: { store.ready && !completed }, set: { _ in })) {
+                NativeOnboardingView(store: store, onAccountChange: { store.capture.accountDidChange(since: $0) }) {
+                    completed = true
+                }
+            }
+    }
+}
+
 /// The simulator interaction test launches the actual history screen over a
 /// separate synthetic store. This entry point is absent from device/release builds.
 private struct NativeHistoryUITestFixture: View {
@@ -62,7 +85,9 @@ struct NudgeScreen: View {
     var body: some View {
         NativeAppShell(store: store)
             .fullScreenCover(isPresented: Binding(get: { store.ready && !onboardingCompleted }, set: { _ in })) {
-                NativeOnboardingView(onAccountChange: { store.capture.accountDidChange(since: $0) }) {
+                NativeOnboardingView(store: store, startAtProfile: UserDefaults.standard.bool(forKey: NativeOnboardingView.previousCompletionKey),
+                                     onAccountChange: { store.capture.accountDidChange(since: $0) }) {
+                    UserDefaults.standard.set(true, forKey: NativeOnboardingView.previousCompletionKey)
                     onboardingCompleted = true
                     store.capture.resumePending()
                     store.refreshPresentation()

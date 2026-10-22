@@ -12,9 +12,9 @@ const baseState=()=>({version:1,nutritionProfile:manualProfile(),cycleSupport:{e
 
 // Execute the production application adapter with a deterministic native storage
 // boundary. History/repertoire rendering is outside these profile/cycle contracts.
-function session(input=baseState(), recipes=[]) {
+function session(input=baseState(), recipes=[], options={}) {
   const values=new Map([[mainKey,JSON.stringify(input)]]), writes=[], diagnostics=[];
-  let failWrites=false,currentDay=today;
+  let failWrites=options.failWrites===true,currentDay=today;
   const sandbox={console,Date,Math,JSON,URL,window:null,
     nativeToday:()=>currentDay,nativeNow:()=>currentDay+'T12:00:00Z',
     nativeDiagnostic:(...args)=>diagnostics.push(args),
@@ -80,6 +80,55 @@ test('editing personal details preserves explicit targets and recomputes only au
   assert.equal(r.state.nutritionProfile.targetHistory[0].targets.protein,150);
 });
 
+test('native startup repairs available missing automatic targets prospectively without changing intake or overrides',()=>{
+  const original=baseState();
+  original.nutritionProfile={...manualProfile(),carbTarget:null,fatTarget:null,fibreTarget:null,
+    targetModes:{protein:'manual',calories:'manual',carbs:'automatic',fat:'automatic',fibre:'manual',plants:'automatic'},
+    targetSourceDetails:{carbs:{status:'pending',reason:'Add activity'},fat:{status:'pending',reason:'Add activity'}}};
+  original.foodLog.entries[0].retiredField={mustKeep:'exactly'};
+  const before=copy(original),s=session(original),p=s.snapshot().state.nutritionProfile;
+  assert.equal(p.carbTarget,331);assert.equal(p.fatTarget,92);
+  assert.equal(p.target,150);assert.equal(p.calorieTarget,2750);
+  assert.equal(p.fibreTarget,null,'A deliberately cleared manual target stays cleared');
+  assert.deepEqual(p.targetHistory[0],before.nutritionProfile.targetHistory[0]);
+  assert.equal(p.targetHistory.at(-1).effectiveFrom,today);
+  assert.deepEqual(s.snapshot().state.foodLog,before.foodLog,'Do not normalize or resave intake fields');
+  assert.deepEqual(s.snapshot().state.unknownTopLevel,before.unknownTopLevel);
+  assert.equal(s.writes.length,1,'Save one atomic main-store repair');
+  const restarted=session(s.saved());assert.equal(restarted.writes.length,0,'Repair is idempotent');
+});
+
+test('native startup preserves legacy targets and weekly goal while filling only eligible missing targets',()=>{
+  const original=baseState();original.foodLog.plantGoal=20;
+  original.nutritionProfile={saved:true,goal:'muscle',age:55,weight:78,height:185,sex:'male',activity:'moderate',care:'none'};
+  const s=session(original),p=s.snapshot().state.nutritionProfile;
+  assert.equal(p.target,125);assert.equal(p.calorieTarget,2650);
+  assert.equal(p.targetModes.protein,'manual','Retain the established legacy target as an accepted value');
+  assert.equal(p.fatTarget,88);assert.equal(p.carbTarget,340);assert.equal(p.fibreTarget,30);
+  assert.equal(p.weeklyPlantTarget,20);assert.equal(s.saved().foodLog.plantGoal,20);
+  assert.deepEqual(s.saved().foodLog.entries,original.foodLog.entries);
+});
+
+test('native startup does not invent missing inputs or overwrite clinical or deliberately cleared targets',()=>{
+  const incomplete=baseState();
+  incomplete.nutritionProfile={...manualProfile(),height:null,activity:'unknown',target:null,calorieTarget:null,carbTarget:null,fatTarget:null,
+    targetModes:{protein:'manual',calories:'automatic',carbs:'automatic',fat:'automatic',fibre:'automatic',plants:'automatic'}};
+  for(const p of [incomplete.nutritionProfile,{...incomplete.nutritionProfile,care:'clinical'},
+    {...incomplete.nutritionProfile,care:'glp1'},{...incomplete.nutritionProfile,age:17},
+    {...incomplete.nutritionProfile,saved:false}]) {
+    const original={...incomplete,nutritionProfile:p},s=session(original);
+    assert.equal(s.writes.length,0);assert.deepEqual(s.snapshot().state,original);
+  }
+});
+
+test('failed startup target repair keeps all persisted and in-memory records unchanged',()=>{
+  const original=baseState();original.nutritionProfile.fatTarget=null;
+  const s=session(original,[],{failWrites:true});
+  assert.equal(s.writes.length,0);assert.deepEqual(s.saved(),original);assert.deepEqual(s.snapshot().state,original);
+  assert.match(s.result.message,/targets.*could not be saved|could not.*targets/i);
+  assert.equal(session(s.saved()).snapshot().state.nutritionProfile.fatTarget,92,'A later successful opening can retry');
+});
+
 test('new profile with missing age cannot invent automatic targets, and medical contexts retain agreed values',()=>{
   for(const care of ['none','clinical','glp1']) {
     const state=baseState();state.nutritionProfile={saved:false,age:care==='none'?null:55,weight:78,height:185,sex:'male',activity:'moderate',goal:'muscle',goals:['muscle'],care};
@@ -115,10 +164,10 @@ test('profile write failure rolls back target history, nutrient targets, and mir
 test('legacy profile editor retains actual onboarding choices and the prior weekly goal',()=>{
   const state=baseState();state.profile={edited:true,goals:['Eat more plants','Build a steady routine'],cooking:'Under 15 minutes'};
   state.foodLog.plantGoal=20;state.nutritionProfile={saved:true,goal:'balance',age:55,weight:78,care:'none'};
-  const s=session(state),p=s.project('profile').profile;
+  const s=session(state),startupWrites=s.writes.length,p=s.project('profile').profile;
   assert.ok(p.goals.includes('more_plants'));assert.ok(p.goals.includes('steady_routine'));
   assert.equal(p.weeklyPlantTarget,20);assert.equal(p.foodPreferences.mealPlanning,'Under 15 minutes');
-  assert.equal(s.writes.length,0,'Viewing the migration draft does not alter saved data');
+  assert.equal(s.writes.length,startupWrites,'Viewing the migration draft does not alter saved data after startup repair');
 });
 
 test('cycle edits preserve check-ins and never rewrite profile, scores, or confirmed intake',()=>{

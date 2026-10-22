@@ -206,7 +206,7 @@ struct NativeCompactNutritionPanel: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10, alignment: .top), count: typeSize.isAccessibilitySize ? 1 : 3), spacing: 18) {
                 ForEach(items.indices, id: \.self) { index in
                     let item = items[index]
-                    let amountOnly = NativeTrackingDisplay.ratio(item) == nil
+                    let amountOnly = !NativeTrackingDisplay.hasTarget(item)
                     VStack(spacing: 6) {
                         ZStack {
                             Circle().stroke(NativeTrackingDisplay.color(item).opacity(amountOnly ? 0.35 : 0.17), lineWidth: 6)
@@ -218,7 +218,7 @@ struct NativeCompactNutritionPanel: View {
                         }.frame(width: typeSize.isAccessibilitySize ? 84 : 60, height: typeSize.isAccessibilitySize ? 84 : 60)
                         Text(NativeTrackingDisplay.title(item) + (item["period"] as? String == "week" ? " · week" : ""))
                             .font(.caption.weight(.semibold)).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                        Text(amountOnly ? NativeTrackingDisplay.valueLabel(item) : NativeTrackingDisplay.total(item)).font(.caption2).monospacedDigit()
+                        Text(NativeTrackingDisplay.summaryAmount(item)).font(.caption2).monospacedDigit()
                             .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                         if amountOnly, item["recorded"] as? Bool == true, NativeTrackingDisplay.number(item["value"]) != nil {
                             Text("Logged amount").font(.caption2).foregroundStyle(Color(uiColor: NudgeTheme.muted))
@@ -1665,9 +1665,16 @@ enum NativeTrackingDisplay {
             && ["reference", "limit"].contains(item["targetRole"] as? String ?? "")
     }
     static func targetLabel(_ item: [String: Any]) -> String {
-        guard item["targetKnown"] as? Bool != false else { return "Target not recorded" }
-        guard let target = number(item["target"]), target > 0 else { return "Target not set" }
+        guard item["targetKnown"] as? Bool != false else { return missingTargetReason(item, fallback: "Target not recorded") }
+        guard let target = number(item["target"]), target > 0 else { return missingTargetReason(item) }
         return (targetRoleLabel(item).map { $0 + ": " } ?? "of ") + numberLabel(target, digits: item["unit"] as? String == "kcal" ? 0 : 1) + " " + (item["unit"] as? String ?? "") + (item["period"] as? String == "week" ? " this week" : " on this day")
+    }
+    /// Target visibility is independent of whether any intake has been recorded.
+    static func hasTarget(_ item: [String: Any]) -> Bool {
+        item["targetKnown"] as? Bool != false && (number(item["target"]) ?? 0) > 0
+    }
+    static func summaryAmount(_ item: [String: Any]) -> String {
+        hasTarget(item) ? total(item) : valueLabel(item)
     }
     static func total(_ item: [String: Any]) -> String {
         let unit = item["unit"] as? String ?? ""
@@ -1683,8 +1690,8 @@ enum NativeTrackingDisplay {
             return (ratio > 1 ? "Above reference amount" : "At reference amount") + ((number(item["unknown"]) ?? 0) > 0 ? " · partial" : "")
         }
         if (number(item["unknown"]) ?? 0) > 0 { return "Known total · partial" }
-        if item["targetKnown"] as? Bool == false { return "Target not recorded" }
-        guard let target = number(item["target"]), target > 0 else { return "Target not set" }
+        if item["targetKnown"] as? Bool == false { return missingTargetReason(item, fallback: "Target not recorded") }
+        guard let target = number(item["target"]), target > 0 else { return missingTargetReason(item) }
         if let value = number(item["rawValue"] ?? item["value"]), value > target {
             return item["targetRole"] as? String == "limit" ? "Above upper limit" : item["targetRole"] as? String == "reference" ? "Above reference amount" : "Over target"
         }
@@ -1693,6 +1700,10 @@ enum NativeTrackingDisplay {
     }
     static func description(_ item: [String: Any]) -> String {
         title(item) + ": " + valueLabel(item) + ", " + targetLabel(item) + (note(item).map { ", " + $0 } ?? "") + (item["estimated"] as? Bool == true ? ", includes estimates" : "") + ((item["referenceNote"] as? String).map { ". " + $0 } ?? "")
+    }
+    static func missingTargetReason(_ item: [String: Any], fallback: String = "Target not set") -> String {
+        let reason = (item["targetReason"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return reason.isEmpty ? fallback : reason
     }
     static func imageSource(_ row: [String: Any]) -> String {
         let entry = object(row["entry"]), draft = object(row["draft"])

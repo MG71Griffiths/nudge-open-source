@@ -5,13 +5,27 @@ import XCTest
 final class AppShellGestureTests: XCTestCase {
     #if targetEnvironment(simulator)
     @MainActor
+    private func scrollTo(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<12 {
+            if element.exists && element.isHittable { return }
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.isHittable, "Expected control to be reachable by scrolling", file: file, line: line)
+    }
+
+    @MainActor
     private func skipInitialSetupIfPresented(_ app: XCUIApplication) {
         let skipAccount = app.buttons["onboarding-skip-account"]
         if skipAccount.waitForExistence(timeout: 5) {
             skipAccount.tap()
-            let skipChatGPT = app.buttons["onboarding-skip-chatgpt"]
-            XCTAssertTrue(skipChatGPT.waitForExistence(timeout: 5))
-            skipChatGPT.tap()
+        }
+        let skipProfile = app.buttons["onboarding-skip-profile"]
+        if skipProfile.waitForExistence(timeout: 3) {
+            scrollTo(skipProfile, in: app); skipProfile.tap()
+        }
+        let skipChatGPT = app.buttons["onboarding-skip-chatgpt"]
+        if skipChatGPT.waitForExistence(timeout: 3) {
+            scrollTo(skipChatGPT, in: app); skipChatGPT.tap()
         }
     }
 
@@ -21,6 +35,7 @@ final class AppShellGestureTests: XCTestCase {
     func testPasswordlessOnboardingSkipsPersistsAndReopens() {
         continueAfterFailure = false
         let app = XCUIApplication()
+        app.launchEnvironment["NUDGE_ONBOARDING_UI_FIXTURE"] = UUID().uuidString
         app.launch()
         defer { app.terminate() }
         func attach(_ name: String) {
@@ -44,14 +59,21 @@ final class AppShellGestureTests: XCTestCase {
         XCTAssertFalse(app.textFields["account-code"].exists)
         attach("Invalid email stays visible without sending a code")
         app.buttons["onboarding-skip-account"].tap()
+        XCTAssertTrue(app.textFields["onboarding-age"].waitForExistence(timeout: 5))
+        scrollTo(app.buttons["onboarding-skip-profile"], in: app)
+        app.buttons["onboarding-skip-profile"].tap()
         XCTAssertTrue(app.buttons["onboarding-connect-chatgpt"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Have a ChatGPT account?"].exists)
+        scrollTo(app.buttons["onboarding-skip-chatgpt"], in: app)
         XCTAssertTrue(app.buttons["onboarding-skip-chatgpt"].isHittable)
         attach("Optional ChatGPT connection explains the shared camera connection")
-        app.navigationBars.buttons["Back"].tap()
+        for _ in 0..<4 { app.navigationBars.buttons["Back"].tap() }
         XCTAssertTrue(email.waitForExistence(timeout: 15))
         XCTAssertFalse(app.secureTextFields["account-password"].exists)
         app.buttons["onboarding-skip-account"].tap()
+        scrollTo(app.buttons["onboarding-skip-profile"], in: app)
+        app.buttons["onboarding-skip-profile"].tap()
+        scrollTo(app.buttons["onboarding-skip-chatgpt"], in: app)
         app.buttons["onboarding-skip-chatgpt"].tap()
         XCTAssertTrue(app.buttons["native-tab-you"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.buttons["onboarding-skip-account"].exists)
@@ -65,8 +87,74 @@ final class AppShellGestureTests: XCTestCase {
         XCTAssertFalse(app.secureTextFields["account-password"].exists)
         attach("Setup can be reopened from You")
         app.buttons["onboarding-skip-account"].tap()
+        scrollTo(app.buttons["onboarding-skip-profile"], in: app)
+        app.buttons["onboarding-skip-profile"].tap()
+        scrollTo(app.buttons["onboarding-skip-chatgpt"], in: app)
         app.buttons["onboarding-skip-chatgpt"].tap()
         XCTAssertTrue(setup.waitForExistence(timeout: 10))
+    }
+
+    @MainActor
+    func testPersonalSetupImperialMeasurementsAndVisibleUnloggedTargets() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchEnvironment["NUDGE_ONBOARDING_UI_FIXTURE"] = UUID().uuidString
+        app.launch()
+        defer { app.terminate() }
+        func attach(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name; shot.lifetime = .keepAlways; add(shot)
+        }
+        XCTAssertTrue(app.buttons["onboarding-skip-account"].waitForExistence(timeout: 30))
+        app.buttons["onboarding-skip-account"].tap()
+        let age = app.textFields["onboarding-age"]
+        XCTAssertTrue(age.waitForExistence(timeout: 5)); age.tap(); age.typeText("40")
+        app.toolbars.buttons["Done"].tap()
+        app.segmentedControls["onboarding-sex"].buttons["Female"].tap()
+        let heightUnits = app.segmentedControls["onboarding-height-units"]
+        scrollTo(heightUnits, in: app); heightUnits.buttons["ft & in"].tap()
+        let feet = app.textFields["onboarding-field-height-major"]
+        scrollTo(feet, in: app); feet.tap(); feet.typeText("5")
+        let inches = app.textFields["onboarding-field-height-minor"]
+        inches.tap(); inches.typeText("6")
+        app.toolbars.buttons["Done"].tap()
+        let weightUnits = app.segmentedControls["onboarding-weight-units"]
+        scrollTo(weightUnits, in: app); weightUnits.buttons["st & lb"].tap()
+        let stone = app.textFields["onboarding-field-weight-major"]
+        scrollTo(stone, in: app); stone.tap(); stone.typeText("10")
+        let pounds = app.textFields["onboarding-field-weight-minor"]
+        pounds.tap(); pounds.typeText("7")
+        app.toolbars.buttons["Done"].tap()
+        attach("Personal measurements — feet inches stone and pounds")
+        let care = app.buttons["onboarding-care-none"]
+        scrollTo(care, in: app); care.tap()
+        let next = app.buttons["onboarding-details-continue"]
+        scrollTo(next, in: app); next.tap()
+        XCTAssertTrue(app.buttons["onboarding-activity-moderate"].waitForExistence(timeout: 5))
+        app.buttons["onboarding-activity-moderate"].tap()
+        attach("Activity selection — profile-dependent energy targets")
+        let targets = app.buttons["onboarding-routine-continue"]
+        scrollTo(targets, in: app); targets.tap()
+        XCTAssertTrue(app.staticTexts["Your starting points."].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["A few targets need attention"].exists)
+        attach("Personal targets calculated from saved setup")
+        let continueTargets = app.buttons["onboarding-targets-continue"]
+        scrollTo(continueTargets, in: app); continueTargets.tap()
+        scrollTo(app.buttons["onboarding-skip-chatgpt"], in: app)
+        app.buttons["onboarding-skip-chatgpt"].tap()
+        XCTAssertTrue(app.buttons["native-tab-today"].waitForExistence(timeout: 10))
+        let fibre = app.otherElements["nutrition-ring-fibre"]
+        XCTAssertTrue(fibre.waitForExistence(timeout: 10))
+        XCTAssertTrue(fibre.label.contains("30 g"), "Known target remains available before any food is logged")
+        attach("Empty diary retains nutrient targets")
+        app.buttons["native-tab-you"].tap()
+        XCTAssertTrue(app.staticTexts["5 ft 6 in"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["10 st 7 lb"].exists)
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["native-tab-you"].waitForExistence(timeout: 15))
+        app.buttons["native-tab-you"].tap()
+        XCTAssertTrue(app.staticTexts["5 ft 6 in"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["10 st 7 lb"].exists)
     }
 
     @MainActor

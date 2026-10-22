@@ -1,6 +1,229 @@
 import SwiftUI
 import CoreFoundation
 
+// MARK: - Measurement model (also exercised by the native measurement checks)
+enum ProfileMeasurementUnit: String, Hashable {
+    case metric, imperial
+}
+
+enum ProfileMeasurementKind: String, Hashable {
+    case height, weight
+
+    var title: String { self == .height ? "Height" : "Weight" }
+    var metricUnit: String { self == .height ? "cm" : "kg" }
+    var imperialTitle: String { self == .height ? "ft & in" : "st & lb" }
+    var majorUnit: String { self == .height ? "ft" : "st" }
+    var minorUnit: String { self == .height ? "in" : "lb" }
+    var majorName: String { self == .height ? "Feet" : "Stone" }
+    var minorName: String { self == .height ? "Inches" : "Pounds" }
+    var bounds: ClosedRange<Double> { self == .height ? 100...230 : 35...250 }
+    var preferenceKey: String { "nudge-profile-\(rawValue)-unit-v1" }
+    var partsPerMajor: Double { self == .height ? 12 : 14 }
+    var canonicalPerMinor: Double { self == .height ? 2.54 : 0.45359237 }
+    var rangeMessage: String {
+        self == .height ? "Enter a height from 100 to 230 cm (about 3 ft 3.4 in to 7 ft 6.6 in), or leave it unset." : "Enter a weight from 35 to 250 kg (about 5 st 7.2 lb to 39 st 5.2 lb), or leave it unset."
+    }
+}
+
+struct ProfileMeasurementFailure: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
+}
+
+/// Raw editing text is separate from the stored cm/kg value. Converting the
+/// display never rounds the canonical value, even after repeated unit changes.
+struct ProfileMeasurementDraft {
+    let kind: ProfileMeasurementKind
+    private(set) var unit: ProfileMeasurementUnit
+    var major = ""
+    var minor = ""
+    var validationError: String?
+    private var renderedMajor = ""
+    private var renderedMinor = ""
+    private var renderedCanonical: Double?
+
+    init(kind: ProfileMeasurementKind, value: Any?, unit: ProfileMeasurementUnit? = nil) {
+        self.kind = kind
+        self.unit = unit ?? ProfileMeasurementUnit(rawValue: UserDefaults.standard.string(forKey: kind.preferenceKey) ?? "") ?? .metric
+        render(Self.number(value))
+    }
+
+    var isEmpty: Bool { major.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && minor.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    func validatedValue() throws -> Double? {
+        if major == renderedMajor && minor == renderedMinor {
+            return try checkedCanonical(renderedCanonical)
+        }
+        let first = major.trimmingCharacters(in: .whitespacesAndNewlines)
+        let second = minor.trimmingCharacters(in: .whitespacesAndNewlines)
+        if unit == .metric {
+            if first.isEmpty { return nil }
+            guard let value = Self.decimal(first) else {
+                throw ProfileMeasurementFailure(message: "Enter \(kind.title.lowercased()) as a number in \(kind.metricUnit), or leave it unset.")
+            }
+            return try checkedCanonical(value)
+        }
+        if first.isEmpty && second.isEmpty { return nil }
+        guard !first.isEmpty, !second.isEmpty else {
+            throw ProfileMeasurementFailure(message: "Enter both \(kind.majorName.lowercased()) and \(kind.minorName.lowercased()), using 0 \(kind.minorUnit) if needed. Clear both to leave \(kind.title.lowercased()) unset.")
+        }
+        guard let whole = Self.decimal(first), whole.rounded() == whole else {
+            throw ProfileMeasurementFailure(message: "Enter \(kind.majorName.lowercased()) as a whole number.")
+        }
+        guard let remainder = Self.decimal(second), remainder >= 0, remainder < kind.partsPerMajor else {
+            throw ProfileMeasurementFailure(message: "Enter \(kind.minorName.lowercased()) from 0 up to, but less than, \(Int(kind.partsPerMajor)). Decimals are welcome.")
+        }
+        return try checkedCanonical((whole * kind.partsPerMajor + remainder) * kind.canonicalPerMinor)
+    }
+
+    /// A failed switch retains the entered text and selected unit for correction.
+    @discardableResult mutating func selectUnit(_ next: ProfileMeasurementUnit) -> Bool {
+        guard unit != next else { return true }
+        do {
+            let value = try validatedValue()
+            unit = next
+            render(value)
+            return true
+        } catch {
+            validationError = error.localizedDescription
+            return false
+        }
+    }
+
+    mutating func clear() { render(nil) }
+
+    private func checkedCanonical(_ value: Double?) throws -> Double? {
+        guard let value else { return nil }
+        guard value.isFinite, kind.bounds.contains(value) else { throw ProfileMeasurementFailure(message: kind.rangeMessage) }
+        return value
+    }
+
+    private mutating func render(_ value: Double?) {
+        renderedCanonical = value
+        if let value {
+            if unit == .metric {
+                major = Self.format(value); minor = ""
+            } else if kind.bounds.contains(value) {
+                let total = value / kind.canonicalPerMinor
+                var whole = floor(total / kind.partsPerMajor)
+                var remainder = ((total - whole * kind.partsPerMajor) * 10).rounded() / 10
+                if remainder >= kind.partsPerMajor { whole += 1; remainder = 0 }
+                major = Self.format(whole); minor = Self.format(remainder)
+            } else {
+                // An invalid saved value must remain invalid without attempting
+                // an unsafe integer conversion or quietly becoming an unknown.
+                major = String(value); minor = ""
+            }
+        } else {
+            major = ""; minor = ""
+        }
+        renderedMajor = major; renderedMinor = minor; validationError = nil
+    }
+
+    static func summary(_ value: Any?, kind: ProfileMeasurementKind, unit: ProfileMeasurementUnit) -> String {
+        guard let number = number(value), kind.bounds.contains(number) else { return "Not set" }
+        let draft = Self(kind: kind, value: number, unit: unit)
+        return unit == .metric ? "\(draft.major) \(kind.metricUnit)" : "\(draft.major) \(kind.majorUnit) \(draft.minor) \(kind.minorUnit)"
+    }
+
+    private static func number(_ raw: Any?) -> Double? {
+        guard let value = raw as? NSNumber, CFGetTypeID(value) != CFBooleanGetTypeID() else { return nil }
+        return value.doubleValue
+    }
+    private static func decimal(_ raw: String) -> Double? {
+        let text = raw.replacingOccurrences(of: ",", with: ".")
+        guard text.range(of: "^(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)$", options: .regularExpression) != nil,
+              let number = Double(text), number.isFinite else { return nil }
+        return number
+    }
+    private static func format(_ number: Double) -> String {
+        let formatted = String(format: "%.1f", locale: Locale(identifier: "en_US_POSIX"), number)
+        return formatted.hasSuffix(".0") ? String(formatted.dropLast(2)) : formatted
+    }
+}
+// MARK: - End measurement model
+
+/// Shared by first-run setup and My profile, so both use the same validation,
+/// saved unit preferences and cm/kg conversion contract.
+struct ProfileMeasurementField: View {
+    @Binding var draft: ProfileMeasurementDraft
+    var idPrefix = "profile"
+    var onCommit: () -> Void = {}
+    var onFocusChange: (Bool) -> Void = { _ in }
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @FocusState private var focusedPart: Part?
+    @State private var previousFocusedPart: Part?
+    private enum Part: Hashable { case major, minor }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .firstTextBaseline) {
+                Text(draft.kind.title).font(.headline)
+                Spacer(minLength: 8)
+                Button("Clear") { focusedPart = nil; draft.clear(); onCommit() }
+                    .font(.subheadline).frame(minWidth: 44, minHeight: 44)
+                    .disabled(draft.isEmpty).opacity(draft.isEmpty ? 0 : 1)
+                    .accessibilityHidden(draft.isEmpty)
+                    .accessibilityLabel("Clear \(draft.kind.title.lowercased())")
+                    .accessibilityIdentifier("\(idPrefix)-\(draft.kind.rawValue)-clear")
+            }
+            Picker("\(draft.kind.title) units", selection: Binding(get: { draft.unit }, set: { value in
+                focusedPart = nil
+                if draft.selectUnit(value) { UserDefaults.standard.set(value.rawValue, forKey: draft.kind.preferenceKey) }
+            })) {
+                Text(draft.kind.metricUnit).tag(ProfileMeasurementUnit.metric)
+                Text(draft.kind.imperialTitle).tag(ProfileMeasurementUnit.imperial)
+            }.pickerStyle(.segmented).accessibilityIdentifier("\(idPrefix)-\(draft.kind.rawValue)-units")
+            if draft.unit == .metric {
+                input(.major, label: draft.kind.title, unit: draft.kind.metricUnit)
+            } else {
+                let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12)) : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+                layout {
+                    input(.major, label: draft.kind.majorName, unit: draft.kind.majorUnit)
+                    input(.minor, label: draft.kind.minorName, unit: draft.kind.minorUnit)
+                }
+            }
+            if let error = draft.validationError {
+                Text(error).font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.errorText)).fixedSize(horizontal: false, vertical: true)
+                    .accessibilityIdentifier("\(idPrefix)-\(draft.kind.rawValue)-error")
+            } else {
+                Text(draft.unit == .metric ? (draft.kind == .height ? "100–230 cm · optional" : "35–250 kg · optional") : "Use whole \(draft.kind.majorName.lowercased()); \(draft.kind.minorName.lowercased()) can include decimals.")
+                    .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted)).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .onChange(of: focusedPart) { next in
+            let old = previousFocusedPart
+            previousFocusedPart = next
+            onFocusChange(next != nil)
+            if old != nil && next == nil { onCommit() }
+        }
+        .onDisappear { onFocusChange(false) }
+    }
+
+    private func input(_ part: Part, label: String, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            if draft.unit == .imperial { Text(label).font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted)) }
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                TextField("Not set", text: Binding(get: { part == .major ? draft.major : draft.minor }, set: { value in
+                    if part == .major { draft.major = value } else { draft.minor = value }
+                    draft.validationError = nil
+                }))
+                .font(.title2.weight(.semibold)).monospacedDigit()
+                .keyboardType(part == .major && draft.unit == .imperial ? .numberPad : .decimalPad)
+                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                .focused($focusedPart, equals: part).submitLabel(.done)
+                .onSubmit { focusedPart = nil; onCommit() }
+                .accessibilityLabel("\(draft.kind.title), \(draft.unit == .metric ? unit : label.lowercased())")
+                .accessibilityIdentifier("\(idPrefix)-field-\(draft.kind.rawValue)\(draft.unit == .imperial ? "-\(part == .major ? "major" : "minor")" : "")")
+                Text(unit).font(.subheadline.weight(.semibold)).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+            }
+            .padding(14).frame(minHeight: 58)
+            .background(Color(uiColor: NudgeTheme.canvas), in: RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color(uiColor: NudgeTheme.border)))
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
 /// Native profile and optional cycle screens. These views only edit the existing
 /// profile/check-in contract; target and phase rules stay in the shared core.
 @MainActor
@@ -12,13 +235,15 @@ struct NativeProfileView: View {
     @State private var ambassadorsPresented = false
     @State private var signInAfterAmbassadors = false
     @State private var setupPresented = false
+    @AppStorage(ProfileMeasurementKind.height.preferenceKey) private var heightUnit = ProfileMeasurementUnit.metric.rawValue
+    @AppStorage(ProfileMeasurementKind.weight.preferenceKey) private var weightUnit = ProfileMeasurementUnit.metric.rawValue
     private var profile: [String: Any] { store.project("profile")["profile"] as? [String: Any] ?? [:] }
 
     var body: some View {
         let p = profile
         ProfilePage {
             ProfileHeading(title: "My profile", subtitle: "Your food, your context.")
-            Button("Set up sign-in & ChatGPT") { setupPresented = true }
+            Button("Set up your Nudge") { setupPresented = true }
                 .buttonStyle(NudgeButtonStyle(variant: .secondary))
                 .accessibilityIdentifier("native-profile-setup")
             Button { ambassadorsPresented = true } label: {
@@ -35,8 +260,8 @@ struct NativeProfileView: View {
             ProfilePanel(title: "Personal details", edit: { editing = .stats }) {
                 ProfileValue(label: "Age", value: ProfileValues.amount(p["age"], suffix: " years"))
                 ProfileValue(label: "Sex", value: ProfileValues.title(p["sex"], in: ProfileValues.sexes))
-                ProfileValue(label: "Height", value: ProfileValues.amount(p["height"], suffix: " cm"))
-                ProfileValue(label: "Weight", value: ProfileValues.amount(p["weight"], suffix: " kg"))
+                ProfileValue(label: "Height", value: ProfileMeasurementDraft.summary(p["height"], kind: .height, unit: ProfileMeasurementUnit(rawValue: heightUnit) ?? .metric))
+                ProfileValue(label: "Weight", value: ProfileMeasurementDraft.summary(p["weight"], kind: .weight, unit: ProfileMeasurementUnit(rawValue: weightUnit) ?? .metric))
                 ProfileCaption(text: ProfileValues.title(p["care"], in: ProfileValues.care))
             }
             ProfilePanel(title: "Goals", edit: { editing = .goals }) {
@@ -99,7 +324,7 @@ struct NativeProfileView: View {
         .sheet(isPresented: $settingsPresented) { NativeSettingsView(store: store) }
         .sheet(isPresented: $chatGPTPresented) { ChatGPTPreviewView() }
         .sheet(isPresented: $setupPresented) {
-            NativeOnboardingView(onAccountChange: { store.capture.accountDidChange(since: $0) }) {
+            NativeOnboardingView(store: store, onAccountChange: { store.capture.accountDidChange(since: $0) }) {
                 UserDefaults.standard.set(true, forKey: NativeOnboardingView.completionKey)
                 setupPresented = false
             }
@@ -123,7 +348,7 @@ struct NativeProfileView: View {
     }
 }
 
-private enum ProfileSection: String, Identifiable {
+enum ProfileSection: String, Identifiable {
     case stats, goals, activity, tracking, requirements, habits, preferences
     var id: String { rawValue }
     var title: String {
@@ -140,7 +365,7 @@ private enum ProfileSection: String, Identifiable {
 }
 
 @MainActor
-private struct NativeProfileEditor: View {
+struct NativeProfileEditor: View {
     @ObservedObject var store: NativeAppStore
     let section: ProfileSection
     @Environment(\.dismiss) private var dismiss
@@ -150,6 +375,9 @@ private struct NativeProfileEditor: View {
     @State private var error = ""
     @State private var loaded = false
     @FocusState private var focusedNumber: String?
+    @State private var height = ProfileMeasurementDraft(kind: .height, value: nil)
+    @State private var weight = ProfileMeasurementDraft(kind: .weight, value: nil)
+    @State private var focusedMeasurements: Set<ProfileMeasurementKind> = []
     private var clinical: Bool { ["clinical", "glp1"].contains(draft["care"] as? String ?? "") }
 
     var body: some View {
@@ -174,7 +402,7 @@ private struct NativeProfileEditor: View {
             }
             .onAppear { load() }
             .onChange(of: focusedNumber) { _ in _ = commitNumbers() }
-            .interactiveDismissDisabled(focusedNumber != nil || !error.isEmpty)
+            .interactiveDismissDisabled(focusedNumber != nil || !focusedMeasurements.isEmpty || !error.isEmpty)
         }
         .tint(Color(uiColor: NudgeTheme.accent))
         .accessibilityIdentifier("native-profile-editor-\(section.rawValue)")
@@ -210,8 +438,8 @@ private struct NativeProfileEditor: View {
         ProfilePanel(title: "Your details") {
             numberField("age", label: "Age", bounds: "18–110", unit: "years")
             choice("sex", title: "Sex", choices: ProfileValues.sexes)
-            numberField("height", label: "Height", bounds: "100–230", unit: "cm")
-            numberField("weight", label: "Weight", bounds: "35–250", unit: "kg")
+            ProfileMeasurementField(draft: $height, idPrefix: "profile", onCommit: { _ = commitNumbers() }, onFocusChange: { setMeasurementFocus(.height, focused: $0) })
+            ProfileMeasurementField(draft: $weight, idPrefix: "profile", onCommit: { _ = commitNumbers() }, onFocusChange: { setMeasurementFocus(.weight, focused: $0) })
             choice("care", title: "Nutrition context · optional", choices: ProfileValues.care)
             ProfileCaption(text: "Automatic targets update from these details. Your own or agreed targets stay fixed.")
         }
@@ -346,11 +574,27 @@ private struct NativeProfileEditor: View {
     }
     private func refreshNumbers() {
         for key in ProfileValues.numeric.keys { numbers[key] = ProfileValues.editAmount(draft[key]) }
+        height = ProfileMeasurementDraft(kind: .height, value: draft["height"], unit: height.unit)
+        weight = ProfileMeasurementDraft(kind: .weight, value: draft["weight"], unit: weight.unit)
+    }
+    private func setMeasurementFocus(_ kind: ProfileMeasurementKind, focused: Bool) {
+        if focused { focusedMeasurements.insert(kind) } else { focusedMeasurements.remove(kind) }
     }
     @discardableResult private func commitNumbers() -> Bool {
         guard loaded else { return true }
         var next = draft
+        if section == .stats {
+            do {
+                for measurement in [height, weight] {
+                    next[measurement.kind.rawValue] = try measurement.validatedValue().map { $0 as Any } ?? NSNull()
+                }
+            } catch {
+                self.error = error.localizedDescription
+                return false
+            }
+        }
         for (key, range) in ProfileValues.numeric {
+            if section == .stats && ["height", "weight"].contains(key) { continue }
             let raw = (numbers[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: ",", with: ".")
             let old = ProfileValues.editAmount(draft[key])
             guard raw != old else { continue }
@@ -731,7 +975,7 @@ struct NativeSettingsView: View {
 }
 
 @MainActor
-private struct ProfileTargetMethods: View {
+struct ProfileTargetMethods: View {
     @ObservedObject var store: NativeAppStore
     let profile: [String: Any]
     var body: some View {
@@ -767,27 +1011,32 @@ private struct ProfileTargetMethods: View {
     }
 }
 
-private struct ProfileTargetRow: View {
+struct ProfileTargetRow: View {
     let metric: ProfileMetric
     let profile: [String: Any]
+    @Environment(\.dynamicTypeSize) private var size
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
-                Circle().fill(metric.color).frame(width: 8, height: 8)
-                Text(metric.title).font(.headline)
-                Spacer(minLength: 4)
-                Text(ProfileValues.amount(profile[metric.field], suffix: " \(metric.unit)")).font(.headline).multilineTextAlignment(.trailing)
+            let layout = size.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6)) : AnyLayout(HStackLayout(alignment: .firstTextBaseline, spacing: 10))
+            layout {
+                HStack(spacing: 10) {
+                    Circle().fill(metric.color).frame(width: 8, height: 8).accessibilityHidden(true)
+                    Text(metric.title).font(.headline)
+                }
+                if !size.isAccessibilitySize { Spacer(minLength: 4) }
+                Text(ProfileValues.amount(profile[metric.field], suffix: " \(metric.unit)")).font(.headline)
+                    .multilineTextAlignment(size.isAccessibilitySize ? .leading : .trailing)
             }
             ProfileCaption(text: ProfileValues.targetNote(metric.id, profile: profile))
-        }.padding(.vertical, 5)
+        }.padding(.vertical, 5).fixedSize(horizontal: false, vertical: true)
     }
 }
 
-private struct ProfileChoice: Identifiable {
+struct ProfileChoice: Identifiable {
     let id: String
     let title: String
 }
-private struct ProfileMetric: Identifiable {
+struct ProfileMetric: Identifiable {
     let id: String
     let field: String
     let title: String
@@ -796,7 +1045,7 @@ private struct ProfileMetric: Identifiable {
     let hex: UInt32
     var color: Color { id == "fat" ? Color(uiColor: NudgeTheme.accent) : Color(uiColor: NudgeTheme.color(hex, hex)) }
 }
-private enum ProfileValues {
+enum ProfileValues {
     static let sexes = choices([("unknown", "Not set"), ("male", "Male"), ("female", "Female")])
     static let care = choices([("unknown", "Choose an answer"), ("none", "No special nutrition needs"), ("glp1", "Weight-loss medication"), ("clinical", "Clinician-guided nutrition")])
     static let goals = choices([("balance", "Eat well, simply"), ("muscle", "Gain muscle"), ("preserve", "Protect muscle while losing weight"), ("stay_active", "Stay active"), ("more_plants", "Eat more plants"), ("less_sugar", "Cut back on added sugar"), ("steady_routine", "Build a steady routine"), ("movement", "Make time for movement"), ("sleep", "Improve my sleep")])
@@ -890,7 +1139,7 @@ private struct ProfileHeading: View {
         }
     }
 }
-private struct ProfilePanel<Content: View>: View {
+struct ProfilePanel<Content: View>: View {
     @Environment(\.dynamicTypeSize) private var size
     var title: String?
     var edit: (() -> Void)? = nil
@@ -911,11 +1160,11 @@ private struct ProfilePanel<Content: View>: View {
             .overlay(RoundedRectangle(cornerRadius: 22).stroke(Color(uiColor: NudgeTheme.border)))
     }
 }
-private struct ProfileCaption: View {
+struct ProfileCaption: View {
     let text: String
     var body: some View { Text(text).font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted)).fixedSize(horizontal: false, vertical: true) }
 }
-private struct ProfileValue: View {
+struct ProfileValue: View {
     let label: String
     let value: String
     @Environment(\.dynamicTypeSize) private var size
@@ -928,7 +1177,7 @@ private struct ProfileValue: View {
         }.fixedSize(horizontal: false, vertical: true)
     }
 }
-private struct ProfileChoiceButton: View {
+struct ProfileChoiceButton: View {
     let title: String
     let selected: Bool
     let action: () -> Void

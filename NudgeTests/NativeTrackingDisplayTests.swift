@@ -287,10 +287,29 @@ struct NativeTrackingDisplayTests {
         #expect(NativeTrackingDisplay.imageSource(saved) == "preview")
     }
 
-    @Test func diaryGroupingRecognizesStoredMealNames() {
-        #expect(NativeTrackingDisplay.mealSlot(["entry": ["slot": "Breakfast"]]) == "breakfast")
-        #expect(NativeTrackingDisplay.mealSlot(["entry": ["slot": "Snacks"]]) == "snack")
-        #expect(NativeTrackingDisplay.mealSlot(["entry": ["slot": "Lunch"]]) == "lunch")
+    @Test func knownTargetsStayVisibleWhenIntakeIsUnloggedOrUnknown() {
+        let unlogged: [String: Any] = ["key": "fibre", "target": 30, "targetKnown": true, "recorded": false, "unit": "g"]
+        #expect(NativeTrackingDisplay.ratio(unlogged) == nil)
+        #expect(NativeTrackingDisplay.summaryAmount(unlogged) == "— / 30 g")
+        let unknown = unlogged.merging(["recorded": true, "value": NSNull()], uniquingKeysWith: { _, newest in newest })
+        #expect(NativeTrackingDisplay.ratio(unknown) == nil)
+        #expect(NativeTrackingDisplay.summaryAmount(unknown) == "— / 30 g")
+        let reference = unknown.merging(["key": "sugars", "target": 90, "targetRole": "reference"], uniquingKeysWith: { _, newest in newest })
+        #expect(NativeTrackingDisplay.summaryAmount(reference) == "— / 90 g")
+        let historical = unknown.merging(["targetKnown": false, "targetReason": "Historical target not recorded"], uniquingKeysWith: { _, newest in newest })
+        #expect(!NativeTrackingDisplay.hasTarget(historical))
+        #expect(NativeTrackingDisplay.summaryAmount(historical) == "—")
+        #expect(NativeTrackingDisplay.targetLabel(historical) == "Historical target not recorded")
+    }
+
+    @Test func unavailableTargetsExplainMissingProfileInputsAndManualClears() {
+        let item: [String: Any] = ["key": "energy", "target": NSNull(), "targetKnown": true, "recorded": true, "value": 300, "unit": "kcal", "targetReason": "Add activity"]
+        #expect(NativeTrackingDisplay.targetLabel(item) == "Add activity")
+        #expect(NativeTrackingDisplay.note(item) == "Add activity")
+        #expect(NativeTrackingDisplay.summaryAmount(item) == "300 kcal")
+        #expect(NativeTrackingDisplay.description(item).contains("Add activity"))
+        let cleared = item.merging(["targetReason": "Target left unset"], uniquingKeysWith: { _, newest in newest })
+        #expect(NativeTrackingDisplay.targetLabel(cleared) == "Target left unset")
     }
 
     @Test func zeroAndMissingTargetsRemainUnavailableWithReferenceAndLimitSemantics() {

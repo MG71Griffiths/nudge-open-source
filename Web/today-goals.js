@@ -36,17 +36,17 @@ window.NudgeToday = (() => {
     const readTarget=profile.targetHistory.length?nutrition.targetReader(profile):null;
     const referenceDays=new Map(),referencesOn=date=>{if(!referenceDays.has(date))referenceDays.set(date,nutrition.effectiveTargets(profile,date,today,context.log.plantGoal).targets);return referenceDays.get(date);};
     const references=referencesOn(day);
-    const datedTarget=(date,metric)=>['sugars','saturatedFat','salt','dailyPlants'].includes(metric)?referencesOn(date)[metric]:readTarget?readTarget(date,metric):{value:date===today?currentTargets[metric]??null:null,known:date===today};
+    const datedTarget=(date,metric)=>['sugars','saturatedFat','salt','dailyPlants'].includes(metric)?referencesOn(date)[metric]:{...(readTarget?readTarget(date,metric):{value:date===today?currentTargets[metric]??null:null,known:date===today}),reason:referencesOn(date)[metric]?.reason||null};
     const dayTarget=metric=>datedTarget(day,metric);
     const nutrient=(field,target)=>{
       const known=current.filter(e=>reading(e,field).value!==null),total=known.reduce((sum,e)=>sum+reading(e,field).value*e.portions,0);
-      return {value:current.length&&!known.length?null:field==='energyPerPortion'?total:rounded(total),rawValue:current.length&&!known.length?null:total,target:target.value,targetKnown:target.known,recorded:current.length>0,future:day>today,unknown:current.filter(e=>reading(e,field).value===null||reading(e,field).partial).length,estimated:estimated(known)||known.some(e=>reading(e,field).estimated)};
+      return {value:current.length&&!known.length?null:field==='energyPerPortion'?total:rounded(total),rawValue:current.length&&!known.length?null:total,target:target.value,targetKnown:target.known,targetReason:target.reason||null,recorded:current.length>0,future:day>today,unknown:current.filter(e=>reading(e,field).value===null||reading(e,field).partial).length,estimated:estimated(known)||known.some(e=>reading(e,field).estimated)};
     };
     const weekly=(field,metric)=>{
       const rows=days.map(d=>{
         const list=d.day<=today?week.filter(e=>e.day===d.day):[],known=list.filter(e=>field==='plants'?plantsKnown(e):reading(e,field).value!==null),target=datedTarget(d.day,metric);
         const toDate=field==='plants'?week.filter(e=>e.day<=d.day):[],weekPlantTarget=field==='plants'?datedTarget(d.day,'plants'):null;
-        return {...d,future:d.day>today,recorded:list.length>0,value:known.length?(field==='plants'?plants(known).length:known.reduce((sum,e)=>sum+reading(e,field).value*e.portions,0)):null,unknown:field==='plants'?list.length-known.length:list.filter(e=>reading(e,field).value===null||reading(e,field).partial).length,target:target.value,targetKnown:target.known,targetRole:target.targetRole||references[metric]?.targetRole||'goal',targetLabel:target.targetLabel,referenceKind:target.referenceKind,referenceNote:target.referenceNote,estimated:estimated(known)||(field!=='plants'&&known.some(e=>reading(e,field).estimated)),...(field==='plants'?{cumulative:{value:toDate.some(plantsKnown)?plants(toDate).length:null,target:weekPlantTarget.value,targetKnown:weekPlantTarget.known,recorded:toDate.length>0,unknown:toDate.filter(e=>!plantsKnown(e)).length,future:d.day>today}}:{})};
+        return {...d,future:d.day>today,recorded:list.length>0,value:known.length?(field==='plants'?plants(known).length:known.reduce((sum,e)=>sum+reading(e,field).value*e.portions,0)):null,unknown:field==='plants'?list.length-known.length:list.filter(e=>reading(e,field).value===null||reading(e,field).partial).length,target:target.value,targetKnown:target.known,targetReason:target.reason||null,targetRole:target.targetRole||references[metric]?.targetRole||'goal',targetLabel:target.targetLabel,referenceKind:target.referenceKind,referenceNote:target.referenceNote,estimated:estimated(known)||(field!=='plants'&&known.some(e=>reading(e,field).estimated)),...(field==='plants'?{cumulative:{value:toDate.some(plantsKnown)?plants(toDate).length:null,target:weekPlantTarget.value,targetKnown:weekPlantTarget.known,targetReason:weekPlantTarget.reason||null,recorded:toDate.length>0,unknown:toDate.filter(e=>!plantsKnown(e)).length,future:d.day>today}}:{})};
       });
       const known=rows.filter(d=>!d.future&&d.value!==null),applicable=known.filter(d=>d.targetKnown&&d.target!==null);
       return {days:rows,value:known.length?(field==='plants'?plants(week).length:known.reduce((sum,d)=>sum+d.value,0)):null,unknown:rows.reduce((sum,d)=>sum+d.unknown,0),loggedDays:rows.filter(d=>d.recorded).length,knownDays:known.length,estimated:known.some(d=>d.estimated),comparison:{intake:applicable.reduce((sum,d)=>sum+d.value,0),target:applicable.reduce((sum,d)=>sum+d.target,0),days:applicable.length},historicalTargetsMissing:rows.filter(d=>!d.future&&!d.targetKnown).length};
@@ -56,7 +56,7 @@ window.NudgeToday = (() => {
     const result={
       protein:nutrient('proteinPerPortion',dayTarget('protein')),energy:nutrient('energyPerPortion',dayTarget('calories')),
       carbs:nutrient('carbohydrate',dayTarget('carbs')),fibre:nutrient('fibrePerPortion',dayTarget('fibre')),fat:nutrient('fat',dayTarget('fat')),
-      plants:{value:current.length&&plantUnknown===current.length?null:plants(current).length,target:plantTarget.value,targetKnown:plantTarget.known,targetRole:plantTarget.targetRole,targetLabel:plantTarget.targetLabel,referenceNote:plantTarget.referenceNote,recorded:current.length>0,future:day>today,unknown:plantUnknown},
+      plants:{value:current.length&&plantUnknown===current.length?null:plants(current).length,target:plantTarget.value,targetKnown:plantTarget.known,targetReason:plantTarget.reason||null,targetRole:plantTarget.targetRole,targetLabel:plantTarget.targetLabel,referenceNote:plantTarget.referenceNote,recorded:current.length>0,future:day>today,unknown:plantUnknown},
       weekPlants:plants(week).length,weekTarget:weekPlantTarget,
       days:days.map(d=>({...d,future:d.day>today,recorded:week.some(e=>e.day===d.day)})),weekProtein:weekly('proteinPerPortion','protein'),weekEnergy:weekly('energyPerPortion','calories'),
       weekCarbs:weekly('carbohydrate','carbs'),weekFibre:weekly('fibrePerPortion','fibre'),weekFat:weekly('fat','fat'),
@@ -110,7 +110,7 @@ window.NudgeToday = (() => {
   const compactFields=[['energy','calories','energyKcal','Energy','kcal'],['protein','protein','protein','Protein','g'],['fibre','fibre','fibre','Fibre','g'],['carbs','carbs','carbohydrate','Carbs','g'],['fat','fat','fat','Fat','g'],['sugars','sugars','sugars','Total sugars','g'],['saturatedFat','saturatedFat','saturatedFat','Saturated fat','g'],['salt','salt','salt','Salt','g']];
   function compactItem(key,title,unit,reading,target,extra={}){
     const value=finite(reading.value)?reading.value:null,item={key,title,unit,value:value===null?null:unit==='kcal'?Math.round(value):rounded(value),rawValue:value,
-      target:target.value,targetKnown:target.known,recorded:reading.recorded,unknown:reading.unknown||0,estimated:reading.estimated===true,
+      target:target.value,targetKnown:target.known,targetReason:target.reason||null,recorded:reading.recorded,unknown:reading.unknown||0,estimated:reading.estimated===true,
       targetRole:target.targetRole,targetLabel:target.targetLabel,targetMode:target.mode,referenceKind:target.referenceKind,referenceNote:target.referenceNote,guideWeeklyTarget:target.guideWeeklyTarget,period:'day',...extra};
     const ratio=progressRatio(item);return {...item,percent:progress(item),ratio:ratio===null?null:Math.min(1,ratio)};
   }
