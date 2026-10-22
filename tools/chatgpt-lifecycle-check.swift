@@ -29,6 +29,8 @@ private final class FakeServer: @unchecked Sendable {
     private var analysisCount: [String: Int] = [:]
     private var analysisBodies: [String: [[String: Any]]] = [:]
     private var modelsCount: [String: Int] = [:]
+    private var heldModels = Set<String>()
+    private var pendingModels: [String: [FakeProtocol]] = [:]
     private var unexpected: [String] = []
     private func json(_ value: Any) -> Data { try! JSONSerialization.data(withJSONObject: value, options: [.sortedKeys]) }
     private func body(_ request: URLRequest) -> Data {
@@ -61,8 +63,11 @@ private final class FakeServer: @unchecked Sendable {
             proto.send(Data())
         } else if path == "/v1/models" {
             let access = request.value(forHTTPHeaderField: "Authorization") ?? "missing"
-            lock.lock(); modelsCount[access, default: 0] += 1; lock.unlock()
-            proto.send(json(["models": [["slug": "test-vision-model", "display_name": "Test vision", "visibility": "list"]]]))
+            lock.lock(); modelsCount[access, default: 0] += 1
+            let held = heldModels.contains(access)
+            if held { pendingModels[access, default: []].append(proto) }
+            lock.unlock()
+            if !held { proto.send(modelData()) }
         } else if path == "/v1/responses" {
             let access = request.value(forHTTPHeaderField: "Authorization") ?? "missing"
             let payload = (try? JSONSerialization.jsonObject(with: body(request))) as? [String: Any] ?? [:]
@@ -80,6 +85,16 @@ private final class FakeServer: @unchecked Sendable {
     func requests(_ access: String) -> [[String: Any]] { lock.lock(); defer { lock.unlock() }; return analysisBodies[access] ?? [] }
     func revocations(_ client: String) -> [String] { lock.lock(); defer { lock.unlock() }; return revoked[client] ?? [] }
     func errors() -> [String] { lock.lock(); defer { lock.unlock() }; return unexpected }
+    private func modelData() -> Data {
+        json(["models": [["slug": "test-vision-model", "display_name": "Test vision", "visibility": "list"],
+                         ["slug": "other-vision-model", "display_name": "Other vision", "visibility": "list"]]])
+    }
+    func holdModels(_ access: String) { lock.lock(); heldModels.insert(access); lock.unlock() }
+    func releaseModels(_ access: String, fail: Bool = false, onlyModel: String? = nil) {
+        lock.lock(); let pending = pendingModels.removeValue(forKey: access) ?? []; heldModels.remove(access); lock.unlock()
+        let data = onlyModel.map { json(["models": [["slug": $0, "display_name": $0, "visibility": "list"]]]) } ?? modelData()
+        pending.forEach { $0.send(fail ? json(["error": "server_error"]) : data, status: fail ? 503 : 200) }
+    }
     func releaseRefresh(_ client: String) {
         lock.lock(); let pending = pendingRefresh.removeValue(forKey: client) ?? []; lock.unlock()
         let response = json(["access_token": "new-access-" + client, "refresh_token": "new-refresh-" + client, "id_token": "deliberately-not-a-jwt", "token_type": "Bearer", "expires_in": 3600, "scope": "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"])
@@ -111,8 +126,12 @@ private final class FakeServer: @unchecked Sendable {
 @MainActor private final class MemoryVault {
     var value: ChatGPTVault
     var saveCount = 0
+    var failNextSave = false
     init(_ value: ChatGPTVault) { self.value = value }
-    func save(_ value: ChatGPTVault) { self.value = value; saveCount += 1 }
+    func save(_ value: ChatGPTVault) throws {
+        if failNextSave { failNextSave = false; throw ChatGPTFailure.storage }
+        self.value = value; saveCount += 1
+    }
 }
 
 private enum TestFailure: Error { case failed(String) }
@@ -138,7 +157,7 @@ private enum TestFailure: Error { case failed(String) }
     private static func connection(_ box: MemoryVault) -> ChatGPTConnection {
         let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [FakeProtocol.self]
         let session = URLSession(configuration: config)
-        return ChatGPTConnection(session: session, loadVault: { box.value }, saveVault: { box.save($0) })
+        return ChatGPTConnection(session: session, loadVault: { box.value }, saveVault: { try box.save($0) })
     }
     private static func binding(_ box: MemoryVault, id: String, modelID: String = "test-vision-model") -> ChatGPTCaptureBinding {
         let profile = box.value.profiles.first { $0.id == id }!
@@ -155,15 +174,17 @@ private enum TestFailure: Error { case failed(String) }
     }
     static func captureReasoningPolicy() async throws {
         try expect(ChatGPTCapturePolicy.reasoning(modelID: "gpt-6-astra") == ["effort": "low"], "Astra low policy missing")
-        for modelID in ["test-vision-model", "gpt-6-sol", "GPT-6-ASTRA", "gpt-6-astra-latest", " gpt-6-astra"] {
+        try expect(ChatGPTCapturePolicy.reasoning(modelID: "gpt-6-luna") == ["effort": "none"], "Luna none policy missing")
+        for modelID in ["test-vision-model", "gpt-6-sol", "GPT-6-ASTRA", "gpt-6-astra-latest", " gpt-6-astra", "GPT-6-LUNA", "gpt-6-luna-latest", "gpt-6-luna "] {
             try expect(ChatGPTCapturePolicy.reasoning(modelID: modelID) == nil, "reasoning policy matched a different model")
         }
-        for (index, modelID) in ["gpt-6-astra", "test-vision-model"].enumerated() {
+        for (index, modelID) in ["gpt-6-astra", "gpt-6-luna", "test-vision-model"].enumerated() {
             let id = "reasoning-valid-\(index)", (connection, box) = make(["reasoning-valid-\(index)"], expired: false)
             let choice = binding(box, id: id, modelID: modelID), access = "Bearer old-access-" + id
             var request = captureRequest()
             request["reasoning"] = ChatGPTCapturePolicy.reasoning(modelID: modelID)
-            let task = Task { try await connection.analyseCapture(binding: choice, request: request) }
+            var reports: [[String: Any]] = []
+            let task = Task { try await connection.analyseCapture(binding: choice, request: request) { reports.append($0) } }
             try await eventually("reasoning policy reaches intercepted transport") { FakeProtocol.server.analyses(access) == 1 }
             let sent = FakeProtocol.server.requests(access)[0]
             try expect(sent["model"] as? String == modelID && sent["store"] as? Bool == false && sent["stream"] as? Bool == true,
@@ -177,6 +198,8 @@ private enum TestFailure: Error { case failed(String) }
             FakeProtocol.server.releaseAnalysis(access, output: "{}")
             let output = try await task.value
             try expect(output == "{}", "reasoning policy rejected completed output")
+            try expect(reports.last?["requestedReasoningEffort"] as? String == ChatGPTCapturePolicy.reasoning(modelID: modelID)?["effort"],
+                       "diagnostics did not preserve the actual bounded request effort")
         }
         let id = "reasoning-invalid", (connection, box) = make(["reasoning-invalid"])
         let astra = binding(box, id: id, modelID: "gpt-6-astra")
@@ -194,7 +217,7 @@ private enum TestFailure: Error { case failed(String) }
         catch let failure as ChatGPTFailure { try expect(failure == .unsupported, "wrong unsupported-model error") }
         try expect(FakeProtocol.server.count(id) == 0 && FakeProtocol.server.analyses("Bearer old-access-" + id) == 0,
                    "invalid reasoning reached token refresh or inference")
-        print("PASS exact Astra low reasoning and unknown-model omission preserve pinned transport/schema/images; malformed or spoofed options fail before HTTP")
+        print("PASS exact Astra low and Luna none reasoning preserve pinned transport/schema/images and bounded diagnostics; other models omit tuning and malformed or spoofed options fail before HTTP")
     }
     static func captureDiagnosticFamilies() async throws {
         func request(version: Any?) -> [String: Any] {
@@ -214,7 +237,7 @@ private enum TestFailure: Error { case failed(String) }
             (nil, "photo-instructions-2026-10-20-v1", "photo_v1"),
             ([1], "photo-instructions-2026-10-20-v1", "compact_photo_v1"),
             ([2], "photo-estimate-2026-10-20-v2", "compact_photo_v2"),
-            ([3], "photo-estimate-2026-10-20-v3", "compact_photo_v3")
+            ([3], "photo-estimate-2026-10-21-v4", "compact_photo_v3")
         ]
         for (index, item) in cases.enumerated() {
             let id = "diagnostic-family-\(index)", (connection, box) = make(["diagnostic-family-\(index)"], expired: false)
@@ -302,8 +325,9 @@ private enum TestFailure: Error { case failed(String) }
         try await eventually("two captures") { FakeProtocol.server.analyses(access) == 2 }
         connection.cancel(); connection.select(b)
         try await eventually("case6 B selected") { connection.selectedID == b && !connection.busy }
-        try expect(connection.cameraSelection == choice && connection.isCaptureBindingCurrent(choice), "preview switch changed camera choice")
-        connection.selectedModel = "other-preview-model"
+        try expect(connection.cameraSelection?.profileID == b && connection.isCaptureBindingCurrent(choice), "shared account switch did not update only future camera photos")
+        connection.selectModel("other-vision-model")
+        try expect(connection.cameraSelection?.modelID == "other-vision-model", "shared model switch did not update future camera photos")
         for request in FakeProtocol.server.requests(access) {
             try expect(request["model"] as? String == choice.modelID && request["store"] as? Bool == false && request["stream"] as? Bool == true, "transport accepted routing override")
         }
@@ -311,7 +335,127 @@ private enum TestFailure: Error { case failed(String) }
         let results = try await (first.value, second.value)
         try expect(results.0 == results.1 && results.0.contains("product"), "concurrent captures did not complete")
         try expect(FakeProtocol.server.analyses("Bearer old-access-" + b) == 0 && connection.result.isEmpty, "capture crossed account or preview result")
-        print("PASS concurrent captures retain pinned account/model across preview cancellation and account/model switching")
+        print("PASS account/model selections update future photos while concurrent captures retain their pinned account/model")
+    }
+    static func combinedSetupReusesAuthorization() async throws {
+        for expired in [false, true] {
+            let id = expired ? "combined-expired" : "combined-ready", (connection, box) = make([expired ? "combined-expired" : "combined-ready"], expired: expired)
+            connection.continueWithChatGPT()
+            try expect(connection.cameraSelection == nil, "combined setup enabled camera before authorization/model readiness")
+            if expired {
+                try await eventually("combined saved grant refresh") { FakeProtocol.server.count(id) == 1 }
+                FakeProtocol.server.releaseRefresh(id)
+            }
+            try await eventually("combined setup completes") { !connection.busy && connection.cameraSelection != nil }
+            try expect(connection.canAnalyse && connection.cameraSelection == binding(box, id: id), "one action did not prepare both camera and preview")
+            try expect(FakeProtocol.server.count(id) == (expired ? 1 : 0), "combined setup repeated authorization or refresh")
+            let access = "Bearer " + (expired ? "new-access-" : "old-access-") + id
+            let modelCalls = FakeProtocol.server.modelCount(access)
+            try connection.disableCamera(); connection.continueWithChatGPT()
+            try expect(connection.cameraSelection != nil && !connection.busy && FakeProtocol.server.modelCount(access) == modelCalls,
+                       "ready saved connection required another model request or sign-in")
+            let initial = connection.cameraSelection!
+            connection.selectModel("other-vision-model")
+            try expect(connection.cameraSelection?.modelID == "other-vision-model" && connection.isCaptureBindingCurrent(initial), "model choice invalidated queued binding")
+            let restored = self.connection(box)
+            restored.loadModels(); try await eventually("restored shared model") { restored.canAnalyse }
+            try expect(restored.selectedModel == "other-vision-model" && restored.cameraSelection == connection.cameraSelection, "restart reset shared model to first catalogue entry")
+        }
+        print("PASS one action reuses saved authorization, waits for model readiness, and persists shared camera/preview model")
+    }
+    static func explicitOptOutAndLateSetup() async throws {
+        let a = "optout-A", b = "optout-B", (connection, box) = make(["optout-A", "optout-B"], expired: false)
+        connection.loadModels(); try await eventually("optout models") { connection.canAnalyse }
+        try expect(connection.cameraSelection == nil, "ordinary model loading silently enabled camera")
+        connection.continueWithChatGPT(); try await eventually("optout setup") { connection.cameraSelection != nil }
+        try connection.disableCamera()
+        connection.select(b); try await eventually("optout account switch") { !connection.busy && connection.selectedID == b }
+        connection.selectModel("other-vision-model")
+        connection.loadModels(); try await eventually("optout reload") { !connection.busy }
+        try expect(connection.cameraSelection == nil && box.value.cameraSelection == nil, "account/model change or reload undid explicit opt-out")
+        let restored = self.connection(box); restored.loadModels()
+        try await eventually("optout restart") { restored.canAnalyse }
+        try expect(restored.cameraSelection == nil, "restart silently migrated opt-out")
+        for cancel in [false, true] {
+            let access = "Bearer old-access-" + b, before = FakeProtocol.server.modelCount("Bearer old-access-" + b)
+            let pending = self.connection(box)
+            FakeProtocol.server.holdModels(access); pending.continueWithChatGPT()
+            try await eventually("pending combined setup") { FakeProtocol.server.modelCount(access) == before + 1 }
+            if cancel { pending.cancel() } else { try pending.disableCamera() }
+            FakeProtocol.server.releaseModels(access); try await eventually("pending setup ends") { !pending.busy }
+            try await settle()
+            try expect(pending.cameraSelection == nil && box.value.cameraSelection == nil, "late setup crossed cancellation/opt-out fence")
+        }
+        try expect(box.value.profiles.first(where: { $0.id == a })?.refreshToken == "old-" + a, "opt-out changed other saved account")
+        print("PASS explicit opt-out survives selection/loading/restart and wins over late setup; cancellation cannot enable camera")
+    }
+    static func sharedSelectionFailureIsAtomic() async throws {
+        let a = "atomic-A", b = "atomic-B", (connection, box) = make(["atomic-A", "atomic-B"], expired: false)
+        connection.continueWithChatGPT(); try await eventually("atomic setup") { connection.cameraSelection != nil }
+        let choice = connection.cameraSelection, model = connection.selectedModel, available = connection.models
+        let access = "Bearer old-access-" + b
+        FakeProtocol.server.holdModels(access); connection.select(b)
+        try await eventually("atomic candidate model request") { FakeProtocol.server.modelCount(access) == 1 }
+        try expect(connection.selectedID == a && connection.cameraSelection == choice && connection.selectedModel == model, "pending switch prematurely changed shared selection")
+        FakeProtocol.server.releaseModels(access, fail: true)
+        try await eventually("atomic candidate fails") { !connection.busy }
+        try expect(connection.selectedID == a && box.value.selectedID == a && connection.cameraSelection == choice && connection.models == available && connection.selectedModel == model, "failed catalogue request partially changed selection")
+        box.failNextSave = true; connection.selectModel("other-vision-model")
+        try expect(connection.selectedModel == model && connection.cameraSelection == choice && box.value.cameraSelection == choice, "failed model save changed displayed/persisted selection")
+        box.failNextSave = true; connection.select(b)
+        try await eventually("atomic account save fails") { !connection.busy }
+        try expect(connection.selectedID == a && box.value.selectedID == a && connection.cameraSelection == choice && connection.models == available && connection.selectedModel == model, "failed account save partially changed selection")
+        connection.selectModel("unknown-model")
+        try expect(connection.selectedModel == model && connection.cameraSelection == choice, "unavailable model accepted")
+        for profile in box.value.profiles { try expect(profile.refreshToken == "old-" + profile.id, "failed selection changed credential") }
+        // Older releases allowed separate camera and preview accounts. Let the
+        // user select the existing camera account to explicitly replace a removed
+        // model, without first switching providers or signing in again.
+        box.value.selectedID = b
+        let legacy = self.connection(box); legacy.loadModels()
+        try await eventually("legacy separate preview account") { legacy.canAnalyse }
+        let previousModels = legacy.models, previousModel = legacy.selectedModel
+        let oldAccess = "Bearer old-access-" + a
+        for failSave in [true, false] {
+            let previousCalls = FakeProtocol.server.modelCount(oldAccess)
+            FakeProtocol.server.holdModels(oldAccess); legacy.select(a)
+            try await eventually("legacy candidate catalogue") { FakeProtocol.server.modelCount(oldAccess) == previousCalls + 1 }
+            box.failNextSave = failSave
+            FakeProtocol.server.releaseModels(oldAccess, onlyModel: "other-vision-model")
+            try await eventually("legacy candidate unavailable") { !legacy.busy }
+            if failSave {
+                try expect(legacy.selectedID == b && box.value.selectedID == b && legacy.models == previousModels && legacy.selectedModel == previousModel && legacy.cameraSelection == choice,
+                           "failed legacy recovery save changed selected account or published candidate catalogue")
+            } else {
+                try expect(legacy.selectedID == a && box.value.selectedID == a && legacy.models.map(\.id) == ["other-vision-model"] && legacy.selectedModel == choice?.modelID && legacy.cameraSelection == choice && !legacy.canAnalyse,
+                           "legacy recovery did not select existing camera account while retaining unavailable pinned model")
+                try expect(legacy.message?.contains("Choose an available model") == true, "legacy recovery omitted actionable model selection guidance")
+            }
+        }
+        legacy.selectModel("other-vision-model")
+        try expect(legacy.canAnalyse && legacy.cameraSelection?.profileID == a && legacy.cameraSelection?.modelID == "other-vision-model" && legacy.isCaptureBindingCurrent(choice!),
+                   "explicit legacy model repair rerouted or invalidated queued captures")
+        print("PASS model/network/storage failures leave account, camera and preview selection atomic with credentials retained")
+    }
+    static func failedSetupAndUnavailableSavedModel() async throws {
+        let id = "setup-failure", (connection, box) = make(["setup-failure"], expired: false)
+        let access = "Bearer old-access-" + id
+        FakeProtocol.server.holdModels(access); connection.continueWithChatGPT()
+        try await eventually("combined failed setup request") { FakeProtocol.server.modelCount(access) == 1 }
+        FakeProtocol.server.releaseModels(access, fail: true)
+        try await eventually("combined failed setup settles") { !connection.busy }
+        try expect(connection.cameraSelection == nil && box.value.cameraSelection == nil && connection.active?.connected == true, "failed setup enabled camera or lost reusable authorization")
+        connection.continueWithChatGPT(); try await eventually("combined retry") { connection.cameraSelection != nil }
+        let choice = connection.cameraSelection
+        FakeProtocol.server.holdModels(access); connection.loadModels()
+        try await eventually("changed catalogue request") { FakeProtocol.server.modelCount(access) == 3 }
+        FakeProtocol.server.releaseModels(access, onlyModel: "other-vision-model")
+        try await eventually("changed catalogue settles") { !connection.busy }
+        try expect(connection.cameraSelection == choice && box.value.cameraSelection == choice && connection.selectedModel == choice?.modelID && !connection.canAnalyse, "catalogue removal silently replaced saved camera model")
+        connection.selectModel("other-vision-model")
+        try expect(connection.canAnalyse && connection.cameraSelection?.modelID == "other-vision-model" && connection.isCaptureBindingCurrent(choice!), "explicit replacement did not retain queued binding")
+        try expect(FakeProtocol.server.count(id) == 0 && box.value.profiles[0].refreshToken == "old-" + id, "retry/model change repeated sign-in or changed authorization")
+        print("PASS failed setup retains authorization for one-action retry; removed model requires explicit replacement without rerouting queued work")
     }
     static func captureCancellationSharesRefresh() async throws {
         let id = "case7-A", (connection, box) = make(["case7-A"])
@@ -619,6 +763,10 @@ private enum TestFailure: Error { case failed(String) }
             try await cancellationRejectsLateAnalysis()
             try await migrationAndExplicitSelection()
             try await concurrentCaptureIgnoresPreviewSwitch()
+            try await combinedSetupReusesAuthorization()
+            try await explicitOptOutAndLateSetup()
+            try await sharedSelectionFailureIsAtomic()
+            try await failedSetupAndUnavailableSavedModel()
             try await captureCancellationSharesRefresh()
             try await disconnectCancelsCaptures()
             try await disconnectDuringCaptureRefresh()
@@ -634,7 +782,7 @@ private enum TestFailure: Error { case failed(String) }
             try await captureReasoningPolicy()
             try await captureDiagnosticFamilies()
             try expect(FakeProtocol.server.errors().isEmpty, "unexpected mock request: \(FakeProtocol.server.errors())")
-            print("PASS all 20 lifecycle scenarios; all HTTP intercepted; no browser, live network, or Keychain calls")
+            print("PASS all 24 lifecycle scenarios; all HTTP intercepted; no browser, live network, or Keychain calls")
         } catch { print("FAIL \(error)"); exit(1) }
     }
 }

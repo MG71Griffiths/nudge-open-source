@@ -12,20 +12,29 @@ import Foundation
             "streamEventCount": 120, "streamTerminalCount": 0, "streamTextDeltaCount": 90,
             "finalOutputTextCount": 0, "streamOutputItemDoneCount": 2, "completedItemTextCount": 1,
             "finalOutputSource": "output_item", "responseBytes": 6000, "authorizationMs": 200,
-            "responseHeadersMs": 500, "downloadMs": 36000, "networkMs": 36500, "nativeElapsedMs": 36700]
+            "responseHeadersMs": 500, "downloadMs": 36000, "networkMs": 36500, "nativeElapsedMs": 36700,
+            "captureOperation": "analyse", "observedType": "meal", "observedConsistency": "uncertain",
+            "proposedNutrientCount": 8, "recoveryReason": "subject_uncertain",
+            "promptVersion": "photo-estimate-2026-10-21-v4", "requestedReasoningEffort": "none"]
         check(NSDictionary(dictionary: AnalysisDiagnostics.safeMetadata(safe)).isEqual(to: safe), "fixed stream metadata")
         for key in ["streamEventCount", "streamTerminalCount", "streamTextDeltaCount", "streamOutputItemDoneCount", "completedItemTextCount", "finalOutputTextCount"] {
             for invalid: Any in [-1, true, 0.5, 100001, Double.infinity, "private text"] {
                 check(AnalysisDiagnostics.safeMetadata([key: invalid]).isEmpty, "bounded stream counts")
             }
         }
-        for key in ["responseFormat", "parseFailure", "finalOutputSource", "providerErrorCode"] {
+        for key in ["responseFormat", "parseFailure", "finalOutputSource", "providerErrorCode", "captureOperation", "observedType", "observedConsistency", "recoveryReason", "requestedReasoningEffort"] {
             for invalid: Any in ["private food", "server_error\n", ["message": "private token"], 1] {
                 check(AnalysisDiagnostics.safeMetadata([key: invalid]).isEmpty, "fixed enums")
             }
         }
+        for invalid: Any in [-1, true, 0.5, 9, Double.infinity, "private text"] {
+            check(AnalysisDiagnostics.safeMetadata(["proposedNutrientCount": invalid]).isEmpty, "bounded proposed nutrient count")
+        }
         for code in ["subscription_sharing_usage_limit_exceeded", "subscription_sharing_usage_unavailable", "subscription_sharing_unsupported_capability", "server_error"] {
             check(AnalysisDiagnostics.safeMetadata(["providerErrorCode":code])["providerErrorCode"] as? String == code, "safe provider error")
+        }
+        for operation in ["analyse", "retrieve", "retry", "delete"] {
+            check(AnalysisDiagnostics.safeMetadata(["captureOperation": operation])["captureOperation"] as? String == operation, "fixed capture operation")
         }
         let directory = URL(fileURLWithPath: CommandLine.arguments[1], isDirectory: true)
         let diagnostics = AnalysisDiagnostics(directory: directory)

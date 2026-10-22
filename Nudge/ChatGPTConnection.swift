@@ -143,7 +143,7 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
     @Published private(set) var message: String?
     @Published private(set) var result = ""
     @Published private(set) var models: [ChatGPTModel] = []
-    @Published var selectedModel = ""
+    @Published private(set) var selectedModel = ""
     @Published var showWelcome = false
     @Published private(set) var limitReached = false
     @Published private(set) var revocationWarning: String?
@@ -154,6 +154,8 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
     private var browser: ASWebAuthenticationSession?
     private var loopback: ChatGPTLoopback?
     private var generation = UUID()
+    // A later camera opt-out must win even if an earlier setup request is still loading.
+    private var cameraPreferenceGeneration = UUID()
     private var pending: ChatGPTAttempt?
     private var discovery: ChatGPTDiscovery?
     private var retryClientID: String?
@@ -203,17 +205,44 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
     }
     func enableCamera() throws {
         guard storageReady else { throw ChatGPTFailure.storage }
-        guard canAnalyse, let profile = activeProfile, let epoch = profile.connectionID else { throw ChatGPTFailure.expired }
+        guard canAnalyse, let profile = activeProfile else { throw ChatGPTFailure.expired }
         var next = vault
-        let binding = ChatGPTCaptureBinding(profileID: profile.id, subject: profile.subject,
-            connectionID: epoch, modelID: selectedModel)
-        guard binding.isValid else { throw ChatGPTFailure.unsupported }
-        next.cameraSelection = binding
-        try save(next)
+        next.cameraSelection = try cameraBinding(for: profile, model: selectedModel)
+        try save(next); cameraPreferenceGeneration = UUID()
     }
     func disableCamera() throws {
         guard storageReady else { throw ChatGPTFailure.storage }
-        var next = vault; next.cameraSelection = nil; try save(next)
+        var next = vault; next.cameraSelection = nil; try save(next); cameraPreferenceGeneration = UUID()
+    }
+    private func cameraBinding(for profile: ChatGPTProfile, model: String) throws -> ChatGPTCaptureBinding {
+        guard profile.connected, let epoch = profile.connectionID else { throw ChatGPTFailure.expired }
+        let binding = ChatGPTCaptureBinding(profileID: profile.id, subject: profile.subject,
+            connectionID: epoch, modelID: model)
+        guard binding.isValid else { throw ChatGPTFailure.unsupported }
+        return binding
+    }
+    /// The UI discloses camera sharing before this action. A saved authorization
+    /// is reused; only an unconnected account opens the provider's sign-in flow.
+    func continueWithChatGPT() {
+        guard !busy, storageReady else { return }
+        if canAnalyse {
+            do {
+                try enableCamera(); clearResult()
+                message = "ChatGPT is ready for camera photos and photo previews."
+            } catch { message = (error as? ChatGPTFailure ?? .storage).localizedDescription }
+        }
+        else if active?.connected == true { loadModels(useForCamera: true) }
+        else { signIn(useForCamera: true) }
+    }
+    func selectModel(_ id: String) {
+        guard !busy, active?.connected == true, models.contains(where: { $0.id == id }) else { return }
+        do {
+            if vault.cameraSelection != nil, let profile = activeProfile {
+                var next = vault; next.cameraSelection = try cameraBinding(for: profile, model: id)
+                try save(next); cameraPreferenceGeneration = UUID()
+            }
+            selectedModel = id; clearResult()
+        } catch { message = ChatGPTFailure.storage.localizedDescription }
     }
     func isCaptureBindingCurrent(_ binding: ChatGPTCaptureBinding) -> Bool {
         guard storageReady, binding.isValid,
@@ -243,17 +272,33 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
     func cancel() { stop(); result = ""; message = "Request cancelled. Your Nudge diary is unchanged." }
     func clearResult() { result = ""; message = nil; limitReached = false }
     func select(_ id: String) {
-        guard !busy, profiles.contains(where: { $0.id == id }) else { return }
-        stop(); clearResult(); models = []; selectedModel = ""
-        var next = vault; next.selectedID = id
-        do { try save(next); loadModels() } catch { message = ChatGPTFailure.storage.localizedDescription }
+        guard !busy, let profile = vault.profiles.first(where: { $0.id == id }) else { return }
+        stop(); clearResult()
+        if !profile.connected {
+            var next = vault; next.selectedID = id
+            do { try save(next); models = []; selectedModel = "" }
+            catch { message = ChatGPTFailure.storage.localizedDescription }
+            return
+        }
+        // Keep the previous account/model/camera choice until all three can be
+        // committed together. Failed or cancelled model loading changes none.
+        busy = true
+        let expected = generation, cameraGeneration = cameraPreferenceGeneration
+        let useForCamera = vault.cameraSelection != nil
+        operation = Task {
+            do {
+                let available = try await availableModels(for: profile, expected: expected)
+                _ = try applyModels(available, for: profile, useForCamera: useForCamera, cameraGeneration: cameraGeneration)
+                busy = false
+            } catch { fail(error, expected: expected) }
+        }
     }
 
-    func signIn(newAccount: Bool = false) {
+    func signIn(newAccount: Bool = false, useForCamera: Bool = false) {
         guard !busy, storageReady else { return }
         stop(); clearResult(); busy = true
         if newAccount { retryClientID = nil }
-        let expected = generation
+        let expected = generation, cameraGeneration = cameraPreferenceGeneration
         let original = newAccount ? nil : activeProfile
         operation = Task {
             do {
@@ -270,7 +315,10 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
                 guard generation == expected else { return }
                 let attempt = try ChatGPTAttempt(port: port, clientID: original?.clientID ?? retryClientID)
                 pending = attempt
-                listener.onCallback = { [weak self] url in self?.receive(url, expected: expected, original: original) ?? false }
+                listener.onCallback = { [weak self] url in
+                    self?.receive(url, expected: expected, original: original,
+                        useForCamera: useForCamera, cameraGeneration: cameraGeneration) ?? false
+                }
                 let browser = ASWebAuthenticationSession(url: attempt.authorizationURL(hostID: vault.hostID, idToken: original?.idToken), callbackURLScheme: nil) { [weak self] _, _ in
                     Task { @MainActor in
                         guard let self, self.generation == expected, self.pending != nil else { return }
@@ -291,7 +339,8 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
         }
     }
 
-    private func receive(_ url: URL, expected: UUID, original: ChatGPTProfile?) -> Bool {
+    private func receive(_ url: URL, expected: UUID, original: ChatGPTProfile?,
+                         useForCamera: Bool, cameraGeneration: UUID) -> Bool {
         guard generation == expected, let attempt = pending else { return false }
         let exchange: (code: String, client: String)
         do { exchange = try attempt.callback(url) }
@@ -323,16 +372,21 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
                 let profile = try await validatedProfile(json, clientID: exchange.client, nonce: attempt.nonce, original: original, config: config)
                 try Task.checkCancellation(); guard generation == expected else { return }
                 var next = vault
-                next.profiles.removeAll { $0.clientID == profile.clientID }; next.profiles.append(profile); next.selectedID = profile.clientID
-                // Keep the previous camera choice visibly stale until the user
-                // explicitly chooses this renewed registration. Never fall back
-                // to Nudge's service because a connection needed renewal.
-                try save(next); retryClientID = nil; models = []; selectedModel = ""
+                next.profiles.removeAll { $0.clientID == profile.clientID }; next.profiles.append(profile)
+                if next.selectedID == nil { next.selectedID = profile.id }
+                // Persist the verified renewable grant before model discovery.
+                // Keep the former camera binding on failure; never change provider
+                // merely because a connection needs renewal or a request fails.
+                try save(next); retryClientID = nil
                 cancelCaptures(profileID: profile.id)
-                showWelcome = profile.connected && !profile.welcomed
                 if !profile.connected { throw ChatGPTFailure.consent }
-                try await fetchModels(expected: expected)
-                guard generation == expected else { return }; busy = false; message = "ChatGPT plan connected."
+                let available = try await availableModels(for: profile, expected: expected)
+                let ready = try applyModels(available, for: profile, useForCamera: useForCamera, cameraGeneration: cameraGeneration)
+                busy = false
+                if ready {
+                    message = useForCamera && cameraPreferenceGeneration == cameraGeneration
+                        ? "ChatGPT is ready for camera photos and photo previews." : "ChatGPT plan connected."
+                }
             } catch { fail(error, expected: expected) }
         }
         return true
@@ -344,28 +398,67 @@ final class ChatGPTConnection: NSObject, ObservableObject, ASWebAuthenticationPr
         var next = vault; next.profiles[index].welcomed = true
         do { try save(next) } catch { message = ChatGPTFailure.storage.localizedDescription }
     }
-    func loadModels() {
+    func loadModels(useForCamera: Bool = false) {
         guard !busy, active?.connected == true else { return }
-        busy = true; let expected = generation
+        guard let profile = activeProfile else { return }
+        busy = true; let expected = generation, cameraGeneration = cameraPreferenceGeneration
         operation = Task {
-            do { try await fetchModels(expected: expected); if generation == expected { busy = false } }
+            do {
+                let available = try await availableModels(for: profile, expected: expected)
+                let ready = try applyModels(available, for: profile, useForCamera: useForCamera, cameraGeneration: cameraGeneration)
+                busy = false
+                if ready && useForCamera && cameraPreferenceGeneration == cameraGeneration {
+                    message = "ChatGPT is ready for camera photos and photo previews."
+                }
+            }
             catch { fail(error, expected: expected) }
         }
     }
-    private func fetchModels(expected: UUID) async throws {
-        let token = try await accessToken(expected: expected)
+    private func availableModels(for profile: ChatGPTProfile, expected: UUID) async throws -> [ChatGPTModel] {
+        let token = try await accessToken(for: profile)
+        try Task.checkCancellation(); guard generation == expected else { throw CancellationError() }
         var request = URLRequest(url: URL(string: ChatGPTAttempt.resource + "/models")!)
         request.setValue("Bearer " + token, forHTTPHeaderField: "Authorization")
         let json = try await object(request)
         try Task.checkCancellation(); guard generation == expected else { throw CancellationError() }
+        guard let current = vault.profiles.first(where: { $0.id == profile.id }), current.connected,
+              current.subject == profile.subject, current.connectionID == profile.connectionID else { throw ChatGPTFailure.expired }
         let entries = (json["models"] as? [[String: Any]] ?? []).compactMap { item -> ChatGPTModel? in
             guard item["visibility"] as? String == "list", let slug = item["slug"] as? String, !slug.isEmpty,
                   let name = item["display_name"] as? String else { return nil }
             return ChatGPTModel(id: slug, name: name)
         }
-        var seen = Set<String>(); models = entries.filter { seen.insert($0.id).inserted }
-        guard !models.isEmpty else { throw ChatGPTFailure.unavailable }
-        if !models.contains(where: { $0.id == selectedModel }) { selectedModel = models[0].id }
+        var seen = Set<String>(); let available = entries.filter { seen.insert($0.id).inserted }
+        guard !available.isEmpty else { throw ChatGPTFailure.unavailable }
+        return available
+    }
+    private func applyModels(_ available: [ChatGPTModel], for profile: ChatGPTProfile,
+                             useForCamera: Bool, cameraGeneration: UUID) throws -> Bool {
+        // Restore the existing camera model on restart/renewal instead of silently
+        // selecting a different model merely because the catalogue order changes.
+        let pinned = vault.cameraSelection?.profileID == profile.id ? vault.cameraSelection?.modelID : nil
+        if let pinned, !available.contains(where: { $0.id == pinned }) {
+            // The user can select the already-pinned camera account to repair a
+            // legacy separate preview choice. Save that account before showing
+            // its catalogue, but retain the exact camera binding/model until an
+            // available replacement is explicitly selected.
+            if vault.selectedID != profile.id {
+                var next = vault; next.selectedID = profile.id; try save(next)
+            }
+            models = available; selectedModel = pinned
+            message = "Your saved ChatGPT model is unavailable. Choose an available model below for new camera photos and previews. Already queued captures keep their original model."
+            return false
+        }
+        let preferred = pinned ?? selectedModel
+        let model = available.first(where: { $0.id == preferred })?.id ?? available[0].id
+        var next = vault; next.selectedID = profile.id
+        if useForCamera && cameraPreferenceGeneration == cameraGeneration {
+            next.cameraSelection = try cameraBinding(for: profile, model: model)
+        }
+        if next.selectedID != vault.selectedID || next.cameraSelection != vault.cameraSelection { try save(next) }
+        models = available; selectedModel = model
+        showWelcome = activeProfile?.connected == true && activeProfile?.welcomed == false
+        return true
     }
     func analyse(jpeg: Data) {
         guard canAnalyse, !jpeg.isEmpty, jpeg.count <= 6_000_000 else { return }

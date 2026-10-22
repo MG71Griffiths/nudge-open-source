@@ -74,7 +74,7 @@ describe('automatic photo batches and editable portions', () => {
       assert.equal(calls.length, 1);assert.equal(calls[0].kind, 'observation');assert.equal(calls[0].outcome, 'incomplete');
       assert.equal(calls[0].reportedModel, model === 'gpt-4.1-mini-2025-04-14' ? model : undefined);
       assert.equal(calls[0].inputTokens, 100);assert.equal(calls[0].outputTokens, 20);
-      assert.equal(result.trace.promptVersion, 'photo-estimate-2026-10-20-v3');
+      assert.equal(result.trace.promptVersion, 'photo-estimate-2026-10-21-v4');
       assert.doesNotMatch(JSON.stringify(result), /private model/);
     }
   });
@@ -110,7 +110,7 @@ describe('automatic photo batches and editable portions', () => {
     env.LABEL_QUOTA={idFromName:name=>name,get:()=>({fetch:(url,init)=>quota.fetch(new Request(url,init))})};
     const response=await worker.fetch(request({images:[upload],analysisPolicy:{version:1,mode:'fast'}}),env),body=await response.json();
     assert.equal(response.status,429);assert.equal(body.code,'capture_spend_limit');assert.equal(body.trace.usage.callCount,0);
-    assert.equal(body.trace.promptVersion,'photo-estimate-2026-10-20-v3');
+    assert.equal(body.trace.promptVersion,'photo-estimate-2026-10-21-v4');
     assert.equal(body.trace.upstreamCallCount,0);assert.equal(body.trace.visionInvoked,false);
     assert.equal(values.get('quota').daily,1);assert.equal(values.get('quota').lease,null);assert.equal(upstream.mock.callCount(),0);
   });

@@ -5,6 +5,71 @@ import XCTest
 final class AppShellGestureTests: XCTestCase {
     #if targetEnvironment(simulator)
     @MainActor
+    private func skipInitialSetupIfPresented(_ app: XCUIApplication) {
+        let skipAccount = app.buttons["onboarding-skip-account"]
+        if skipAccount.waitForExistence(timeout: 5) {
+            skipAccount.tap()
+            let skipChatGPT = app.buttons["onboarding-skip-chatgpt"]
+            XCTAssertTrue(skipChatGPT.waitForExistence(timeout: 5))
+            skipChatGPT.tap()
+        }
+    }
+
+    /// Run on a fresh isolated simulator. This path never submits a real email,
+    /// connects ChatGPT, or changes an existing person's app container.
+    @MainActor
+    func testPasswordlessOnboardingSkipsPersistsAndReopens() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launch()
+        defer { app.terminate() }
+        func attach(_ name: String) {
+            let shot = XCTAttachment(screenshot: app.screenshot())
+            shot.name = name; shot.lifetime = .keepAlways; add(shot)
+        }
+        let email = app.textFields["account-email"]
+        XCTAssertTrue(email.waitForExistence(timeout: 30))
+        XCTAssertTrue(app.staticTexts["account-onboarding-title"].exists)
+        XCTAssertFalse(app.secureTextFields["account-password"].exists)
+        XCTAssertTrue(app.buttons["account-send-code"].isHittable)
+        attach("First run — email code sign-in with no password field")
+        email.tap(); email.typeText("not-an-email")
+        XCTAssertTrue(app.buttons["account-send-code"].isHittable)
+        app.buttons["account-send-code"].tap()
+        let feedback = app.staticTexts["account-feedback"]
+        let invalidEmail = NSPredicate(format: "label CONTAINS[c] %@", "valid email")
+        expectation(for: invalidEmail, evaluatedWith: feedback)
+        waitForExpectations(timeout: 5)
+        XCTAssertEqual(email.value as? String, "not-an-email")
+        XCTAssertFalse(app.textFields["account-code"].exists)
+        attach("Invalid email stays visible without sending a code")
+        app.buttons["onboarding-skip-account"].tap()
+        XCTAssertTrue(app.buttons["onboarding-connect-chatgpt"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Have a ChatGPT account?"].exists)
+        XCTAssertTrue(app.buttons["onboarding-skip-chatgpt"].isHittable)
+        attach("Optional ChatGPT connection explains the shared camera connection")
+        app.navigationBars.buttons["Back"].tap()
+        XCTAssertTrue(email.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.secureTextFields["account-password"].exists)
+        app.buttons["onboarding-skip-account"].tap()
+        app.buttons["onboarding-skip-chatgpt"].tap()
+        XCTAssertTrue(app.buttons["native-tab-you"].waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["onboarding-skip-account"].exists)
+        app.terminate(); app.launch()
+        XCTAssertTrue(app.buttons["native-tab-you"].waitForExistence(timeout: 20))
+        XCTAssertFalse(app.buttons["onboarding-skip-account"].exists, "Completed setup stays dismissed after relaunch")
+        app.buttons["native-tab-you"].tap()
+        let setup = app.buttons["native-profile-setup"]
+        XCTAssertTrue(setup.waitForExistence(timeout: 10)); setup.tap()
+        XCTAssertTrue(email.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.secureTextFields["account-password"].exists)
+        attach("Setup can be reopened from You")
+        app.buttons["onboarding-skip-account"].tap()
+        app.buttons["onboarding-skip-chatgpt"].tap()
+        XCTAssertTrue(setup.waitForExistence(timeout: 10))
+    }
+
+    @MainActor
     private func launchSearchFixture() -> XCUIApplication {
         continueAfterFailure = false
         let app = XCUIApplication()
@@ -296,6 +361,7 @@ final class AppShellGestureTests: XCTestCase {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launch()
+        skipInitialSetupIfPresented(app)
         func element(_ id: String) -> XCUIElement {
             app.descendants(matching: .any).matching(identifier: id).firstMatch
         }
@@ -374,6 +440,7 @@ final class AppShellGestureTests: XCTestCase {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launch()
+        skipInitialSetupIfPresented(app)
         let searchTab = app.buttons["native-tab-search"]
         XCTAssertTrue(searchTab.waitForExistence(timeout: 20))
         searchTab.tap()
@@ -423,6 +490,7 @@ final class AppShellGestureTests: XCTestCase {
         continueAfterFailure = false
         let app = XCUIApplication()
         app.launch()
+        skipInitialSetupIfPresented(app)
         let today = app.buttons["native-tab-today"]
         XCTAssertTrue(today.waitForExistence(timeout: 20))
         // Search is native now and has its own navigation/control test above.

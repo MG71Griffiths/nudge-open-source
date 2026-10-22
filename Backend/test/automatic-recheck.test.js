@@ -296,7 +296,7 @@ describe('explicit fast capture policy',()=>{
         portion:{label:'1 portion',amount:null,unit:null,source:'estimated'},recipeEvidence:null,qualityEstimate:null,nutrientEstimate:estimate}};
     const {run,calls,admissions}=setup([compact,meal()],{images:[photo],analysisPolicy:{version:1,mode:'fast'}}),result=await run();
     assert.equal(result.status,200);assert.equal(result.extraction.type,'meal');assert.equal(calls.length,1);
-    assert.equal(result.trace.observationSchema,'compact_photo_v3');assert.equal(result.trace.promptVersion,'photo-estimate-2026-10-20-v3');
+    assert.equal(result.trace.observationSchema,'compact_photo_v3');assert.equal(result.trace.promptVersion,'photo-estimate-2026-10-21-v4');
     assert.equal(result.trace.scoreReadiness,'available');assert.equal(result.trace.scoreBasis,'model_nutrient_estimate');
     assert.equal(result.trace.automaticRecheck,false);assert.equal(result.trace.recheckOutcome,'not_needed');assert.equal(result.trace.upstreamCallCount,1);assert.equal(result.trace.usage.callCount,1);
     assert.equal(admissions.filter(a=>a.url.endsWith('/acquire')).length,1);assert.equal(admissions.filter(a=>a.url.endsWith('/release')).length,1);
@@ -317,7 +317,7 @@ describe('explicit fast capture policy',()=>{
         nutrients:[450,15,50,8,20,4,9,1.5],assumptions:['One serving; estimated oil and seasoning.']}}};
     const {run,calls,admissions}=setup([compact,meal()],{images:[photo],analysisPolicy:{version:1,mode:'fast'}}),result=await run();
     assert.equal(result.status,200);assert.equal(calls.length,1);assert.equal(result.trace.upstreamCallCount,1);
-    assert.equal(result.trace.observationSchema,'compact_photo_v3');assert.equal(result.trace.promptVersion,'photo-estimate-2026-10-20-v3');
+    assert.equal(result.trace.observationSchema,'compact_photo_v3');assert.equal(result.trace.promptVersion,'photo-estimate-2026-10-21-v4');
     assert.equal(result.trace.scoreReadiness,'available');assert.equal(result.trace.scoreBasis,'model_nutrient_estimate');
     assert.equal(admissions.filter(a=>a.url.endsWith('/acquire')).length,1);
     const output=result.extraction.meal;

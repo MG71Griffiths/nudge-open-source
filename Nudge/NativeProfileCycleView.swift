@@ -11,12 +11,16 @@ struct NativeProfileView: View {
     @State private var chatGPTPresented = false
     @State private var ambassadorsPresented = false
     @State private var signInAfterAmbassadors = false
+    @State private var setupPresented = false
     private var profile: [String: Any] { store.project("profile")["profile"] as? [String: Any] ?? [:] }
 
     var body: some View {
         let p = profile
         ProfilePage {
             ProfileHeading(title: "My profile", subtitle: "Your food, your context.")
+            Button("Set up sign-in & ChatGPT") { setupPresented = true }
+                .buttonStyle(NudgeButtonStyle(variant: .secondary))
+                .accessibilityIdentifier("native-profile-setup")
             Button { ambassadorsPresented = true } label: {
                 HStack(spacing: 12) {
                     Image(systemName: "sparkles").font(.title2)
@@ -94,6 +98,12 @@ struct NativeProfileView: View {
         }
         .sheet(isPresented: $settingsPresented) { NativeSettingsView(store: store) }
         .sheet(isPresented: $chatGPTPresented) { ChatGPTPreviewView() }
+        .sheet(isPresented: $setupPresented) {
+            NativeOnboardingView(onAccountChange: { store.capture.accountDidChange(since: $0) }) {
+                UserDefaults.standard.set(true, forKey: NativeOnboardingView.completionKey)
+                setupPresented = false
+            }
+        }
         .sheet(isPresented: $ambassadorsPresented, onDismiss: {
             if signInAfterAmbassadors { signInAfterAmbassadors = false; store.showAccount() }
         }) {

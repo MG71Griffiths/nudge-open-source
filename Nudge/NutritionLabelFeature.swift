@@ -364,8 +364,9 @@ struct NutritionLabelService {
 
     /// Preserve additive extraction fields, including explicit unknown values,
     /// within the existing response budget before passing them to the web view.
-    static func decodedResult(from data: Data, diagnosticID: UUID = UUID()) throws -> [String: Any] {
-        let metadata: [String: Any] = ["attemptId":diagnosticID.uuidString, "responseBytes":data.count]
+    static func decodedResult(from data: Data, diagnosticID: UUID = UUID(), captureOperation: String? = nil) throws -> [String: Any] {
+        var metadata: [String: Any] = ["attemptId":diagnosticID.uuidString, "responseBytes":data.count]
+        if let captureOperation { metadata["captureOperation"] = captureOperation }
         guard data.count <= maximumAnalysisResponseBytes else {
             AnalysisDiagnostics.shared.record(stage:"native_parse", outcome:"body_too_large", metadata:metadata)
             throw ServiceError.invalidResponse
@@ -829,11 +830,11 @@ struct NutritionLabelService {
     }
 
     func retrieveCapture(_ captureID: UUID, ownerKey: String) async throws -> [String: Any] {
-        try await analyse(body: Data(), captureID: captureID, ownerKey: ownerKey, retrieving: true)
+        try await analyse(body: Data(), diagnosticID: captureID, captureID: captureID, ownerKey: ownerKey, retrieving: true)
     }
 
     func retryCapture(_ captureID: UUID, ownerKey: String) async throws -> [String: Any] {
-        try await analyse(body: Data("{}".utf8), captureID: captureID, ownerKey: ownerKey, retrieving: true, manualRetry: true)
+        try await analyse(body: Data("{}".utf8), diagnosticID: captureID, captureID: captureID, ownerKey: ownerKey, retrieving: true, manualRetry: true)
     }
 
     static func captureRetryAfter(_ value: String?, at date: Date = Date(), fallback: TimeInterval = 60) -> TimeInterval {
@@ -879,7 +880,9 @@ struct NutritionLabelService {
         if fastCapture && !retrieving { request.setValue("fast-v1", forHTTPHeaderField: "X-Nudge-Capture-Policy") }
         request.httpBody = retrieving && !manualRetry ? nil : body
         let started = ProcessInfo.processInfo.systemUptime, responseTiming = ResponseTiming()
+        let captureOperation = deleting ? "delete" : manualRetry ? "retry" : retrieving ? "retrieve" : "analyse"
         var metadata: [String:Any] = ["attemptId":diagnosticID.uuidString, "route":"photo_analysis",
+            "captureOperation": captureOperation,
             "requestTimeoutMs":Int(limits.request * 1000), "resourceTimeoutMs":Int(limits.resource * 1000),
             "payloadBytes":body.count, "includesVoiceMemo":includesVoiceMemo, "authorizationMs":authorizationMs]
         AnalysisDiagnostics.shared.record(stage:"transport", outcome:"started", metadata:metadata)
@@ -958,7 +961,7 @@ struct NutritionLabelService {
             }
             throw failure
         }
-        return try Self.decodedResult(from: data, diagnosticID: diagnosticID)
+        return try Self.decodedResult(from: data, diagnosticID: diagnosticID, captureOperation: captureOperation)
     }
 }
 

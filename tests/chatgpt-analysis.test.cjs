@@ -80,7 +80,17 @@ function expected(value, context = options) {
   extraction = photoModule.bindPhotoEvidence(extraction, body);
   extraction = hintsModule.reconcileMealHints(extraction, body.mealHints);
   extraction.analysisId = sandbox.__nudgeChatGPTUUID(); extraction.analysisVersion = api.version;
-  return clone({ extraction, diagnosticEnums: [...issues] });
+  const proposed = value.type === 'meal' ? value.meal?.nutrientEstimate?.nutrients : value.nutrients;
+  const observationDiagnostics = { observedType: value.type, observedConsistency: value.photoConsistency,
+    proposedNutrientCount: keys.filter(key => {
+      const candidate = proposed?.[key], n = typeof candidate === 'number' ? candidate : candidate?.value;
+      return typeof n === 'number' && Number.isFinite(n) && n >= 0;
+    }).length };
+  const recoveryReason = extraction.type !== 'unknown' ? null : value.photoConsistency === 'uncertain'
+    ? 'subject_uncertain' : issues.has('subject_uncertain') ? 'identity_conflict'
+    : issues.has('subject_type_mismatch') ? 'subject_type_mismatch' : 'subject_unidentified';
+  return clone({ extraction, diagnosticEnums: [...issues], observationDiagnostics,
+    ...(recoveryReason ? { recoveryReason } : {}) });
 }
 
 test('offline runtime reuses engines and exposes no IO or missing browser dependencies', () => {
@@ -238,6 +248,36 @@ test('generated adapter accepts the current compact meal and product contract',(
   for(const value of [compactV3(meal()),compactV3(recipe()),compactV3(base()),
     {version:3,type:'unknown',photoConsistency:'uncertain',product:null,meal:null}])
     assert.deepEqual(finish(value,fastOptions),sourceFinish(value));
+});
+test('uncertain meal retains only bounded failure evidence and never exposes discarded estimates as nutrition',()=>{
+  const value=compactV3(meal());value.photoConsistency='uncertain';
+  const result=finish(value,fastOptions);
+  assert.equal(result.extraction.type,'unknown');assert.equal(result.extraction.meal,null);
+  assert.deepEqual(result.observationDiagnostics,{observedType:'meal',observedConsistency:'uncertain',proposedNutrientCount:8});
+  assert.equal(result.recoveryReason,'subject_uncertain');
+  for(const key of keys)assert.equal(result.extraction.nutrients[key],null);
+  const unknown=finish({version:3,type:'unknown',photoConsistency:'uncertain',product:null,meal:null},fastOptions);
+  assert.deepEqual(unknown.observationDiagnostics,{observedType:'unknown',observedConsistency:'uncertain',proposedNutrientCount:0});
+  assert.equal(unknown.recoveryReason,'subject_uncertain');
+  const accepted=finish(compactV3(meal()),fastOptions);
+  assert.equal(Object.hasOwn(accepted,'recoveryReason'),false);
+  assert.deepEqual(accepted.observationDiagnostics,{observedType:'meal',observedConsistency:'sameMeal',proposedNutrientCount:8});
+  assert.deepEqual(sourceFinish(value),result);
+});
+test('identity conflict, unidentified food and type mismatch have distinct recovery reasons',()=>{
+  const conflict=base();conflict.metadata=photoModule.emptyMetadata();
+  conflict.metadata.conflicts=[{field:'identity',description:'Synthetic conflict',evidenceIds:[]}];
+  const cases=[
+    [conflict,'identity_conflict'],
+    [{...base(),type:'unknown',meal:null},'subject_unidentified'],
+    [{...base(),photoConsistency:'sameMeal'},'subject_type_mismatch']
+  ];
+  for(const [value,reason] of cases){
+    const result=finish(value);
+    assert.equal(result.recoveryReason,reason);assert.equal(result.extraction.type,'unknown');
+    assert.equal(result.extraction.meal,null);
+    for(const key of keys)assert.equal(result.extraction.nutrients[key],null);
+  }
 });
 test('compact product preserves all eight values, true zero and unknown fibre through normal validation',()=>{
   const value=base();value.labelKind='nutrition';value.basis='per100g';value.needsClearerPhoto=false;

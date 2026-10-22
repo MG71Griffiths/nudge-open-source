@@ -567,6 +567,7 @@ struct AccountHTTPResponse {
 @MainActor final class AccountConnectionViewController: UIViewController, UIAdaptivePresentationControllerDelegate {
     private let manager: NudgeAccountManager
     private let onChange: () -> Void
+    private let onSignedIn: (() -> Void)?
     private let stack = UIStackView()
     private let scrollView = UIScrollView()
     private let activity = UIActivityIndicatorView(style: .medium)
@@ -578,9 +579,11 @@ struct AccountHTTPResponse {
     private var busy = false
     private var notice: String?
     private var noticeIsError = false
+    private var passwordSignIn = false
+    private var invalidated = false
 
-    init(manager: NudgeAccountManager, onChange: @escaping () -> Void) {
-        self.manager = manager; self.onChange = onChange
+    init(manager: NudgeAccountManager, onSignedIn: (() -> Void)? = nil, onChange: @escaping () -> Void) {
+        self.manager = manager; self.onSignedIn = onSignedIn; self.onChange = onChange
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
@@ -622,7 +625,7 @@ struct AccountHTTPResponse {
         password.autocapitalizationType = .none; password.autocorrectionType = .no; password.spellCheckingType = .no
         password.smartQuotesType = .no; password.smartDashesType = .no; password.borderStyle = .roundedRect
         password.accessibilityIdentifier = "account-password"
-        code.placeholder = "Code from email"; code.keyboardType = .numberPad; code.textContentType = .oneTimeCode
+        code.placeholder = "6-digit code"; code.keyboardType = .numberPad; code.textContentType = .oneTimeCode
         code.borderStyle = .roundedRect; code.accessibilityIdentifier = "account-code"
         for field in [email, password, code] {
             field.font = .preferredFont(forTextStyle: .body)
@@ -642,13 +645,29 @@ struct AccountHTTPResponse {
         let status = manager.publicStatus()
         let state = status["state"] as? String ?? "unavailable"
         let available = status["available"] as? Bool == true
-        message.text = notice ?? (busy ? "Checking your account…" : "Sign in for photo analysis. Your diary stays on this iPhone.")
+        message.text = notice ?? (busy ? "Checking your account…" : state == "signedIn"
+            ? "Your Nudge account is ready. Your diary stays on this iPhone."
+            : passwordSignIn ? "Sign in with your existing Nudge password. You can use an email code instead."
+            : "Enter your email address to sign in or create your Nudge account. We’ll email you a 6-digit code — no password needed.")
         message.textColor = noticeIsError ? NudgeTheme.errorText : NudgeTheme.ink
+        if onSignedIn != nil {
+            let heading = UILabel()
+            heading.text = "Welcome to Nudge"
+            heading.font = .preferredFont(forTextStyle: .largeTitle)
+            heading.adjustsFontForContentSizeCategory = true
+            heading.numberOfLines = 0
+            heading.textColor = NudgeTheme.ink
+            heading.accessibilityTraits.insert(.header)
+            heading.accessibilityIdentifier = "account-onboarding-title"
+            heading.setContentCompressionResistancePriority(.required, for: .vertical)
+            stack.addArrangedSubview(heading)
+        }
         stack.addArrangedSubview(activity)
         stack.addArrangedSubview(message)
         if state == "signedIn" {
             let identity = UILabel(); identity.numberOfLines = 0; identity.font = .preferredFont(forTextStyle: .body); identity.adjustsFontForContentSizeCategory = true; identity.textColor = NudgeTheme.ink; identity.text = "Signed in as \(status["email"] as? String ?? "your account")"
             stack.addArrangedSubview(identity)
+            if let onSignedIn { addButton("Continue", identifier: "account-continue", action: onSignedIn) }
             addButton("Sign out", destructive: false) { [weak self] in
                 self?.run(progress: "Signing out…") { [weak self] in guard let self else { return }; self.notice = try await self.manager.signOut() }
             }
@@ -660,33 +679,38 @@ struct AccountHTTPResponse {
                 addButton("Verify code", identifier: "account-verify") { [weak self] in
                     guard let self else { return }
                     let enteredCode = self.code.text ?? ""
-                    self.run(progress: "Verifying your code…") { [weak self] in guard let self else { return }; try await self.manager.verifyCode(enteredCode); self.code.text = ""; self.notice = "You’re signed in. Ready to scan." }
+                    self.run(progress: "Verifying your code…", onSuccess: self.onSignedIn) { [weak self] in guard let self else { return }; try await self.manager.verifyCode(enteredCode); self.code.text = ""; self.notice = "You’re signed in. Ready to scan." }
                 }
-                addButton("Send a new code") { [weak self] in self?.run(progress: "Sending your code…") { [weak self] in guard let self else { return }; try await self.manager.sendCode(email: pending); self.code.text = ""; self.notice = "A new sign-in code has been requested." } }
-                addButton("Use another email or password") { [weak self] in guard let self else { return }; self.manager.cancelSignIn(); self.code.text = ""; self.password.text = ""; self.notice = nil; self.noticeIsError = false; self.render() }
+                addButton("Send a new code", identifier: "account-resend-code") { [weak self] in self?.run(progress: "Sending your code…") { [weak self] in guard let self else { return }; try await self.manager.sendCode(email: pending); self.code.text = ""; self.notice = "A new sign-in code has been requested." } }
+                addButton("Use another email", identifier: "account-change-email") { [weak self] in guard let self else { return }; self.manager.cancelSignIn(); self.code.text = ""; self.password.text = ""; self.passwordSignIn = false; self.notice = nil; self.noticeIsError = false; self.render() }
             } else {
                 if email.text?.isEmpty != false { email.text = status["email"] as? String }
-                stack.addArrangedSubview(email); stack.addArrangedSubview(password)
-                addButton("Sign in with password", identifier: "account-sign-in-password") { [weak self] in
-                    guard let self else { return }
-                    let enteredEmail = self.email.text ?? "", enteredPassword = self.password.text ?? ""
-                    self.password.text = ""
-                    self.run(progress: "Signing in…") { [weak self] in
+                stack.addArrangedSubview(email)
+                if passwordSignIn {
+                    stack.addArrangedSubview(password)
+                    addButton("Sign in with password", identifier: "account-sign-in-password") { [weak self] in
                         guard let self else { return }
-                        try await self.manager.signInWithPassword(email: enteredEmail, password: enteredPassword)
-                        self.notice = "You’re signed in. Ready to scan."
+                        let enteredEmail = self.email.text ?? "", enteredPassword = self.password.text ?? ""
+                        self.password.text = ""
+                        self.run(progress: "Signing in…", onSuccess: self.onSignedIn) { [weak self] in
+                            guard let self else { return }
+                            try await self.manager.signInWithPassword(email: enteredEmail, password: enteredPassword)
+                            self.notice = "You’re signed in. Ready to scan."
+                        }
                     }
-                }
-                let alternative = UILabel(); alternative.numberOfLines = 0
-                alternative.font = .preferredFont(forTextStyle: .subheadline); alternative.adjustsFontForContentSizeCategory = true
-                alternative.textColor = NudgeTheme.muted
-                alternative.text = "New here, or no password? Sign in with a code sent to your email."
-                stack.addArrangedSubview(alternative)
-                addButton("Email me a code", identifier: "account-send-code") { [weak self] in
-                    guard let self else { return }
-                    let enteredEmail = self.email.text ?? ""
-                    self.password.text = ""
-                    self.run(progress: "Sending your code…") { [weak self] in guard let self else { return }; try await self.manager.sendCode(email: enteredEmail); self.notice = "Check your email for your Nudge sign-in code." }
+                    addButton("Use an email code", identifier: "account-use-code") { [weak self] in
+                        self?.switchSignInMethod(password: false)
+                    }
+                } else {
+                    addButton("Email me a code", identifier: "account-send-code") { [weak self] in
+                        guard let self else { return }
+                        let enteredEmail = self.email.text ?? ""
+                        self.password.text = ""
+                        self.run(progress: "Sending your code…") { [weak self] in guard let self else { return }; try await self.manager.sendCode(email: enteredEmail); self.notice = "Check your email for your 6-digit Nudge sign-in code. If it hasn’t arrived, check your junk folder." }
+                    }
+                    addButton("Sign in with a password", identifier: "account-use-password") { [weak self] in
+                        self?.switchSignInMethod(password: true)
+                    }
                 }
                 if status["email"] != nil { addButton("Sign out on this iPhone") { [weak self] in self?.run { [weak self] in guard let self else { return }; self.notice = try await self.manager.signOut() } } }
             }
@@ -698,8 +722,17 @@ struct AccountHTTPResponse {
         for control in stack.arrangedSubviews.compactMap({ $0 as? UIControl }) { control.isEnabled = !busy }
     }
 
+    private func switchSignInMethod(password: Bool) {
+        guard !busy else { return }
+        manager.cancelSignIn()
+        passwordSignIn = password
+        self.password.text = ""; code.text = ""
+        notice = nil; noticeIsError = false
+        render()
+    }
+
     private func addButton(_ title: String, destructive: Bool = false, identifier: String? = nil, action: @escaping () -> Void) {
-        let primary = identifier == "account-verify" || identifier == "account-sign-in-password" || title == "Try again"
+        let primary = identifier == "account-send-code" || identifier == "account-verify" || identifier == "account-sign-in-password" || identifier == "account-continue" || title == "Try again"
         let button = NudgeButton(title, variant: destructive ? .destructive : primary ? .primary : .secondary)
         button.accessibilityIdentifier = identifier
         button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44).isActive = true
@@ -707,8 +740,8 @@ struct AccountHTTPResponse {
         stack.addArrangedSubview(button)
     }
 
-    private func run(progress: String = "Checking your account…", _ operation: @escaping @MainActor () async throws -> Void) {
-        guard !busy else { return }
+    private func run(progress: String = "Checking your account…", onSuccess: (() -> Void)? = nil, _ operation: @escaping @MainActor () async throws -> Void) {
+        guard !busy && !invalidated else { return }
         busy = true; notice = nil; noticeIsError = false
         // Preserve the actual controls and their text during submission. Replacing
         // the form here used to flash the page before reading the entered value.
@@ -718,13 +751,14 @@ struct AccountHTTPResponse {
         view.endEditing(true)
         revealFeedback()
         task = Task { [weak self] in
-            do { try await operation() }
+            var succeeded = false
+            do { try await operation(); succeeded = true }
             catch is CancellationError { }
             catch {
                 self?.notice = (error as? AccountError)?.localizedDescription ?? AccountError.network.localizedDescription
                 self?.noticeIsError = true
             }
-            guard let self else { return }
+            guard let self, !self.invalidated else { return }
             self.busy = false
             self.password.text = ""
             self.task = nil
@@ -735,7 +769,17 @@ struct AccountHTTPResponse {
                 if let notice = self.notice { UIAccessibility.post(notification: .announcement, argument: notice) }
             }
             self.onChange()
+            if succeeded && !Task.isCancelled { onSuccess?() }
         }
+    }
+
+    /// SwiftUI's embedded sign-in form has no UIKit dismissal delegate. Its
+    /// dismantle hook uses this to prevent late responses/callbacks after leaving.
+    func cancelPendingSignIn() {
+        invalidated = true
+        task?.cancel(); task = nil
+        manager.cancelSignIn()
+        email.text = ""; code.text = ""; password.text = ""
     }
 
     private func revealFeedback() {
@@ -754,11 +798,11 @@ struct AccountHTTPResponse {
     }
 
     private func close() {
-        task?.cancel(); manager.cancelSignIn(); code.text = ""; password.text = ""
+        cancelPendingSignIn()
         dismiss(animated: true) { [onChange] in onChange() }
     }
     func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        task?.cancel(); manager.cancelSignIn(); code.text = ""; password.text = ""; onChange()
+        cancelPendingSignIn(); onChange()
     }
 }
 

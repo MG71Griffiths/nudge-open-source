@@ -1,7 +1,7 @@
 {
   "version": 1,
   "bundle": "Web/core/chatgpt-analysis.js",
-  "sha256": "a48001543fc2ab8f7e64c43659e971feacc2c213d7c032380f28af79708a8aed",
+  "sha256": "fac6c1c1dddf7e3dbdf19702b3e6dd393606f2e0ec46c00123320e998836d17c",
   "sources": {
     "Backend/data/cofid-2021.json": "4dd1315de788172a31cf797c8eb8e066657269276debd0b14c17baa5b4319934",
     "Backend/data/usda-meal-fallbacks.json": "5ae304d5459466d1b0b96ab141cecb294c75b4248b70d25969af73a5091d77fd",
@@ -9,8 +9,8 @@
     "Backend/scripts/build-chatgpt-analysis.mjs": "6224a629f12a1a42b9cb0956db0d0917f673214ac2db40d55652d8b1701b8daf",
     "Backend/scripts/chatgpt-browser-runtime.js": "b48ec72a9cb619b28b04d31106f05830a6f800b31868447f0cb711f214805507",
     "Backend/src/capture-policy.js": "4dfacec1906677de4f11ca7b4be38deaa03828f6b56f348bde7c7f8661b31fb8",
-    "Backend/src/chatgpt-analysis.js": "989b973c2cb45aec7a1ca041cce15289a65fd626aa66b971cdd648ed81add603",
-    "Backend/src/compact-photo-contract.js": "e75890ad19e75e3e2d55188a50ac9e1055ce004060a1b65acdd19b97e374bb90",
+    "Backend/src/chatgpt-analysis.js": "3d6f2bb184260d1cb61e112181045af61c95d80e5df15091c41a15494682da99",
+    "Backend/src/compact-photo-contract.js": "675eeeae303374c172aaf28cb710d510afaca09aeeaefe7cf0300d7855065bd1",
     "Backend/src/composition.js": "e31333b29f851decab4d531fbcb0184429972f688b2721056ae3fcd14b8ef75d",
     "Backend/src/meal-hints.js": "31448c5c51cc469a5ef16a8419fc3608554f59211fc27572e19ad3e32d3f06e3",
     "Backend/src/photo-analysis-contract.js": "f88745dc59fceb0b12117477f2efe633cd5c58170c471fa32e9e5378d9bf3fe2",

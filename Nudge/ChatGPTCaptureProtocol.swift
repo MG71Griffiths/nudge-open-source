@@ -21,7 +21,12 @@ struct ChatGPTCaptureBinding: Codable, Equatable, Sendable {
 /// existing request contract rather than inheriting unsupported capabilities.
 enum ChatGPTCapturePolicy {
     static func reasoning(modelID: String) -> [String: String]? {
-        modelID == "gpt-6-astra" ? ["effort": "low"] : nil
+        switch modelID {
+        case "gpt-6-astra": return ["effort": "low"]
+        // Exact, documented capability. Other model IDs retain their defaults.
+        case "gpt-6-luna": return ["effort": "none"]
+        default: return nil
+        }
     }
 
     /// Fixed diagnostic families only; never copy prompt text or caller labels.
@@ -34,8 +39,13 @@ enum ChatGPTCapturePolicy {
         let values = version?["enum"] as? [Any]
         let value = values?.count == 1 ? values?.first as? NSNumber : nil
         let number = value.flatMap { CFGetTypeID($0) == CFBooleanGetTypeID() ? nil : $0.doubleValue }
-        return ["promptVersion": number == 3 ? "photo-estimate-2026-10-20-v3" : number == 2 ? "photo-estimate-2026-10-20-v2" : "photo-instructions-2026-10-20-v1",
+        var result = ["promptVersion": number == 3 ? "photo-estimate-2026-10-21-v4" : number == 2 ? "photo-estimate-2026-10-20-v2" : "photo-instructions-2026-10-20-v1",
                 "observationSchema": number == 3 ? "compact_photo_v3" : number == 2 ? "compact_photo_v2" : number == 1 ? "compact_photo_v1" : "photo_v1"]
+        if let reasoning = request["reasoning"] as? [String: String], reasoning.count == 1,
+           let effort = reasoning["effort"], ["none", "low"].contains(effort) {
+            result["requestedReasoningEffort"] = effort
+        }
+        return result
     }
 }
 

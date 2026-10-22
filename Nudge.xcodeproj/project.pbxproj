@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D04400000000000000000001 /* NativeOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04400000000000000000002 /* NativeOnboardingView.swift */; };
 		A5233475A789EF5A98D9354C /* ChatGPTPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */; };
 		F6CF27D47F6A53DE1E16C734 /* ChatGPTConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */; };
 		71F2AD43F4EB248B61705F9D /* ChatGPTProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FA22218C477AF5B8A1A11ED /* ChatGPTProtocol.swift */; };
@@ -86,6 +87,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D04400000000000000000002 /* NativeOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeOnboardingView.swift; sourceTree = "<group>"; };
 		E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTPreviewView.swift; sourceTree = "<group>"; };
 		0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTConnection.swift; sourceTree = "<group>"; };
 		3FA22218C477AF5B8A1A11ED /* ChatGPTProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTProtocol.swift; sourceTree = "<group>"; };
@@ -215,6 +217,7 @@
 				D1579B4CC8000258B0D3B30A /* NativeFoodReviewView.swift */,
 				12CAFE0012CAFE0012CAFE02 /* NativeMealIngredientPicker.swift */,
 				C76326F90B536E317C8B6BD6 /* NativeProfileCycleView.swift */,
+				D04400000000000000000002 /* NativeOnboardingView.swift */,
 				E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */,
 				0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */,
 				3FA22218C477AF5B8A1A11ED /* ChatGPTProtocol.swift */,
@@ -388,12 +391,12 @@
 			inputPaths = ();
 			name = "Exclude development reference images";
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Web/assets/lindt-70.png",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Web/assets/yuka-lindt-reference.png",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Web/assets/reference-removed.svg",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Web/assets/reference-removed.svg",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -eu\n/bin/rm -f \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/lindt-70.png\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/yuka-lindt-reference.png\"\ntest ! -e \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/lindt-70.png\"\ntest ! -e \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/yuka-lindt-reference.png\"\n";
+			shellScript = "set -eu\n/bin/rm -f \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/reference-removed.svg\" \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/reference-removed.svg\"\ntest ! -e \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/reference-removed.svg\"\ntest ! -e \"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/Web/assets/reference-removed.svg\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -412,6 +415,7 @@
 				E9678B65D71AF2104DEB692C /* NativeFoodReviewView.swift in Sources */,
 				12CAFE0012CAFE0012CAFE01 /* NativeMealIngredientPicker.swift in Sources */,
 				403D4EE009114FABDA035336 /* NativeProfileCycleView.swift in Sources */,
+				D04400000000000000000001 /* NativeOnboardingView.swift in Sources */,
 				A5233475A789EF5A98D9354C /* ChatGPTPreviewView.swift in Sources */,
 				F6CF27D47F6A53DE1E16C734 /* ChatGPTConnection.swift in Sources */,
 				71F2AD43F4EB248B61705F9D /* ChatGPTProtocol.swift in Sources */,
@@ -513,7 +517,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 44;
 				DEVELOPMENT_TEAM = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -556,7 +560,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 39;
+				CURRENT_PROJECT_VERSION = 44;
 				DEVELOPMENT_TEAM = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				GENERATE_INFOPLIST_FILE = NO;

@@ -5,6 +5,56 @@ enum NativeCaptureStatus: String, Codable, Sendable {
     case draft, queued, processing, complete, retryableFailure, needsUserInput, deleted
 }
 
+/// Fixed recovery categories only. Provider prose and food content never become
+/// persisted error codes or technical diagnostics.
+enum NativeCaptureRecoveryReason: String {
+    case subjectUncertain = "subject_uncertain"
+    case subjectUnidentified = "subject_unidentified"
+    case subjectTypeMismatch = "subject_type_mismatch"
+    case identityConflict = "identity_conflict"
+
+    var errorCode: String { "photo_" + rawValue }
+    init?(errorCode: String?) {
+        guard let errorCode, errorCode.hasPrefix("photo_") else { return nil }
+        self.init(rawValue: String(errorCode.dropFirst(6)))
+    }
+    static func from(response: [String: Any]) -> Self? {
+        if let raw = response["recoveryReason"] as? String, let reason = Self(rawValue: raw) { return reason }
+        // Older adapters report normalization enums but no recovery field.
+        let issues = response["diagnosticEnums"] as? [String] ?? []
+        if let reason = [Self.subjectUncertain, .subjectUnidentified, .subjectTypeMismatch].first(where: { issues.contains($0.rawValue) }) {
+            return reason
+        }
+        // The ordinary service keeps these same fixed categories in its trace.
+        // Only a rejected observation may use them; never copy provider prose
+        // or turn a successfully recovered meal into an input failure.
+        guard (response["extraction"] as? [String: Any])?["type"] as? String == "unknown",
+              let trace = response["trace"] as? [String: Any] else { return nil }
+        let backendIssues = trace["normalizationIssues"] as? [String] ?? []
+        if let reason = [Self.subjectUncertain, .subjectUnidentified, .subjectTypeMismatch].first(where: { backendIssues.contains($0.rawValue) }) {
+            return reason
+        }
+        switch trace["subjectStatus"] as? String {
+        case "uncertain": return .subjectUncertain
+        case "unidentified": return .subjectUnidentified
+        case "type_mismatch": return .subjectTypeMismatch
+        default: return nil
+        }
+    }
+    var message: String {
+        switch self {
+        case .subjectUncertain:
+            return "Choose one meal or product. Keep only its photos, or take a closer photo, then tap Analyse."
+        case .subjectUnidentified:
+            return "The food could not be identified. Try a clearer photo, then tap Analyse. Your photos are saved."
+        case .subjectTypeMismatch:
+            return "These photos could not be matched to one food. Keep photos of the same meal or product, then tap Analyse."
+        case .identityConflict:
+            return "These photos may show different products. Keep one product’s photos, then tap Analyse."
+        }
+    }
+}
+
 /// User-confirmed meal ingredients supplement photo evidence; they never assert
 /// an ingredient quantity. Only the overall portion is specified.
 struct NativeMealAnalysisHints: Codable, Equatable, Sendable {
@@ -98,7 +148,8 @@ struct NativeCaptureRecord: Codable, Sendable {
                 }
             }
             return "Saved — tap Retry now to finish"
-        case .needsUserInput: return "Saved — more information needed"
+        case .needsUserInput:
+            return NativeCaptureRecoveryReason(errorCode: errorCode)?.message ?? "Saved — more information needed"
         case .complete, .deleted: return ""
         }
     }

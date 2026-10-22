@@ -96,7 +96,7 @@ final class AnalysisDiagnostics: @unchecked Sendable {
             if let raw = values[key] as? String,
                raw.range(of: #"\A(?:gpt-[a-zA-Z0-9.-]{1,60}|o[1-9](?:-[a-zA-Z0-9.-]{1,40})?)\z"#, options: .regularExpression) != nil { result[key] = raw }
         }
-        for (key, maximum) in ["streamEventCount":100_000, "streamTerminalCount":100_000, "streamTextDeltaCount":100_000, "streamOutputItemDoneCount":100_000, "completedItemTextCount":100_000, "finalOutputTextCount":100_000, "timingVersion":2, "analyseToResultMs":600_000, "captureToResultMs":600_000, "cropMs":600_000, "cropOriginalBytes":6_000_000, "cropPreparedBytes":6_000_000, "croppedCount":4, "captureMs":600_000, "timedImageCount":4, "ocrMs":600_000, "inferenceMs":600_000, "bridgeMs":600_000, "preparationMs":600_000, "inputTokens":10_000_000, "cachedInputTokens":10_000_000, "cacheWriteTokens":10_000_000, "reasoningTokens":10_000_000, "processingMs":600_000, "outputTokens":10_000_000, "totalTokens":20_000_000, "estimatedCostMicrousd":100_000_000, "status":599, "httpStatus":599, "submittedImageCount":4, "imageCount":4, "captureRevision":1_000_000, "elapsedMs":600_000, "nativeElapsedMs":600_000, "authorizationMs":600_000, "responseHeadersMs":600_000, "downloadMs":600_000, "transcriptionMs":600_000, "observationMs":600_000, "recheckMs":600_000, "queueWaitMs":600_000, "lookupMs":600_000, "networkMs":600_000, "calculationMs":600_000, "batchSize":100, "resolvedCount":100, "missingCount":100, "queueDepth":400, "activeCount":20, "responseBytes":10_000_000, "payloadBytes":20_000_000, "storedBytes":50_000_000, "entryCount":10_000, "imageBytes":20_000_000, "requestTimeoutMs":180_000, "resourceTimeoutMs":180_000, "backendDeadlineMs":180_000, "recipeIngredientCount":40, "recipeMissingAmountCount":40, "componentCount":40, "matchedComponentCount":40, "missingAmountCount":40, "plantCount":200, "knownNutrientCount":8, "missingNutrientCount":8, "partialNutrientCount":8, "zeroNutrientCount":8, "upstreamCallCount":2, "transcriptionCallCount":1, "page":20, "queryLength":120, "queryTokenCount":40, "resultCount":10_000, "recipeCount":10_000, "productCount":10_000, "visibleCount":10_000, "filterCount":8, "filteredCount":10_000, "requirementsExcludedCount":10_000, "retryAfterSeconds":3600] {
+        for (key, maximum) in ["streamEventCount":100_000, "streamTerminalCount":100_000, "streamTextDeltaCount":100_000, "streamOutputItemDoneCount":100_000, "completedItemTextCount":100_000, "finalOutputTextCount":100_000, "timingVersion":2, "analyseToResultMs":600_000, "captureToResultMs":600_000, "cropMs":600_000, "cropOriginalBytes":6_000_000, "cropPreparedBytes":6_000_000, "croppedCount":4, "captureMs":600_000, "timedImageCount":4, "ocrMs":600_000, "inferenceMs":600_000, "bridgeMs":600_000, "preparationMs":600_000, "inputTokens":10_000_000, "cachedInputTokens":10_000_000, "cacheWriteTokens":10_000_000, "reasoningTokens":10_000_000, "processingMs":600_000, "outputTokens":10_000_000, "totalTokens":20_000_000, "estimatedCostMicrousd":100_000_000, "status":599, "httpStatus":599, "submittedImageCount":4, "imageCount":4, "captureRevision":1_000_000, "elapsedMs":600_000, "nativeElapsedMs":600_000, "authorizationMs":600_000, "responseHeadersMs":600_000, "downloadMs":600_000, "transcriptionMs":600_000, "observationMs":600_000, "recheckMs":600_000, "queueWaitMs":600_000, "lookupMs":600_000, "networkMs":600_000, "calculationMs":600_000, "batchSize":100, "resolvedCount":100, "missingCount":100, "queueDepth":400, "activeCount":20, "responseBytes":10_000_000, "payloadBytes":20_000_000, "storedBytes":50_000_000, "entryCount":10_000, "imageBytes":20_000_000, "requestTimeoutMs":180_000, "resourceTimeoutMs":180_000, "backendDeadlineMs":180_000, "recipeIngredientCount":40, "recipeMissingAmountCount":40, "componentCount":40, "matchedComponentCount":40, "missingAmountCount":40, "plantCount":200, "proposedNutrientCount":8, "knownNutrientCount":8, "missingNutrientCount":8, "partialNutrientCount":8, "zeroNutrientCount":8, "upstreamCallCount":2, "transcriptionCallCount":1, "page":20, "queryLength":120, "queryTokenCount":40, "resultCount":10_000, "recipeCount":10_000, "productCount":10_000, "visibleCount":10_000, "filterCount":8, "filteredCount":10_000, "requirementsExcludedCount":10_000, "retryAfterSeconds":3600] {
             if let n = values[key] as? NSNumber, CFGetTypeID(n) != CFBooleanGetTypeID(),
                n.doubleValue.isFinite, n.doubleValue.rounded() == n.doubleValue, (0...Double(maximum)).contains(n.doubleValue) { result[key] = n.intValue }
         }
@@ -104,6 +104,7 @@ final class AnalysisDiagnostics: @unchecked Sendable {
             if let value = values[key] as? NSNumber, CFGetTypeID(value) == CFBooleanGetTypeID() { result[key] = value.boolValue }
         }
         allowed("route", ["local_text", "chatgpt_photo_analysis", "photo_analysis", "product_score", "product_search", "product_lookup", "contribution_submit", "contribution_status", "contribution_list", "contribution_retry", "contribution_delete"])
+        allowed("captureOperation", ["analyse", "retrieve", "retry", "delete"])
         allowed("ratingPath", ["batch", "full_record", "cache", "catalogue"])
         allowed("sourceRoute", ["discovery", "facts_batch", "alternatives", "catalogue_search", "catalogue_batch", "phone_cache", "catalogue_fallback", "off_product"])
         allowed("gateReason", ["local_budget", "provider_pause", "route_outage"])
@@ -129,9 +130,10 @@ final class AnalysisDiagnostics: @unchecked Sendable {
         allowed("providerErrorCode", ["subscription_sharing_usage_limit_exceeded", "rate_limit_exceeded", "subscription_sharing_usage_unavailable", "unsupported_capability", "subscription_sharing_unsupported_capability", "invalid_token", "invalid_grant", "token_expired", "refresh_token_expired", "refresh_token_invalidated", "refresh_token_reused", "server_error"])
         allowed("providerOutcome", ["completed", "incomplete", "failed", "received", "unknown", "http_error"])
         allowed("observationSchema", ["compact_photo_v1", "compact_photo_v2", "compact_photo_v3", "photo_v1"])
-        allowed("promptVersion", ["photo-instructions-2026-10-20-v1", "photo-estimate-2026-10-20-v2", "photo-estimate-2026-10-20-v3"])
+        allowed("promptVersion", ["photo-instructions-2026-10-20-v1", "photo-estimate-2026-10-20-v2", "photo-estimate-2026-10-20-v3", "photo-estimate-2026-10-21-v4"])
         allowed("priceVersion", ["openai-standard-2026-10-20"])
         allowed("analysisPolicy", ["fast_v1", "legacy"])
+        allowed("requestedReasoningEffort", ["none", "low"])
         allowed("endpoint", ["/v1/responses"])
         allowed("encoding", ["jpeg_base64"])
         allowed("parseStatus", ["not_started", "validating", "validated"])
@@ -146,6 +148,9 @@ final class AnalysisDiagnostics: @unchecked Sendable {
         allowed("validationIssue", issues)
         allowed("outcome", outcomes)
         allowed("resultType", ["meal", "product", "unknown"])
+        allowed("observedType", ["meal", "product", "unknown"])
+        allowed("observedConsistency", ["sameMeal", "sameProduct", "uncertain"])
+        allowed("recoveryReason", ["subject_uncertain", "subject_unidentified", "subject_type_mismatch", "identity_conflict"])
         allowed("eventType", ["loading", "result", "error", "capture-status", "cancelled"])
         if let list = values["normalizationIssues"] as? [String] {
             result["normalizationIssues"] = Array(Set(list.filter { issues.contains($0) })).sorted().prefix(12).map { $0 }

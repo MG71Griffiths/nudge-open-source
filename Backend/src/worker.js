@@ -643,7 +643,7 @@ async function analyse(body, env, requestSignal, {productOnly = false, captureId
     analysisPolicy:isFastCapture(body)?'fast_v1':'legacy',timingVersion:1,
     // Base instruction family only. Schema/policy versions are independent;
     // runtime user hints are never logged or hashed into this identifier.
-    promptVersion:isFastCapture(body)?'photo-estimate-2026-10-20-v3':'photo-instructions-2026-10-20-v1',
+    promptVersion:isFastCapture(body)?'photo-estimate-2026-10-21-v4':'photo-instructions-2026-10-20-v1',
     observationSchema:isFastCapture(body)?COMPACT_OBSERVATION_VERSION:'photo_v1',
     submittedImageCount: body.images?.length || (body.productImage ? 2 : 1),
     captureRevision: body.captureRevision ?? 0, encoding: 'jpeg_base64',

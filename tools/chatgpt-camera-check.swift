@@ -29,6 +29,7 @@ final class CameraCheckBlockedHTTP: URLProtocol {
 private enum CameraCheckError: Error { case failed(String), timeout(String) }
 @MainActor private final class CameraCheckState {
     var selection: ChatGPTCaptureBinding?
+    var selectionDelay: TimeInterval = 0
     var valid: [ChatGPTCaptureBinding] = []
     var permission = true
     var revision = 0
@@ -40,6 +41,11 @@ private enum CameraCheckError: Error { case failed(String), timeout(String) }
     var chatCalls: [(ChatGPTCaptureBinding, [String: Any])] = []
     var ordinaryCalls = 0
     var ordinarySubmissionIDs: [UUID] = []
+    var ordinaryInputs: [([Data], [String], Int, VoiceMemoPayload?)] = []
+    var cacheOrdinaryResults = false
+    var completedRemoteResults: [UUID: [String: Any]] = [:]
+    var retrieveCalls: [UUID] = []
+    var retryCalls: [UUID] = []
     var ordinaryFailure = false
     var ordinaryError: Error?
     var ordinaryEnvelope: [String: Any]?
@@ -87,17 +93,35 @@ private enum CameraCheckError: Error { case failed(String), timeout(String) }
         let state = self.state
         coordinator = NativeCaptureCoordinator(store: app,
             lookup: { _, _ in throw CameraCheckError.failed("Unexpected barcode lookup") },
-            analysePhotos: { _, _, _, voice, submissionID in
+            analysePhotos: { images, photoIDs, revision, voice, submissionID in
                 state.ordinaryCalls += 1; state.ordinarySubmissionIDs.append(submissionID)
+                state.ordinaryInputs.append((images, photoIDs, revision, voice))
                 if voice != nil { state.voiceCalls += 1 }
                 if let error = state.ordinaryError { throw error }
                 if state.ordinaryFailure { throw URLError(.networkConnectionLost) }
-                if let envelope = state.ordinaryEnvelope { return envelope }
-                return ["extraction": ["type":"product", "productName":"Synthetic ordinary label", "labelKind":"unreadable", "basis":"unknown", "nutrients":[:]]]
-            }, recognizeText: { try await state.recognize($0, ids: $1) }, permissionAllowed: { state.permission }, cameraSelection: { state.selection },
+                let response: [String: Any] = state.ordinaryEnvelope ?? ["extraction": ["type":"product", "productName":"Synthetic ordinary label", "labelKind":"unreadable", "basis":"unknown", "nutrients":[:]]]
+                if state.cacheOrdinaryResults {
+                    // Match the real queue: a completed same-ID POST, GET or
+                    // /retry returns the cached observation without rerunning.
+                    if let cached = state.completedRemoteResults[submissionID] { return cached }
+                    state.completedRemoteResults[submissionID] = response
+                    return ["job": ["id": submissionID.uuidString, "status": "queued"], "retryAfterSeconds": 1]
+                }
+                return response
+            }, recognizeText: { try await state.recognize($0, ids: $1) }, permissionAllowed: { state.permission }, cameraSelection: {
+                if state.selectionDelay > 0 { Thread.sleep(forTimeInterval: state.selectionDelay) }
+                return state.selection
+            },
             chatGPTBindingCurrent: { state.valid.contains($0) }, analyseChatGPT: { binding, request, _ in try await state.analyse(binding, request: request) },
             accountRevision: { state.revision }, outbox: outbox, ownerKey: { state.owner },
-            deleteCapture: { _, _ in state.deleteCalls += 1 })
+            deleteCapture: { _, _ in state.deleteCalls += 1 },
+            retrieveCapture: { id, _ in
+                state.retrieveCalls.append(id)
+                return state.completedRemoteResults[id] ?? ["captureMissing": true]
+            }, retryCapture: { id, _ in
+                state.retryCalls.append(id)
+                return state.completedRemoteResults[id] ?? state.ordinaryEnvelope ?? ["extraction": ["type":"product", "productName":"Synthetic retried label", "labelKind":"unreadable", "basis":"unknown", "nutrients":[:]]]
+            })
         app.capture = coordinator
         image = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { ctx in
             UIColor.gray.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: 2, height: 2))
@@ -148,8 +172,32 @@ private enum CameraCheckError: Error { case failed(String), timeout(String) }
         let b = ChatGPTCaptureBinding(profileID:"synthetic-b",subject:"synthetic-subject-b",connectionID:UUID(),modelID:"synthetic-model-b")
         do {
             let response = try String(contentsOfFile: CommandLine.arguments[2], encoding: .utf8)
+            let unknownResponse = #"{"version":3,"type":"unknown","photoConsistency":"uncertain","product":null,"meal":null}"#
             struct LabelFixture: Decodable { let pages: [FoodOCRPage] }
             let labelPages = try JSONDecoder().decode(LabelFixture.self, from: Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[3]))).pages
+            do {
+                let source: [String: Any] = ["extraction": ["type": "unknown"], "recoveryReason": "identity_conflict",
+                    "observationDiagnostics": ["observedType": "product", "observedConsistency": "sameProduct", "proposedNutrientCount": 8, "foodName": "private food", "rawOutput": "private output"]]
+                let metadata = NativeCaptureCoordinator.structuredResponseMetadata(source)
+                try expect("Structured diagnostics copy only bounded recovery and observation fields", metadata["resultType"] as? String == "unknown" && metadata["recoveryReason"] as? String == "identity_conflict" && metadata["observedType"] as? String == "product" && metadata["observedConsistency"] as? String == "sameProduct" && metadata["proposedNutrientCount"] as? Int == 8 && metadata.count == 6)
+                for (name, invalid) in [("boolean", true as Any), ("fraction", 1.5 as Any), ("negative", -1 as Any), ("large", 9 as Any), ("text", "8" as Any)] {
+                    let value = NativeCaptureCoordinator.structuredResponseMetadata(["extraction": ["type": "private food"], "recoveryReason": "private prose",
+                        "observationDiagnostics": ["observedType": "private food", "observedConsistency": "private prose", "proposedNutrientCount": invalid]])
+                    try expect("Structured diagnostics reject unbounded enums and " + name + " counts", value.count == 2 && value["resultType"] as? String == "unknown")
+                }
+                let zero = NativeCaptureCoordinator.structuredResponseMetadata(["observationDiagnostics": ["proposedNutrientCount": 0]])
+                try expect("A genuine zero nutrient observation remains measurable", zero["proposedNutrientCount"] as? Int == 0)
+                try expect("Old adapters retain bounded subject recovery", NativeCaptureRecoveryReason.from(response: ["diagnosticEnums": ["subject_uncertain"]]) == .subjectUncertain && NativeCaptureRecoveryReason.from(response: ["diagnosticEnums": ["private food"]]) == nil)
+                try expect("Unknown backend trace retains fixed uncertainty recovery", NativeCaptureRecoveryReason.from(response: ["extraction": ["type": "unknown"], "trace": ["normalizationIssues": ["subject_uncertain"], "subjectStatus": "uncertain"]]) == .subjectUncertain)
+                try expect("Private or malformed backend trace cannot become recovery prose", NativeCaptureRecoveryReason.from(response: ["extraction": ["type": "unknown"], "trace": ["normalizationIssues": ["private food"], "subjectStatus": "private prose"]]) == nil)
+                try expect("Known food is never downgraded by backend trace", NativeCaptureRecoveryReason.from(response: ["extraction": ["type": "meal"], "trace": ["normalizationIssues": ["subject_uncertain"], "subjectStatus": "uncertain"]]) == nil)
+                for reason in [NativeCaptureRecoveryReason.subjectUncertain, .subjectUnidentified, .subjectTypeMismatch, .identityConflict] {
+                    var record = NativeCaptureRecord(eventID: "synthetic-recovery", ownerKey: "synthetic-owner")
+                    record.status = .needsUserInput; record.errorCode = reason.errorCode
+                    let restored = try JSONDecoder().decode(NativeCaptureRecord.self, from: JSONEncoder().encode(record))
+                    try expect("Recovery reason survives durable record decoding: " + reason.rawValue, restored.message == reason.message && restored.message.contains("Analyse"))
+                }
+            }
             do {
                 let image = UIGraphicsImageRenderer(size: CGSize(width: 2, height: 2)).image { ctx in
                     UIColor.gray.setFill(); ctx.fill(CGRect(x: 0, y: 0, width: 2, height: 2))
@@ -331,10 +379,193 @@ private enum CameraCheckError: Error { case failed(String), timeout(String) }
                 try expect("manual Retry rejects a different payer", f.state.chatCalls.count == 1 && (try f.record(id).chatGPTBinding) == a)
                 let renewed = ChatGPTCaptureBinding(profileID:a.profileID,subject:a.subject,connectionID:UUID(),modelID:"replacement-model")
                 f.state.selection = renewed; f.state.valid.append(renewed)
+                f.state.selectionDelay = 0.04
                 _ = f.coordinator.retryHistory(["id":id])
+                f.state.selectionDelay = 0
                 try await wait("explicit same-account Retry starts") { f.state.chatCalls.count == 2 }
                 try expect("manual retry pins renewed same account", f.state.chatCalls[1].0 == renewed)
+                let retryDiagnostics = try JSONSerialization.jsonObject(with: AnalysisDiagnostics.shared.exportData()) as! [String: Any]
+                let requestID = try f.record(id).submissionID.uuidString
+                let starts = (retryDiagnostics["events"] as? [[String: Any]] ?? []).filter {
+                    $0["stage"] as? String == "capture_performance" && $0["outcome"] as? String == "started" &&
+                    ($0["metadata"] as? [String: Any])?["requestId"] as? String == requestID
+                }
+                try expect("History Retry timing includes synchronous account lookup before durable queue acknowledgement", starts.count == 2 && ((starts.last?["metadata"] as? [String: Any])?["analyseToResultMs"] as? Int ?? 0) >= 39)
                 f.state.finish(1); try await wait("retried job completes") { try f.record(id).status == .complete }
+            }
+            do {
+                let f = try CameraCheckFixture("unknown-camera-same-account-retry", response: unknownResponse); defer { f.stop() }
+                f.state.selection = a; f.state.valid = [a]
+                let id = f.submit(); try await wait("unknown direct request starts") { f.state.chatCalls.count == 1 }
+                f.state.finish(0); try await wait("unknown result retains recovery") { try f.record(id).status == .needsUserInput }
+                let previous = try f.record(id)
+                let prepared = try await f.outbox.preparedCloudImages(for: previous)
+                let row = f.app.project("historyItem", ["id": id])["row"] as! [String: Any]
+                try expect("Uncertain result retains fixed recovery advice in native History", previous.errorCode == "photo_subject_uncertain" && row["message"] as? String == NativeCaptureRecoveryReason.subjectUncertain.message && (row["extraction"] == nil || row["extraction"] is NSNull))
+                let diagnostics = try JSONSerialization.jsonObject(with: AnalysisDiagnostics.shared.exportData()) as! [String: Any]
+                let observations = (diagnostics["events"] as? [[String: Any]] ?? []).filter { $0["stage"] as? String == "structured_response" }.compactMap { $0["metadata"] as? [String: Any] }
+                try expect("Real bridge diagnostics preserve bounded pre-normalization evidence", observations.last?["recoveryReason"] as? String == "subject_uncertain" && observations.last?["observedType"] as? String == "unknown" && observations.last?["observedConsistency"] as? String == "uncertain" && observations.last?["proposedNutrientCount"] as? Int == 0)
+                let renewed = ChatGPTCaptureBinding(profileID: a.profileID, subject: a.subject, connectionID: UUID(), modelID: "replacement-model")
+                f.state.selection = renewed; f.state.valid = [renewed]
+                f.app.openHistory(row)
+                guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Unknown History row did not reopen saved camera") }
+                try expect("Opening unknown History preserves the old binding without submitting", f.state.chatCalls.count == 1 && (try f.record(id).chatGPTBinding) == a && camera.capturedImages == [f.image])
+                let reopenedDiagnostics = try JSONSerialization.jsonObject(with: AnalysisDiagnostics.shared.exportData()) as! [String: Any]
+                let reopenedStarts = (reopenedDiagnostics["events"] as? [[String: Any]] ?? []).filter {
+                    $0["stage"] as? String == "capture_performance" && $0["outcome"] as? String == "started" &&
+                    ($0["metadata"] as? [String: Any])?["requestId"] as? String == previous.submissionID.uuidString
+                }
+                try expect("Opening unknown History starts no analysis timer before an explicit Analyse tap", reopenedStarts.count == 1)
+                let retryStart = Date()
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                try await wait("camera explicit same-account Retry starts") { f.state.chatCalls.count == 2 }
+                let retried = try f.record(id)
+                let retriedPrepared = try await f.outbox.preparedCloudImages(for: retried)
+                try expect("Reopened camera renews only the original account on explicit Analyse", f.state.chatCalls[1].0 == renewed && retried.chatGPTBinding == renewed && f.state.ordinaryCalls == 0)
+                try expect("Camera retry preserves immutable dispatched photos and submission", retried.id == previous.id && retried.submissionID == previous.submissionID && retried.photoIDs == previous.photoIDs && retried.photoFiles == previous.photoFiles && retried.captureRevision == previous.captureRevision && retried.photoReferences == previous.photoReferences && retried.cloudPreparedSubmissionID == previous.cloudPreparedSubmissionID && prepared != nil && prepared == retriedPrepared && (try f.outbox.images(for: retried)) == [f.image])
+                try expect("Camera retry retains remote state and restarts attempt timing", retried.remoteAccepted == previous.remoteAccepted && retried.manualRetryRequested == previous.manualRetryRequested && retried.analysisStartedAt.map { $0 >= retryStart } == true && retried.attempts == 1 && retried.errorCode == nil)
+                let retryDiagnostics = try JSONSerialization.jsonObject(with: AnalysisDiagnostics.shared.exportData()) as! [String: Any]
+                let starts = (retryDiagnostics["events"] as? [[String: Any]] ?? []).filter {
+                    $0["stage"] as? String == "capture_performance" && $0["outcome"] as? String == "started" &&
+                    ($0["metadata"] as? [String: Any])?["requestId"] as? String == previous.submissionID.uuidString
+                }
+                try expect("An unchanged camera retry gets a fresh performance start for the same submission", starts.count == 2)
+                f.state.finish(1); try await wait("camera retried unknown remains recoverable") { try f.record(id).status == .needsUserInput }
+            }
+            for originalStillValid in [false, true] {
+                let f = try CameraCheckFixture("unknown-camera-other-account-" + String(originalStillValid), response: unknownResponse); defer { f.stop() }
+                f.state.selection = a; f.state.valid = [a]
+                let id = f.submit(); try await wait("other-account unknown request starts") { f.state.chatCalls.count == 1 }
+                f.state.finish(0); try await wait("other-account unknown is saved") { try f.record(id).status == .needsUserInput }
+                f.state.selection = b; f.state.valid = originalStillValid ? [a, b] : [b]
+                f.app.openHistory(try f.historyPresentationRow(id))
+                guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Other-account recovery camera missing") }
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                if originalStillValid {
+                    try await wait("valid original account camera retry starts") { f.state.chatCalls.count == 2 }
+                    try expect("A different selected payer cannot replace a valid original binding", f.state.chatCalls[1].0 == a && (try f.record(id).chatGPTBinding) == a && f.state.ordinaryCalls == 0)
+                    f.state.finish(1); try await wait("original payer camera retry ends") { try f.record(id).status == .needsUserInput }
+                } else {
+                    try await Task.sleep(nanoseconds: 60_000_000)
+                    try expect("An invalid original account blocks camera retry without a different payer or fallback", f.state.chatCalls.count == 1 && f.state.ordinaryCalls == 0 && (try f.record(id).chatGPTBinding) == a && (try f.record(id).status) == .needsUserInput && f.app.analysisFailure?.contains("original ChatGPT account") == true && camera.capturedImages == [f.image])
+                }
+            }
+            do {
+                let f = try CameraCheckFixture("legacy-unknown-camera-provider", response: response); defer { f.stop() }
+                f.state.selection = a; f.state.valid = [a]
+                let id = "legacy-unknown"
+                try f.legacy(id, status: .needsUserInput)
+                f.app.openHistory(try f.historyPresentationRow(id))
+                guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Legacy unknown camera missing") }
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                try await wait("legacy unknown camera retry completes") { try f.record(id).status == .complete }
+                try expect("Legacy unknown camera keeps its original ordinary provider and policy", f.state.ordinaryCalls == 1 && f.state.chatCalls.isEmpty && f.state.ocrCalls == 0 && (try f.record(id).chatGPTBinding) == nil && (try f.record(id).fastCaptureVersion) == nil)
+            }
+            do {
+                let f = try CameraCheckFixture("unknown-camera-retained-remote", response: response); defer { f.stop() }
+                let id = "retained-remote-unknown"
+                try f.legacy(id, status: .needsUserInput)
+                var previous = try f.record(id)
+                previous.remoteAccepted = true; previous.fastCaptureVersion = 1; previous.cloudPreparationVersion = 1
+                previous.serverRetryAt = Date().addingTimeInterval(3600); previous.attempts = 5
+                previous = try f.outbox.save(previous)
+                let prepared = try await f.outbox.freezeCloudImages(for: previous, images: [f.image])
+                previous = try f.record(id)
+                f.state.selection = a; f.state.valid = [a]
+                f.app.openHistory(try f.historyPresentationRow(id))
+                guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Retained remote camera missing") }
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                let retried = try f.record(id)
+                let retriedPrepared = try await f.outbox.preparedCloudImages(for: retried)
+                try expect("Unchanged camera retry preserves accepted remote work, frozen input and server backoff", retried.status == .queued && retried.remoteAccepted && !retried.manualRetryRequested && retried.chatGPTBinding == nil && retried.submissionID == previous.submissionID && retried.cloudPreparedSubmissionID == previous.cloudPreparedSubmissionID && retried.nextAttemptAt == previous.serverRetryAt && prepared == retriedPrepared && f.state.chatCalls.isEmpty && f.state.ordinaryCalls == 0)
+            }
+            do {
+                let f = try CameraCheckFixture("completed-remote-unknown-camera", response: response); defer { f.stop() }
+                f.state.selection = a; f.state.valid = [a]; f.state.cacheOrdinaryResults = true
+                f.state.ordinaryEnvelope = ["extraction": ["type": "unknown"], "trace": ["normalizationIssues": ["subject_uncertain"], "subjectStatus": "uncertain"]]
+                let memo = VoiceMemoPayload(audioData: Data([0,0,0,12]) + Data("ftypM4A ".utf8), durationSeconds: 2)!
+                let id = f.submit(voice: memo)
+                try await wait("ordinary unknown is retrieved and saved") { try f.record(id).status == .needsUserInput }
+                var previous = try f.record(id)
+                previous.repairContext = try JSONSerialization.data(withJSONObject: ["syntheticContext": true])
+                previous.mealHints = NativeMealAnalysisHints(ingredients: ["Carrot"])
+                previous.serverRetryAt = Date().addingTimeInterval(3600)
+                previous = try f.outbox.save(previous)
+                let originalVoice = try f.outbox.voiceMemo(for: previous)
+                let prepared = try await f.outbox.preparedCloudImages(for: previous)
+                let row = try f.historyPresentationRow(id)
+                let savedRow = f.app.project("historyItem", ["id": id])["row"] as! [String: Any]
+                try expect("Ordinary backend uncertainty persists fixed recovery in History", previous.remoteAccepted && previous.errorCode == "photo_subject_uncertain" && savedRow["message"] as? String == NativeCaptureRecoveryReason.subjectUncertain.message)
+                f.coordinator.resumePending(); f.app.openHistory(row)
+                guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Remote unknown did not reopen camera") }
+                try expect("Opening completed unknown does not retrieve, resubmit or change its identity", f.state.ordinaryCalls == 1 && f.state.retrieveCalls == [previous.submissionID] && f.state.retryCalls.isEmpty && (try f.record(id).submissionID) == previous.submissionID)
+                f.state.ordinaryEnvelope = nil
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                try await wait("explicit camera retry creates a fresh successful server job") { try f.record(id).status == .complete }
+                let retried = try f.record(id), retriedVoice = try f.outbox.voiceMemo(for: retried)
+                let retriedPrepared = try await f.outbox.preparedCloudImages(for: retried)
+                try expect("Completed unknown retry bypasses same-ID server cache with exactly one fresh upload", retried.submissionID != previous.submissionID && f.state.ordinarySubmissionIDs == [previous.submissionID, retried.submissionID] && f.state.retrieveCalls == [previous.submissionID, retried.submissionID] && f.state.retryCalls.isEmpty && f.state.completedRemoteResults[previous.submissionID]?["extraction"] is [String: Any])
+                try expect("Fresh unknown submission retains owner, ordinary provider and original photo identities", retried.id == previous.id && retried.eventID == previous.eventID && retried.ownerKey == previous.ownerKey && retried.chatGPTBinding == nil && f.state.chatCalls.isEmpty && retried.photoIDs == previous.photoIDs && retried.photoFiles == previous.photoFiles && retried.captureRevision == previous.captureRevision && retried.photoReferences == previous.photoReferences && (try f.outbox.images(for: retried)) == [f.image])
+                try expect("Fresh unknown submission retains voice, context and ingredient hints byte for byte", retried.voiceFile == previous.voiceFile && retried.voiceDuration == previous.voiceDuration && retriedVoice?.audioData == originalVoice?.audioData && retriedVoice?.durationSeconds == originalVoice?.durationSeconds && retried.repairContext == previous.repairContext && retried.mealHints == previous.mealHints && f.state.ordinaryInputs.count == 2 && f.state.ordinaryInputs[0].0 == f.state.ordinaryInputs[1].0 && f.state.ordinaryInputs[0].3?.audioData == f.state.ordinaryInputs[1].3?.audioData)
+                try expect("Fresh unknown submission uses current policy and independently freezes identical photos", retried.fastCaptureVersion == 1 && retried.cloudPreparedSubmissionID == retried.submissionID && prepared != nil && prepared == retriedPrepared && retried.serverRetryAt == nil && !retried.manualRetryRequested && retried.addToEaten == false)
+            }
+            do {
+                let f = try CameraCheckFixture("camera-accepted-transport-retry", response: response); defer { f.stop() }
+                let id = "camera-accepted-transport-retry"
+                try f.legacy(id, status: .retryableFailure)
+                var previous = try f.record(id)
+                previous.remoteAccepted = true; previous.fastCaptureVersion = 1
+                previous.errorCode = "analysis_connection"; previous.serverRetryAt = Date().addingTimeInterval(3600)
+                previous = try f.outbox.save(previous)
+                let camera = SmartFoodCameraViewController(images: [f.image], photoIDs: previous.photoIDs, revision: previous.captureRevision)
+                f.coordinator.prepareRetry(camera, eventID: id)
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                var retried = try f.record(id)
+                try expect("Camera transport retry retains accepted identity and enforces server backoff", retried.submissionID == previous.submissionID && retried.remoteAccepted && retried.manualRetryRequested && retried.nextAttemptAt == previous.serverRetryAt && f.state.ordinaryCalls == 0 && f.state.retrieveCalls.isEmpty && f.state.retryCalls.isEmpty)
+                // Advance this synthetic job past its backoff; the real dispatch
+                // must use /retry, not GET or a duplicate fresh upload.
+                retried.nextAttemptAt = .distantPast; retried.serverRetryAt = .distantPast
+                _ = try f.outbox.save(retried); f.coordinator.resumePending()
+                try await wait("accepted camera retry reaches retry endpoint") { try f.record(id).status == .complete }
+                try expect("Camera transport retry calls the same-ID retry endpoint once", f.state.retryCalls == [previous.submissionID] && f.state.retrieveCalls.isEmpty && f.state.ordinaryCalls == 0 && (try f.record(id).submissionID) == previous.submissionID)
+            }
+            for errorCode in ["signInRequired", "photoPermissionRequired"] {
+                let f = try CameraCheckFixture("unknown-no-rotation-" + errorCode, response: response); defer { f.stop() }
+                try f.legacy(errorCode, status: .needsUserInput)
+                var previous = try f.record(errorCode)
+                previous.remoteAccepted = true; previous.errorCode = errorCode; previous.serverRetryAt = Date().addingTimeInterval(3600)
+                previous = try f.outbox.save(previous)
+                f.app.openHistory(try f.historyPresentationRow(errorCode))
+                guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Auth/permission camera missing") }
+                f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                let retried = try f.record(errorCode)
+                try expect("Camera does not replace accepted auth/permission work: " + errorCode, retried.submissionID == previous.submissionID && retried.remoteAccepted && !retried.manualRetryRequested && retried.fastCaptureVersion == nil && retried.nextAttemptAt == previous.serverRetryAt && f.state.ordinaryCalls == 0 && f.state.retrieveCalls.isEmpty && f.state.retryCalls.isEmpty)
+            }
+            for status in [NativeCaptureStatus.retryableFailure, .needsUserInput, .queued] {
+                let f = try CameraCheckFixture("legacy-direct-policy-" + status.rawValue, response: status == .queued ? response : unknownResponse); defer { f.stop() }
+                let luna = ChatGPTCaptureBinding(profileID: a.profileID, subject: a.subject, connectionID: a.connectionID, modelID: "gpt-6-luna")
+                f.state.selection = luna; f.state.valid = [luna]
+                let id = "legacy-direct-" + status.rawValue
+                try f.legacy(id, binding: luna, status: status)
+                let previous = try f.record(id)
+                if status == .queued {
+                    f.coordinator.resumePending()
+                } else {
+                    if status == .needsUserInput {
+                        f.app.openHistory(try f.historyPresentationRow(id))
+                        guard let camera = f.coordinator.camera else { throw CameraCheckError.failed("Legacy direct camera missing") }
+                        try expect("Opening legacy direct recovery does not promote or submit", (try f.record(id).fastCaptureVersion) == nil && f.state.chatCalls.isEmpty)
+                        f.coordinator.foodCamera(camera, analyse: camera.capturedImages, addToEaten: false)
+                    } else { _ = f.coordinator.retryHistory(["id": id]) }
+                }
+                try await wait("legacy direct request starts") { f.state.chatCalls.count == 1 }
+                let submitted = try f.record(id)
+                let policy = ChatGPTCapturePolicy.diagnostics(request: f.state.chatCalls[0].1)
+                try expect("Only explicit legacy direct retry adopts compact Luna policy: " + status.rawValue, status == .queued ? submitted.fastCaptureVersion == nil && policy["observationSchema"] == "photo_v1" && policy["requestedReasoningEffort"] == nil : submitted.fastCaptureVersion == 1 && policy["observationSchema"] == "compact_photo_v3" && policy["requestedReasoningEffort"] == "none")
+                try expect("Legacy policy preserves payer and original saved capture: " + status.rawValue, submitted.chatGPTBinding == luna && submitted.submissionID == previous.submissionID && submitted.photoIDs == previous.photoIDs && submitted.photoFiles == previous.photoFiles && (try f.outbox.images(for: submitted)) == [f.image] && f.state.ordinaryCalls == 0)
+                f.state.finish(0)
+                try await wait("legacy direct policy response is delivered") { try f.record(id).status == (status == .queued ? .complete : .needsUserInput) }
             }
             do {
                 let f = try CameraCheckFixture("permissions", response:response); defer { f.stop() }
@@ -397,6 +628,7 @@ private enum CameraCheckError: Error { case failed(String), timeout(String) }
                 f.app.openHistory(row)
                 f.app.cancelProductRecovery()
                 try expect("Saved photo review exposes retained originals", f.app.reviewHasPhotos && f.app.route == "review")
+                try expect("Opening a completed History result replays saved analysis without a new photo request", f.state.chatCalls.count == 1 && f.state.ordinaryCalls == 0 && f.coordinator.camera == nil)
                 let revealRevision = f.app.analysisHistoryRevealRevision
                 f.app.reanalyseReviewPhotos()
                 f.app.reanalyseReviewPhotos()

@@ -285,12 +285,16 @@ private struct CheckFailure: Error { let message: String }
         controller.loadViewIfNeeded()
         try await until { changes == 1 }
         let email = try control(controller, "account-email", as: UITextField.self)
+        try check((try? control(controller, "account-password", as: UITextField.self)) == nil, "Ordinary sign-in starts without a password field")
+        let initialCodeButton = try control(controller, "account-send-code", as: UIButton.self)
+        try check(initialCodeButton.isEnabled && initialCodeButton.configuration?.title == "Email me a code", "Email code is the default sign-in action")
+        try control(controller, "account-use-password", as: UIButton.self).sendActions(for: .touchUpInside)
         let password = try control(controller, "account-password", as: UITextField.self)
         let button = try control(controller, "account-sign-in-password", as: UIButton.self)
-        let codeButton = try control(controller, "account-send-code", as: UIButton.self)
+        let codeButton = try control(controller, "account-use-code", as: UIButton.self)
         try check(password.isSecureTextEntry && password.textContentType == .password && email.textContentType == .username, "Visible secure password and autofill semantics")
         try check(password.autocorrectionType == .no && password.spellCheckingType == .no && password.smartQuotesType == .no && password.smartDashesType == .no, "Password editing does not autocorrect credentials")
-        try check(button.isEnabled && codeButton.isEnabled && button.configuration?.title == "Sign in with password" && codeButton.configuration?.title == "Email me a code", "Both normal sign-in choices visible")
+        try check(button.isEnabled && codeButton.isEnabled && button.configuration?.title == "Sign in with password" && codeButton.configuration?.title == "Use an email code", "Explicit password screen retains email-code recovery")
         email.text = address; password.text = "  UI synthetic exact  "
         button.sendActions(for: .touchUpInside)
         try check(password.text == "" && !button.isEnabled && !codeButton.isEnabled, "Password cleared and buttons disabled immediately on submit")
@@ -304,17 +308,146 @@ private struct CheckFailure: Error { let message: String }
         network.handler = { request in request.url?.path == "/auth/v1/otp" ? response([:]) : session() }
         let currentEmail = try control(controller, "account-email", as: UITextField.self)
         currentEmail.text = address; password.text = "never sent via OTP"
+        try control(controller, "account-use-code", as: UIButton.self).sendActions(for: .touchUpInside)
+        try check(password.text == "" && (try? control(controller, "account-password", as: UITextField.self)) == nil && network.requests.count == 2, "Choosing code mode clears password without sending a request")
         try control(controller, "account-send-code", as: UIButton.self).sendActions(for: .touchUpInside)
         try await until { changes == 3 }
         try check(password.text == "" && body(network.requests.last!)["password"] == nil && account.pendingEmail == address, "Switching to email code clears and never sends password")
-        guard let back = views(controller.view).compactMap({ $0 as? UIButton }).first(where: { $0.configuration?.title == "Use another email or password" }) else { throw CheckFailure(message: "OTP switch-back action absent") }
-        back.sendActions(for: .touchUpInside)
-        try check(account.pendingEmail == nil && (try? control(controller, "account-password", as: UITextField.self))?.text == "", "OTP screen can return to password login")
+        try control(controller, "account-change-email", as: UIButton.self).sendActions(for: .touchUpInside)
+        try check(account.pendingEmail == nil && (try? control(controller, "account-password", as: UITextField.self)) == nil, "Changing email returns to passwordless entry")
+        try control(controller, "account-use-password", as: UIButton.self).sendActions(for: .touchUpInside)
         let finalPassword = try control(controller, "account-password", as: UITextField.self)
         finalPassword.text = "dismissed synthetic"
         controller.presentationControllerDidDismiss(UIPresentationController(presentedViewController: controller, presenting: nil))
         try check(finalPassword.text == "", "Interactive dismissal clears password")
         groups.append("actual UIKit controls, secure autofill, submission, errors, OTP switch and dismissal")
+    }
+
+    static func passwordlessOnboardingControls() async throws {
+        let sendGate = Gate(), verifyGate = Gate(), store = MemoryStore()
+        var otpRequests = 0, acceptCode = false
+        let network = FakeTransport { request in
+            if request.url?.path == "/v1/account/config" { return config() }
+            if request.url?.path == "/auth/v1/otp" {
+                otpRequests += 1
+                if otpRequests == 1 { await sendGate.wait() }
+                return response([:])
+            }
+            if request.url?.path == "/auth/v1/verify" {
+                if acceptCode { await verifyGate.wait(); return session() }
+                return response(["message": "PRIVATE DETAIL"], 400)
+            }
+            throw CheckFailure(message: "Passwordless controls requested an unexpected endpoint")
+        }
+        let account = manager(store, network)
+        var changes = 0, signedIn = 0, callbackSawInstalledSession = false
+        let controller = AccountConnectionViewController(manager: account, onSignedIn: {
+            signedIn += 1
+            callbackSawInstalledSession = store.saves == 1 && account.publicStatus()["state"] as? String == "signedIn"
+        }, onChange: { changes += 1 })
+        controller.loadViewIfNeeded()
+        try await until { changes == 1 }
+        try check(signedIn == 0 && store.saves == 0, "Loading onboarding does not complete sign-in or save credentials")
+        let email = try control(controller, "account-email", as: UITextField.self)
+        let send = try control(controller, "account-send-code", as: UIButton.self)
+        email.text = " \n" + address + " \n"
+        send.sendActions(for: .touchUpInside)
+        try check(!send.isEnabled && !email.isEnabled, "Sending a code disables duplicate submission and email editing")
+        email.text = "later@example.test"
+        send.sendActions(for: .touchUpInside)
+        try await until { sendGate.entered }
+        try check(otpRequests == 1 && body(network.requests.last!)["email"] as? String == address && body(network.requests.last!)["create_user"] as? Bool == true, "Default signup snapshots the email and sends a single passwordless request")
+        sendGate.release(); try await until { changes == 2 }
+        let code = try control(controller, "account-code", as: UITextField.self)
+        try check(code.textContentType == .oneTimeCode && code.placeholder == "6-digit code" && account.pendingEmail == address && signedIn == 0, "Six-digit email-code guidance and autofill appear without completing onboarding")
+        code.text = "12 3456"
+        try control(controller, "account-verify", as: UIButton.self).sendActions(for: .touchUpInside)
+        try await until { changes == 3 }
+        try check(network.requests.filter { $0.url?.path == "/auth/v1/verify" }.isEmpty && signedIn == 0, "Malformed code cannot reach verification or complete onboarding")
+        code.text = "00123456"
+        try control(controller, "account-verify", as: UIButton.self).sendActions(for: .touchUpInside)
+        try await until { changes == 4 }
+        let feedback = try control(controller, "account-feedback", as: UILabel.self)
+        try check(feedback.text == AccountError.invalidCode.localizedDescription && code.text == "00123456" && account.pendingEmail == address && signedIn == 0, "Rejected code stays correctable without exposing provider text or advancing onboarding")
+        try control(controller, "account-resend-code", as: UIButton.self).sendActions(for: .touchUpInside)
+        try await until { changes == 5 }
+        try check(otpRequests == 2 && code.text == "" && account.pendingEmail == address && signedIn == 0, "Resend retains the intended email, clears the old input and waits for verification")
+        acceptCode = true; code.text = " 00123456\n"
+        let verify = try control(controller, "account-verify", as: UIButton.self)
+        verify.sendActions(for: .touchUpInside)
+        try await until { verifyGate.entered }
+        code.text = "99999999"; verify.sendActions(for: .touchUpInside)
+        try check(body(network.requests.last!)["token"] as? String == "00123456" && signedIn == 0 && store.saves == 0, "Verification snapshots the complete code and cannot complete before durable success")
+        verifyGate.release(); try await until { changes == 6 }
+        try check(signedIn == 1 && callbackSawInstalledSession && account.pendingEmail == nil && code.text == "", "Successful OTP advances onboarding once after installing the verified session")
+        try check(network.requests.allSatisfy { body($0)["password"] == nil }, "Normal onboarding never sends a password")
+
+        let existingStore = MemoryStore(selected()), original = existingStore.value
+        let existingNetwork = FakeTransport { request in
+            if request.url?.path == "/v1/account/config" { return config() }
+            return response(["id": userID, "email": address])
+        }
+        let existing = manager(existingStore, existingNetwork)
+        var loaded = false, continued = 0
+        let restored = AccountConnectionViewController(manager: existing, onSignedIn: { continued += 1 }, onChange: { loaded = true })
+        restored.loadViewIfNeeded(); try await until { loaded }
+        try check(existingStore.value == original && existingStore.saves == 0 && existingStore.clears == 0 && continued == 0, "Showing onboarding preserves the selected owner session without automatic advance")
+        try check((try? control(restored, "account-email", as: UITextField.self)) == nil, "Existing signed-in user is not asked to enter email or replace credentials")
+        try control(restored, "account-continue", as: UIButton.self).sendActions(for: .touchUpInside)
+        try check(continued == 1 && existingStore.value == original, "Existing signed-in user can explicitly continue with unchanged credentials")
+        groups.append("passwordless onboarding, email/code snapshots, resend/errors, durable success callback and existing-session continuation")
+    }
+
+    static func embeddedSignInCancellation() async throws {
+        for usePassword in [false, true] {
+            let gate = Gate(), store = MemoryStore()
+            var returned = false
+            let network = FakeTransport { request in
+                if request.url?.path == "/v1/account/config" { return config() }
+                if request.url?.path == "/auth/v1/otp" { return response([:]) }
+                await gate.wait(); returned = true
+                return session()
+            }
+            let account = manager(store, network)
+            var changes = 0, signedIn = 0
+            let controller = AccountConnectionViewController(manager: account, onSignedIn: { signedIn += 1 }, onChange: { changes += 1 })
+            controller.loadViewIfNeeded(); try await until { changes == 1 }
+            let email = try control(controller, "account-email", as: UITextField.self)
+            email.text = address
+            let activeField: UITextField
+            if usePassword {
+                try control(controller, "account-use-password", as: UIButton.self).sendActions(for: .touchUpInside)
+                activeField = try control(controller, "account-password", as: UITextField.self)
+                activeField.text = "synthetic reviewer password"
+                try control(controller, "account-sign-in-password", as: UIButton.self).sendActions(for: .touchUpInside)
+            } else {
+                try control(controller, "account-send-code", as: UIButton.self).sendActions(for: .touchUpInside)
+                try await until { changes == 2 }
+                activeField = try control(controller, "account-code", as: UITextField.self)
+                activeField.text = "001234"
+                try control(controller, "account-verify", as: UIButton.self).sendActions(for: .touchUpInside)
+            }
+            try await until { gate.entered }
+            let changesBeforeLeaving = changes
+            controller.cancelPendingSignIn()
+            try check(activeField.text == "" && email.text == "" && account.pendingEmail == nil, "Leaving the embedded form clears in-flight credentials and code state")
+            gate.release(); try await until { returned }
+            try await Task.sleep(nanoseconds: 20_000_000)
+            try check(store.value == nil && store.saves == 0 && changes == changesBeforeLeaving && signedIn == 0, "A late response cannot sign in or update a dismantled onboarding form")
+        }
+
+        let store = MemoryStore(), network = FakeTransport { request in request.url?.path == "/v1/account/config" ? config() : session() }
+        let account = manager(store, network)
+        var changes = 0, signedIn = 0
+        let controller = AccountConnectionViewController(manager: account, onSignedIn: { signedIn += 1 }, onChange: { changes += 1 })
+        controller.loadViewIfNeeded(); try await until { changes == 1 }
+        try control(controller, "account-email", as: UITextField.self).text = address
+        try control(controller, "account-use-password", as: UIButton.self).sendActions(for: .touchUpInside)
+        try control(controller, "account-password", as: UITextField.self).text = "synthetic reviewer password"
+        try control(controller, "account-sign-in-password", as: UIButton.self).sendActions(for: .touchUpInside)
+        try await until { changes == 2 }
+        try check(store.saves == 1 && signedIn == 1 && account.publicStatus()["state"] as? String == "signedIn", "Explicit ordinary password sign-in still advances onboarding after verified durable success")
+        groups.append("embedded form cancellation for both grants and retained password onboarding success")
     }
 
     static func main() async {
@@ -326,6 +459,8 @@ private struct CheckFailure: Error { let message: String }
             try await refreshAndSignOutRaces()
             try await otpRegression()
             try await uiControls()
+            try await passwordlessOnboardingControls()
+            try await embeddedSignInCancellation()
             let receipt: [String: Any] = ["checks": checks, "groups": groups, "passed": true,
                 "limits": "Headless Mac Catalyst UIKit control execution; not a screenshot, simulator, physical-device or live Supabase authentication test."]
             print("ACCOUNT_CHECK_RESULT " + String(decoding: try JSONSerialization.data(withJSONObject: receipt, options: [.sortedKeys]), as: UTF8.self))

@@ -43,14 +43,16 @@ COUNTS = {'streamEventCount':100000, 'streamTerminalCount':100000, 'streamTextDe
           'resourceTimeoutMs': 180000, 'backendDeadlineMs': 180000,
           'payloadBytes': 20000000, 'storedBytes': 50000000,
           'responseBytes': 10000000, 'entryCount': 10000,
-          'knownNutrientCount': 8, 'missingNutrientCount': 8, 'partialNutrientCount': 8, 'zeroNutrientCount': 8,
+          'proposedNutrientCount': 8, 'knownNutrientCount': 8, 'missingNutrientCount': 8, 'partialNutrientCount': 8, 'zeroNutrientCount': 8,
           'componentCount': 40, 'matchedComponentCount': 40,
           'missingAmountCount': 40, 'plantCount': 200,
           'recipeIngredientCount': 40, 'recipeMissingAmountCount': 40,
           'upstreamCallCount': 2, 'transcriptionCallCount': 1}
 ENUMS = {'finalOutputSource':{'response','output_item','none'}, 'responseFormat':{'sse','json','other','missing'}, 'parseFailure':{'none','invalid_encoding','response_too_large','malformed_event','event_name_mismatch','missing_terminal','terminal_mismatch','multiple_terminal','event_after_terminal','missing_final_output','multiple_final_output','empty_output','output_too_large','refused','provider_error','unexpected_response_format'}, 'providerErrorCode':{'subscription_sharing_usage_limit_exceeded','rate_limit_exceeded','subscription_sharing_usage_unavailable','unsupported_capability','subscription_sharing_unsupported_capability','invalid_token','invalid_grant','token_expired','refresh_token_expired','refresh_token_invalidated','refresh_token_reused','server_error'}, 'captureBasis':{'photo_acquisition','barcode_decode','barcode_entry'}, 'providerOutcome':{'completed','incomplete','failed','received','unknown','http_error'},
-         'observationSchema':{'compact_photo_v1','compact_photo_v2','compact_photo_v3','photo_v1'}, 'promptVersion':{'photo-instructions-2026-10-20-v1','photo-estimate-2026-10-20-v2','photo-estimate-2026-10-20-v3'},
+         'observationSchema':{'compact_photo_v1','compact_photo_v2','compact_photo_v3','photo_v1'}, 'promptVersion':{'photo-instructions-2026-10-20-v1','photo-estimate-2026-10-20-v2','photo-estimate-2026-10-20-v3', 'photo-estimate-2026-10-21-v4'},
          'priceVersion':{'openai-standard-2026-10-20'},
+         'requestedReasoningEffort': {'none', 'low'},
+         'subjectStatus': {'identified', 'uncertain', 'unidentified', 'type_mismatch'},
          'recheckOutcome':{'not_needed','recovered','no_improvement','failed','skipped_deadline','skipped_legacy','skipped_fast_policy'}, 'billingScope':{'nudge_api','chatgpt_plan'}, 'usageStatus':{'reported','partial','unavailable'}, 'analysisPolicy':{'fast_v1','legacy'}, 'cacheState':{'miss','fresh','stale'}, 'store': {'main', 'history', 'catalogue', 'repertoire', 'preferences', 'unknown'},
          'ratingPath': {'batch', 'full_record', 'cache', 'catalogue'},
          'sourceRoute': {'discovery', 'facts_batch', 'alternatives', 'catalogue_search', 'catalogue_batch', 'phone_cache', 'catalogue_fallback', 'off_product'},
@@ -58,12 +60,16 @@ ENUMS = {'finalOutputSource':{'response','output_item','none'}, 'responseFormat'
          'waitReason': {'pacing', 'provider_cooldown', 'read_budget'},
          'cancelReason': {'query_changed', 'screen_left', 'task_cancelled'},
          'operation': {'read', 'write', 'remove', 'import', 'restore', 'render', 'calculate'},
+         'captureOperation': {'analyse', 'retrieve', 'retry', 'delete'},
          'errorClass': {'quota', 'security', 'serialization', 'invalid_json', 'invalid_shape', 'native_write', 'unknown'},
          'route': {'local_text', 'chatgpt_photo_analysis', 'photo_analysis', 'product_search', 'product_score', 'product_lookup', 'contribution_submit', 'contribution_status', 'contribution_list', 'contribution_retry', 'contribution_delete'},
          'failureOrigin': {'native_transport', 'backend', 'provider', 'web_storage', 'web_runtime'},
          'timeoutSource': {'native_transport', 'backend_deadline', 'voice_transcription'},
          'voiceStatus': {'not_supplied', 'transcribing', 'transcribed', 'failed'},
          'resultType': {'meal', 'product', 'unknown'},
+         'observedType': {'meal', 'product', 'unknown'},
+         'observedConsistency': {'sameMeal', 'sameProduct', 'uncertain'},
+         'recoveryReason': {'subject_uncertain', 'subject_unidentified', 'subject_type_mismatch', 'identity_conflict'},
          'recipeStatus': {'ready', 'needs_servings', 'incomplete'},
          'recipeRecheckDetail': {'invalid_output', 'recipe_unreadable', 'evidence_or_mapping_invalid', 'coverage_unchanged', 'side_not_preserved', 'ingredient_or_quantity_not_preserved', 'yield_not_preserved', 'result_size', 'recovered'},
          'scoreReadiness': {'not_applicable', 'available', 'estimated_rough', 'missing_components', 'missing_amounts', 'missing_nutrients', 'unsupported_profile'},
@@ -132,6 +138,15 @@ def attempt_id(event):
     identities = {value.lower() for value in values}
     return identities.pop() if len(identities) == 1 else None
 
+def capture_maintenance(event):
+    operation = event['metadata'].get('captureOperation')
+    return type(operation) is str and operation in {'retrieve', 'delete'}
+
+def capture_start(event):
+    return event['outcome'] == 'started' and (
+        event['stage'] in {'image_submission', 'capture_performance'}
+        or event['stage'] == 'transport' and metadata(event['metadata']).get('captureOperation') in {'analyse', 'retry'})
+
 def latest_photo(events):
     """Correlate internally; never expose attempt identifiers or private text.
 
@@ -139,19 +154,37 @@ def latest_photo(events):
     A dashboard render cannot replace that attempt's nutrient completeness.
     Uncorrelated legacy events are reported alone, not joined by proximity.
     """
-    anchors = [(i, e) for i, e in enumerate(events)
-               if e['metadata'].get('route') in ('photo_analysis', 'chatgpt_photo_analysis')
+    anchors = [(i, e) for i, e in enumerate(events) if not capture_maintenance(e)
+               and (e['metadata'].get('route') in ('photo_analysis', 'chatgpt_photo_analysis')
                or (e['metadata'].get('route') is None
-                   and e['stage'] in {'image_submission', 'http_response', 'native_parse', 'structured_response'})]
+                   and e['stage'] in {'image_submission', 'http_response', 'native_parse', 'structured_response'}))]
     if not anchors:
         return None, None
     identities = {attempt_id(e) for _, e in anchors} - {None}
-    groups = {}
+    groups, started, complete = {}, set(), set()
     for i, e in enumerate(events):
         identity = attempt_id(e)
         route = e['metadata'].get('route')
-        if identity in identities and (route is None or route in ('photo_analysis', 'chatgpt_photo_analysis')):
-            groups.setdefault(identity, []).append((i, e))
+        if identity not in identities or route is not None and route not in ('photo_analysis', 'chatgpt_photo_analysis'):
+            continue
+        operation = metadata(e['metadata']).get('captureOperation')
+        # Deletion never describes analysis. A poll may deliver an asynchronous
+        # result only when its exact request has a preceding analysis start.
+        # Later polling failures cannot replace a result already delivered.
+        if operation == 'delete' or operation == 'retrieve' and (identity not in started or identity in complete):
+            continue
+        if capture_start(e):
+            # Native direct-ChatGPT retries retain the submission UUID but
+            # explicitly begin a fresh performance attempt. Do not retain its
+            # earlier nutrients, failures or recency behind another capture.
+            # The following image/transport starts belong to this same attempt.
+            if operation == 'retry' or e['stage'] == 'capture_performance':
+                groups.pop(identity, None)
+                complete.discard(identity)
+            started.add(identity)
+        groups.setdefault(identity, []).append((i, e))
+        if e['stage'] == 'capture_performance' and e['outcome'] == 'result_ready' or e['stage'] == 'ui_delivery' and e['outcome'] == 'delivered':
+            complete.add(identity)
     choices = [(items[0][0], True, items) for items in groups.values()]
     choices.extend((i, False, [(i, e)]) for i, e in anchors if attempt_id(e) is None)
     _, correlated, items = max(choices, key=lambda item: item[0])
@@ -162,11 +195,27 @@ def latest_photo(events):
             safe.update(metadata(e['metadata']))
     summary = {'time_utc': utc(photo[0].get('time')), 'last_event_time_utc': utc(photo[-1].get('time')),
                'correlated': correlated, 'stage': photo[-1]['stage'], 'outcome': photo[-1]['outcome'], **safe}
+    # Old exports do not record the HTTP operation. A transport/parse group
+    # cannot establish that a new scan failed rather than a maintenance call.
+    # Do not guess an operation from payload size, time proximity or HTTP code.
+    summary['operationAmbiguous'] = not any(
+        metadata(e['metadata']).get('captureOperation') in {'analyse', 'retry'}
+        or e['metadata'].get('route') == 'chatgpt_photo_analysis'
+        or e['stage'] == 'image_submission'
+        or e['stage'] == 'capture_performance' and e['outcome'] in {'started', 'result_ready', 'card_visible'}
+        for e in photo)
     nutrition = [e for e in photo if e['stage'] == 'nutrition']
     latest = nutrition[-1] if nutrition else None
     counts = {'time_utc': utc(latest.get('time')), 'outcome': latest['outcome'], **metadata(latest['metadata'])} if latest else None
     if counts:
-        if safe.get('recipeEvidenceRejected') and counts.get('recipeIngredientCount', 0) > 0 and counts.get('recipeMissingAmountCount') == counts.get('recipeIngredientCount'):
+        # Validated photo estimates need no database match or component weights.
+        # Their accepted completeness takes precedence over unresolved source
+        # components; never mistake an estimate for absent calculated nutrition.
+        if counts.get('knownNutrientCount') == 8 and counts.get('missingNutrientCount') == 0 and counts.get('partialNutrientCount') == 0:
+            counts['reason'] = 'complete_nutrients'
+        elif safe.get('resultType') == 'unknown' and safe.get('subjectStatus') in {'uncertain', 'unidentified', 'type_mismatch'}:
+            counts['reason'] = 'subject_' + safe['subjectStatus']
+        elif safe.get('recipeEvidenceRejected') and counts.get('recipeIngredientCount', 0) > 0 and counts.get('recipeMissingAmountCount') == counts.get('recipeIngredientCount'):
             counts['reason'] = 'recipe_evidence_rejected'
         elif counts.get('recipeStatus') == 'needs_servings':
             counts['reason'] = 'recipe_servings_missing'
@@ -187,10 +236,13 @@ def analyse(document):
               and isinstance(e.get('metadata'), dict)]
     storage = [e for e in events if e['stage'] == 'storage']
     nutrition = [e for e in events if e['stage'] == 'nutrition']
-    http = [e for e in events if e['stage'] == 'http_response' and e['outcome'] == 'received']
+    http = [e for e in events if e['stage'] == 'http_response' and e['outcome'] == 'received' and not capture_maintenance(e)]
+    maintenance = [e for e in events if capture_maintenance(e)]
     photo_attempt, photo_nutrition = latest_photo(events)
     timeout_attempts = set()
     for index, e in enumerate(events):
+        if capture_maintenance(e):
+            continue
         m = e['metadata']
         if e['outcome'] in {'upstream_timeout', 'analysis_timeout', 'voice_transcription_timeout'} or (e['stage'] == 'http_response' and m.get('httpStatus') == 504):
             identity = attempt_id(e) or index
@@ -207,6 +259,7 @@ def analyse(document):
               'photo_http_statuses': dict(Counter(str(e['metadata']['httpStatus']) for e in http
                                                  if integer(e['metadata'].get('httpStatus'), 599) is not None)),
               'photo_timeout_attempts': len(timeout_attempts),
+              'recent_capture_maintenance': [{'time_utc': utc(e.get('time')), 'stage': e['stage'], 'outcome': e['outcome'], **metadata(e['metadata'])} for e in maintenance][-20:],
               'storage_outcomes': dict(Counter(e['outcome'] for e in storage)),
               'runtime_failures': dict(Counter(e['outcome'] for e in events if e['stage'] == 'ui_error')),
               'nutrition_incomplete_events': sum(e['outcome'] == 'incomplete' for e in nutrition),
@@ -215,6 +268,8 @@ def analyse(document):
               'latest_photo_nutrition': photo_nutrition,
               'findings': [], 'recent_failures': []}
     findings = result['findings']
+    if photo_attempt and photo_attempt['operationAmbiguous']:
+        findings.append('The latest photo-route record has no analysis-operation marker or correlated submission evidence. It may describe analysis or capture maintenance; it does not establish a failed new scan.')
     if not storage:
         findings.append('No storage diagnostic events were recorded. This file cannot establish whether browser or device storage failed.')
     if any(e['outcome'] == 'quota_exceeded' for e in storage):
@@ -222,11 +277,11 @@ def analyse(document):
     if any(e['outcome'] in {'save_failed', 'storage_unavailable', 'parse_failed'} for e in storage):
         findings.append('A local save, access or decoding failure was recorded; inspect its store and error class before changing existing data.')
     if any(e['metadata'].get('httpStatus') == 504 for e in http):
-        findings.append('The backend returned HTTP 504 for photo analysis. This confirms a server-side timeout, not a local storage failure or evidence of an OpenAI account limit.')
+        findings.append('A photo-route request returned HTTP 504, confirming a server-side timeout. If its operation was not recorded, this does not establish a failed new scan; it is not evidence of a local storage failure or an OpenAI account limit.')
         if photo_attempt and photo_attempt.get('httpStatus') == 200:
-            findings.append('That timeout belongs to an earlier attempt. The latest photo analysis returned HTTP 200; inspect its own nutrition counts below.')
-    if any(e['outcome'] == 'analysis_timeout' for e in events):
-        findings.append('Nudge timed out waiting for an analysis response. Without a backend response this does not establish which upstream step timed out.')
+            findings.append('That timeout belongs to an earlier request. The latest selected photo-route response returned HTTP 200; inspect its operation evidence and own nutrition counts below.')
+    if any(e['outcome'] == 'analysis_timeout' and not capture_maintenance(e) for e in events):
+        findings.append('Nudge timed out waiting for a photo-route response. Without operation evidence and a backend response this does not establish which step timed out or whether a new scan failed.')
     if not nutrition:
         findings.append('No nutrient-completeness diagnostics were recorded. Missing nutrient values cannot be reconstructed from this file.')
     elif result['nutrition_incomplete_events']:
@@ -248,7 +303,9 @@ def analyse(document):
             findings.append('The latest ChatGPT stream failed response validation before food calculation. Inspect its fixed parseFailure code; this is not evidence that the photo was unreadable.')
     if photo_nutrition:
         reason = photo_nutrition.get('reason')
-        if reason == 'no_source_matches':
+        if reason in {'subject_uncertain', 'subject_unidentified', 'subject_type_mismatch'}:
+            findings.append('The latest photo observation could not identify one consistent food subject. Keep photos of the same meal or product before analysing again; no combined rating was validated.')
+        elif reason == 'no_source_matches':
             findings.append('The latest photo result has no matched nutrition sources for its meal components. Recognising the dish did not produce calculated nutrients.')
         elif reason == 'recipe_evidence_rejected':
             findings.append('The latest photo succeeded, but all recipe quantities were rejected because their printed evidence was incomplete or inconsistent. This is recipe extraction validation, not phone storage or an upload timeout.')

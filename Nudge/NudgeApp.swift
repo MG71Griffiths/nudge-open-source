@@ -57,9 +57,17 @@ private struct NativeHistoryUITestFixture: View {
 
 struct NudgeScreen: View {
     @StateObject private var store = NativeAppStore()
+    @AppStorage(NativeOnboardingView.completionKey) private var onboardingCompleted = false
     @Environment(\.scenePhase) private var scenePhase
     var body: some View {
         NativeAppShell(store: store)
+            .fullScreenCover(isPresented: Binding(get: { store.ready && !onboardingCompleted }, set: { _ in })) {
+                NativeOnboardingView(onAccountChange: { store.capture.accountDidChange(since: $0) }) {
+                    onboardingCompleted = true
+                    store.capture.resumePending()
+                    store.refreshPresentation()
+                }
+            }
             .task { preparePrivateStorage(); store.capture.resumePending(); await NudgeCatalogueService.bootstrapPopularCache() }
             .onChange(of: scenePhase) { phase in
                 if phase == .active {

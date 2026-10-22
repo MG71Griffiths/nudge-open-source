@@ -1,5 +1,6 @@
 import UIKit
 import Network
+import CoreFoundation
 
 /// Owns capture and account lifetimes independently of any rendered screen.
 @MainActor
@@ -56,6 +57,9 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
     private let service = NutritionLabelService()
     typealias CaptureDeletion = (UUID, String) async throws -> Void
     private let deleteCapture: CaptureDeletion?
+    typealias SavedCaptureRequest = (UUID, String) async throws -> [String: Any]
+    private let retrieveCapture: SavedCaptureRequest?
+    private let retryCapture: SavedCaptureRequest?
     private var photoCaptureIDs: [String: UUID] = [:]
     let outbox: NativeCaptureOutbox
     private let ownerKey: @MainActor () -> String?
@@ -89,11 +93,13 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
          },
          accountRevision: @escaping @MainActor () -> Int = { NudgeAccountManager.shared.revision },
          outbox: NativeCaptureOutbox? = nil, ownerKey: (@MainActor () -> String?)? = nil, deleteCapture: CaptureDeletion? = nil,
+         retrieveCapture: SavedCaptureRequest? = nil, retryCapture: SavedCaptureRequest? = nil,
          dismissForNavigation: @escaping (UIViewController, @escaping () -> Void) -> Void = { controller, completion in
              if controller.presentingViewController == nil { completion() }
              else { controller.dismiss(animated: true, completion: completion) }
          }) {
         self.store = store; self.lookup = lookup; self.analysePhotos = analysePhotos; self.deleteCapture = deleteCapture
+        self.retrieveCapture = retrieveCapture; self.retryCapture = retryCapture
         self.recognizeText = recognizeText
         self.cameraSelection = cameraSelection; self.chatGPTBindingCurrent = chatGPTBindingCurrent; self.analyseChatGPT = analyseChatGPT
         self.dismissForNavigation = dismissForNavigation
@@ -523,18 +529,20 @@ final class NativeCaptureCoordinator: NSObject, SmartFoodCameraDelegate {
         present { [weak self] presenter in
             let previous = NudgeAccountManager.shared.revision
             AccountConnectionPresenter.present(from: presenter) {
-                guard let self else { return }
-                if previous != NudgeAccountManager.shared.revision {
-                    self.cancelAllPhotoAnalyses()
-                    self.automaticRetriesPaused = false
-                    self.store?.cancelProductRecovery()
-                    self.generation = UUID(); self.cancelContext(); self.store?.loading = false
-                    self.camera?.closeCapture(); self.camera = nil
-                }
-                self.resumePending()
-                self.store?.objectWillChange.send()
+                self?.accountDidChange(since: previous)
             }
         }
+    }
+    func accountDidChange(since previous: Int) {
+        if previous != NudgeAccountManager.shared.revision {
+            cancelAllPhotoAnalyses()
+            automaticRetriesPaused = false
+            store?.cancelProductRecovery()
+            generation = UUID(); cancelContext(); store?.loading = false
+            camera?.closeCapture(); camera = nil
+        }
+        resumePending()
+        store?.objectWillChange.send()
     }
     func showDiagnostics() { present { AnalysisDiagnostics.presentShareSheet(from: $0) } }
     func showAISettings() {
@@ -761,6 +769,8 @@ extension NativeCaptureCoordinator {
             record.historyGeneration = historyGeneration(id: eventID)
             record.loggingDay = day; record.loggingMeal = meal
             let changed = record.captureRevision != revision || record.photoFiles.count != images.count || record.photoIDs != photoIDs
+            let explicitRetry = status == .queued && !changed &&
+                (previous?.status == .needsUserInput || previous?.status == .retryableFailure)
             if changed {
                 if previous != nil { record.submissionID = UUID() }
                 record.attempts = 0; record.remoteAccepted = false; record.manualRetryRequested = false
@@ -774,12 +784,25 @@ extension NativeCaptureCoordinator {
                 record.chatGPTBinding = voiceMemo == nil ? try cameraSelection() : nil
                 record.fastCaptureVersion = 1; record.analysisStartedAt = Date()
                 record.localAnalysis = nil
+            } else if explicitRetry {
+                // Analyse on reopened photos is the same deliberate retry as
+                // History. Keep its payer; replace only a terminal unusable
+                // remote submission, never an ambiguous accepted upload.
+                record = try prepareExplicitRetry(record)
+            }
+            if explicitRetry {
+                // A new Analyse tap starts a new attempt, even when the frozen
+                // submission and photos are unchanged. Keep server retry limits.
+                record.analysisStartedAt = Date(); record.attempts = 0; record.errorCode = nil
+                record.nextAttemptAt = record.serverRetryAt.flatMap { $0 > Date() ? $0 : nil }
             }
             record.photoIDs = photoIDs; record.captureRevision = revision
             record.barcode = nil; record.status = status
             if changed { record.photoReferences = nil }
             if changed || record.thumbnail.isEmpty { record.thumbnail = images.first.flatMap { CameraHistoryThumbnail.dataURL(from: $0) } ?? "" }
-            if let repair { record.repairContext = try JSONSerialization.data(withJSONObject: store?.captureRepairContext(repair) ?? repair) }
+            if let repair, !explicitRetry || record.repairContext == nil {
+                record.repairContext = try JSONSerialization.data(withJSONObject: store?.captureRepairContext(repair) ?? repair)
+            }
             if let addToEaten {
                 record.addToEaten = addToEaten; record.diaryAddState = addToEaten ? "pending" : nil
             }
@@ -799,11 +822,15 @@ extension NativeCaptureCoordinator {
                 }
                 latestAnalysisID = record.eventID
                 setAnalysisStage(.saved, for: record)
+                if explicitRetry { CapturePerformance.shared.forget(record.eventID) }
                 CapturePerformance.shared.begin(eventID: record.eventID, requestID: record.submissionID, startedAt: submittedAt,
                     captureStartedAt: captureStartedAt, captureBasis: "photo_acquisition")
             }
             storageError(nil)
             return record
+        } catch ChatGPTFailure.bindingChanged {
+            let message = "Reconnect the original ChatGPT account and choose it for camera photos in You, then tap Analyse again. Your photos are saved."
+            store?.analysisFailure = message; storageError(message); return nil
         } catch ChatGPTFailure.storage {
             let message = "Unlock your iPhone and reopen ChatGPT settings before analysing. Your photos are kept."
             store?.errorMessage = message; storageError(message); return nil
@@ -1082,11 +1109,13 @@ extension NativeCaptureCoordinator {
             let response: [String: Any]
             if record.remoteAccepted && record.manualRetryRequested {
                 setAnalysisStage(.analysing, for: record)
-                response = try await service.retryCapture(record.submissionID, ownerKey: record.ownerKey)
+                if let retryCapture { response = try await retryCapture(record.submissionID, record.ownerKey) }
+                else { response = try await service.retryCapture(record.submissionID, ownerKey: record.ownerKey) }
             }
             else if record.remoteAccepted {
                 setAnalysisStage(.analysing, for: record)
-                response = try await service.retrieveCapture(record.submissionID, ownerKey: record.ownerKey)
+                if let retrieveCapture { response = try await retrieveCapture(record.submissionID, record.ownerKey) }
+                else { response = try await service.retrieveCapture(record.submissionID, ownerKey: record.ownerKey) }
             }
             else {
                 let input = try await outbox.analysisInput(for: record)
@@ -1142,9 +1171,8 @@ extension NativeCaptureCoordinator {
                         metadata: ["route": "chatgpt_photo_analysis", "inferenceMs": CaptureClock.milliseconds(since: inferenceStart), "upstreamCallCount": 1, "imageBytes": images.reduce(0) { $0 + $1.count }])
                     guard chatGPTBindingCurrent(binding) else { throw ChatGPTFailure.bindingChanged }
                     response = try store.finishChatGPTPhoto(text: text, record: record)
-                    var metadata: [String: Any] = ["normalizationIssues": response["diagnosticEnums"] as? [String] ?? []]
+                    var metadata = Self.structuredResponseMetadata(response)
                     let extraction = response["extraction"] as? [String: Any] ?? [:]
-                    metadata["resultType"] = extraction["type"] as? String ?? "unknown"
                     metadata["attemptId"] = diagnosticID.uuidString; metadata["route"] = "chatgpt_photo_analysis"
                     AnalysisDiagnostics.shared.record(stage: "structured_response", outcome: "parsed", metadata: metadata)
                     let nutrition = NutritionLabelService.nutritionDiagnosticMetadata(extraction)
@@ -1186,7 +1214,9 @@ extension NativeCaptureCoordinator {
             }
             guard var extraction = response["extraction"] as? [String: Any], extraction["type"] as? String != "unknown" else {
                 CapturePerformance.shared.record(record.eventID, outcome: "label_unreadable")
-                record.status = .needsUserInput; record.errorCode = "label_unreadable"; record.nextAttemptAt = nil; _ = persist(record); return
+                record.status = .needsUserInput
+                record.errorCode = NativeCaptureRecoveryReason.from(response: response)?.errorCode ?? "label_unreadable"
+                record.nextAttemptAt = nil; _ = persist(record); return
             }
             if record.fastCaptureVersion == 1 {
                 extraction["fastCapture"] = ["version": 1, "requestId": record.submissionID.uuidString,
@@ -1297,8 +1327,65 @@ extension NativeCaptureCoordinator {
         let fractional = ISO8601DateFormatter(); fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
     }
+    /// A deliberate retry may adopt the current registration/model only within
+    /// the originally authorized account. Nil and another payer are never fallback.
+    private func bindingForExplicitRetry(_ original: ChatGPTCaptureBinding) throws -> ChatGPTCaptureBinding {
+        if let current = try cameraSelection(), current.profileID == original.profileID,
+           current.subject == original.subject, chatGPTBindingCurrent(current) { return current }
+        guard chatGPTBindingCurrent(original) else { throw ChatGPTFailure.bindingChanged }
+        return original
+    }
+    /// Only an explicit user retry can replace a completed unusable remote
+    /// result. The server has discarded that completed job's inputs, so GET,
+    /// same-ID upload and /retry would all return the same cached unknown.
+    private func prepareExplicitRetry(_ input: NativeCaptureRecord) throws -> NativeCaptureRecord {
+        var record = input
+        if let original = record.chatGPTBinding {
+            record.chatGPTBinding = try bindingForExplicitRetry(original)
+            // Retained queued jobs keep their original contract. A deliberate
+            // new direct attempt uses the current compact photo policy.
+            record.fastCaptureVersion = 1
+        }
+        let completedUnknown = record.barcode == nil && record.chatGPTBinding == nil && record.remoteAccepted &&
+            record.status == .needsUserInput && (record.errorCode == "label_unreadable" ||
+                NativeCaptureRecoveryReason(errorCode: record.errorCode) != nil)
+        let expired = record.fastCaptureVersion == 1 && record.status == .retryableFailure && record.errorCode == "captureExpired"
+        if completedUnknown || expired {
+            record.submissionID = UUID(); record.remoteAccepted = false; record.manualRetryRequested = false
+            record.nextAttemptAt = nil; record.serverRetryAt = nil; record.errorCode = nil
+            if completedUnknown { record.fastCaptureVersion = 1; record.localAnalysis = nil }
+        } else {
+            // Lost acknowledgements and retryable failures retain their server
+            // identity/backoff. Authentication and permission failures never
+            // become a fresh paid upload just because the camera was reopened.
+            record.manualRetryRequested = record.remoteAccepted && record.status == .retryableFailure
+        }
+        return record
+    }
+    nonisolated static func structuredResponseMetadata(_ response: [String: Any]) -> [String: Any] {
+        let extraction = response["extraction"] as? [String: Any] ?? [:]
+        let kind = extraction["type"] as? String ?? "unknown"
+        var metadata: [String: Any] = ["normalizationIssues": response["diagnosticEnums"] as? [String] ?? [],
+                                      "resultType": ["meal", "product", "unknown"].contains(kind) ? kind : "unknown"]
+        if let reason = NativeCaptureRecoveryReason.from(response: response) { metadata["recoveryReason"] = reason.rawValue }
+        if let observation = response["observationDiagnostics"] as? [String: Any] {
+            if let kind = observation["observedType"] as? String, ["meal", "product", "unknown"].contains(kind) {
+                metadata["observedType"] = kind
+            }
+            if let consistency = observation["observedConsistency"] as? String,
+               ["sameMeal", "sameProduct", "uncertain"].contains(consistency) { metadata["observedConsistency"] = consistency }
+            if let count = observation["proposedNutrientCount"] as? NSNumber, CFGetTypeID(count) != CFBooleanGetTypeID(),
+               count.doubleValue.isFinite, count.doubleValue.rounded() == count.doubleValue, (0...8).contains(count.doubleValue) {
+                metadata["proposedNutrientCount"] = count.intValue
+            }
+        }
+        return metadata
+    }
     /// Old barcode failures can be recovered without inventing a new scan.
     @discardableResult func retryHistory(_ event: [String: Any]) -> Bool {
+        // Include synchronous lookup and durable queue work in an explicit
+        // retry's duration. Merely reopening saved photos starts no attempt.
+        let retryStartedAt = CaptureClock.now
         guard let id = event["id"] as? String, let owner = ownerKey(), historyState(id)["deleted"] as? Bool != true else { return false }
         if photoTasks[id] != nil { store?.notice = "This capture is already being analysed."; return true }
         do {
@@ -1333,31 +1420,18 @@ extension NativeCaptureCoordinator {
                 present { camera.resumePresentation(); $0.present(camera, animated: true) }
                 return true
             }
-            if let original = selected.chatGPTBinding {
-                // A deliberate Retry may use a renewed registration/model only
-                // for the same account. It never falls back to another payer.
-                if let current = try cameraSelection(), current.profileID == original.profileID, current.subject == original.subject, chatGPTBindingCurrent(current) {
-                    selected.chatGPTBinding = current
-                } else if !chatGPTBindingCurrent(original) {
-                    fail(selected, error: ChatGPTFailure.bindingChanged)
-                    store?.analysisFailure = "Reconnect the original ChatGPT account and choose it for camera photos in You, then retry."
-                    return true
-                }
+            do { selected = try prepareExplicitRetry(selected) }
+            catch ChatGPTFailure.bindingChanged {
+                fail(selected, error: ChatGPTFailure.bindingChanged)
+                store?.analysisFailure = "Reconnect the original ChatGPT account and choose it for camera photos in You, then retry."
+                return true
             }
-            if selected.fastCaptureVersion == 1 && selected.status == .retryableFailure && selected.errorCode == "captureExpired" {
-                // Only this explicit retry may replace an expired server
-                // tombstone. Background resume must never create paid work.
-                selected.submissionID = UUID(); selected.remoteAccepted = false
-                selected.manualRetryRequested = false; selected.serverRetryAt = nil
-                selected.errorCode = nil
-            }
-            selected.manualRetryRequested = selected.remoteAccepted && selected.status == .retryableFailure
             selected.status = .queued; selected.attempts = 0; selected.analysisStartedAt = Date()
             selected.nextAttemptAt = selected.serverRetryAt.flatMap { $0 > Date() ? $0 : nil }
             guard persist(selected) != nil else { return true }
             store?.notice = "Saved — retrying this capture"
             CapturePerformance.shared.forget(selected.eventID)
-            CapturePerformance.shared.begin(eventID: selected.eventID, requestID: selected.submissionID)
+            CapturePerformance.shared.begin(eventID: selected.eventID, requestID: selected.submissionID, startedAt: retryStartedAt)
             automaticRetriesPaused = false; resumePending(); return true
         } catch ChatGPTFailure.storage {
             store?.analysisFailure = "Unlock your iPhone and reopen ChatGPT settings before retrying. Your photos are kept."

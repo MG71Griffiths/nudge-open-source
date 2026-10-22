@@ -12,6 +12,172 @@ def event(stage, event_outcome, **metadata):
     return {'time': 1791189000, 'stage': stage, 'outcome': event_outcome, 'metadata': metadata}
 
 class AppDiagnosticsTests(unittest.TestCase):
+    def test_backend_subject_status_survives_without_raw_provider_content(self):
+        attempt = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        for status in ['uncertain', 'unidentified', 'type_mismatch']:
+            report = m.analyse({'version': 1, 'events': [
+                event('capture_performance', 'started', requestId=attempt, route='photo_analysis'),
+                event('http_response', 'received', attemptId=attempt, captureOperation='retrieve',
+                      route='photo_analysis', httpStatus=200, subjectStatus=status, rawReason='private food description'),
+                event('native_parse', 'parsed', attemptId=attempt, captureOperation='retrieve', resultType='unknown'),
+                event('nutrition', 'incomplete', attemptId=attempt, captureOperation='retrieve',
+                      route='photo_analysis', resultType='unknown', knownNutrientCount=0, missingNutrientCount=8, partialNutrientCount=0)]})
+            self.assertEqual(report['latest_photo_attempt']['subjectStatus'], status)
+            self.assertEqual(report['latest_photo_nutrition']['reason'], 'subject_' + status)
+            self.assertTrue(any('one consistent food subject' in f for f in report['findings']))
+            self.assertNotIn('private food description', json.dumps(report))
+        for invalid in ['private food description', 'uncertain\n', ['uncertain'], {'value': 'uncertain'}, True, None]:
+            self.assertEqual(m.metadata({'subjectStatus': invalid}), {})
+
+    def test_requested_reasoning_effort_is_bounded_and_never_inferred(self):
+        for effort in ['none', 'low']:
+            self.assertEqual(m.metadata({'requestedReasoningEffort': effort}), {'requestedReasoningEffort': effort})
+        for invalid in ['medium', 'private text', 'none\n', ['none'], {'effort': 'none'}, True, None]:
+            self.assertEqual(m.metadata({'requestedReasoningEffort': invalid}), {})
+        self.assertNotIn('requestedReasoningEffort', m.metadata({'reasoningTokens': 0}))
+
+    def test_capture_operation_metadata_keeps_only_fixed_values(self):
+        for operation in ['analyse', 'retrieve', 'retry', 'delete']:
+            self.assertEqual(m.metadata({'captureOperation': operation}), {'captureOperation': operation})
+        for invalid in ['private capture', 'delete\n', ['delete'], {'delete': 'private'}, True, None]:
+            self.assertEqual(m.metadata({'captureOperation': invalid}), {})
+
+    def test_failed_maintenance_cannot_replace_latest_completed_scan(self):
+        analysis = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        other = 'd7a53a6b-49cb-410a-b900-fc6b82e294d6'
+        for operation in ['delete', 'retrieve']:
+            for identity in [analysis, other]:
+                report = m.analyse({'version': 1, 'events': [
+                    event('transport', 'started', route='photo_analysis', captureOperation='analyse', attemptId=analysis),
+                    event('http_response', 'received', route='photo_analysis', captureOperation='analyse', attemptId=analysis, httpStatus=200),
+                    event('nutrition', 'calculated', route='photo_analysis', attemptId=analysis, knownNutrientCount=8, missingNutrientCount=0),
+                    event('capture_performance', 'result_ready', route='photo_analysis', requestId=analysis, completeNutrition=True, analyseToResultMs=9000),
+                    event('transport', 'started', route='photo_analysis', captureOperation=operation, attemptId=identity, payloadBytes=0),
+                    event('http_response', 'received', route='photo_analysis', captureOperation=operation, attemptId=identity, httpStatus=504, outcome='upstream_timeout', body='private error'),
+                    event('transport', 'analysis_timeout', route='photo_analysis', captureOperation=operation, attemptId=identity, name='private food')]})
+                self.assertEqual(report['latest_photo_attempt']['outcome'], 'result_ready')
+                self.assertEqual(report['latest_photo_attempt']['httpStatus'], 200)
+                self.assertEqual(report['latest_photo_attempt']['analyseToResultMs'], 9000)
+                self.assertFalse(report['latest_photo_attempt']['operationAmbiguous'])
+                self.assertEqual(report['latest_photo_nutrition']['knownNutrientCount'], 8)
+                self.assertEqual(report['photo_http_statuses'], {'200': 1})
+                self.assertEqual(report['photo_timeout_attempts'], 0)
+                self.assertEqual(len(report['recent_capture_maintenance']), 3)
+                self.assertEqual(report['recent_capture_maintenance'][-1]['captureOperation'], operation)
+                self.assertFalse(any('server-side timeout' in f or 'Nudge timed out' in f for f in report['findings']))
+                for private in [analysis, other, 'private']:
+                    self.assertNotIn(private, json.dumps(report))
+
+    def test_maintenance_alone_does_not_invent_an_analysis(self):
+        report = m.analyse({'version': 1, 'events': [
+            event('http_response', 'received', route='photo_analysis', captureOperation='delete', httpStatus=400),
+            event('http_response', 'received', route='photo_analysis', captureOperation='retrieve', httpStatus=200),
+            event('native_parse', 'parsed', captureOperation='retrieve', resultType='meal'),
+            event('nutrition', 'calculated', route='photo_analysis', captureOperation='retrieve', knownNutrientCount=8)]})
+        self.assertIsNone(report['latest_photo_attempt'])
+        self.assertIsNone(report['latest_photo_nutrition'])
+        self.assertEqual(report['photo_http_statuses'], {})
+        self.assertEqual(len(report['recent_capture_maintenance']), 4)
+
+    def test_user_retry_is_a_new_analysis_not_maintenance(self):
+        first = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        retry = 'd7a53a6b-49cb-410a-b900-fc6b82e294d6'
+        report = m.analyse({'version': 1, 'events': [
+            event('image_submission', 'started', route='chatgpt_photo_analysis', attemptId=first),
+            event('nutrition', 'calculated', route='photo_analysis', attemptId=first, knownNutrientCount=8),
+            event('transport', 'started', route='photo_analysis', captureOperation='retry', attemptId=retry)]})
+        self.assertEqual(report['latest_photo_attempt']['captureOperation'], 'retry')
+        self.assertEqual(report['latest_photo_attempt']['outcome'], 'started')
+        self.assertFalse(report['latest_photo_attempt']['operationAmbiguous'])
+        self.assertIsNone(report['latest_photo_nutrition'])
+        self.assertEqual(report['recent_capture_maintenance'], [])
+
+    def test_async_analysis_poll_result_joins_its_submission_and_ready_timing(self):
+        attempt = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        report = m.analyse({'version': 1, 'events': [
+            event('capture_performance', 'started', requestId=attempt),
+            event('transport', 'started', route='photo_analysis', captureOperation='analyse', attemptId=attempt),
+            event('http_response', 'received', route='photo_analysis', captureOperation='analyse', attemptId=attempt, httpStatus=202),
+            event('transport', 'started', route='photo_analysis', captureOperation='retrieve', attemptId=attempt),
+            event('http_response', 'received', route='photo_analysis', captureOperation='retrieve', attemptId=attempt, httpStatus=200),
+            event('native_parse', 'parsed', captureOperation='retrieve', attemptId=attempt, resultType='meal'),
+            event('nutrition', 'calculated', route='photo_analysis', captureOperation='retrieve', attemptId=attempt, knownNutrientCount=8, missingNutrientCount=0),
+            event('capture_performance', 'result_ready', requestId=attempt, analyseToResultMs=8200, completeNutrition=True),
+            event('http_response', 'received', route='photo_analysis', captureOperation='retrieve', attemptId=attempt, httpStatus=500),
+            event('native_parse', 'invalid_json', captureOperation='retrieve', attemptId=attempt),
+            event('http_response', 'received', route='photo_analysis', captureOperation='delete', attemptId=attempt, httpStatus=400)]})
+        latest = report['latest_photo_attempt']
+        self.assertEqual(latest['outcome'], 'result_ready')
+        self.assertEqual(latest['httpStatus'], 200)
+        self.assertEqual(latest['analyseToResultMs'], 8200)
+        self.assertFalse(latest['operationAmbiguous'])
+        self.assertEqual(report['latest_photo_nutrition']['knownNutrientCount'], 8)
+        self.assertEqual(report['latest_photo_nutrition']['missingNutrientCount'], 0)
+        self.assertEqual(len(report['recent_capture_maintenance']), 7)
+        self.assertNotIn(attempt, json.dumps(report))
+
+    def test_retry_with_same_capture_identity_cannot_borrow_prior_nutrition(self):
+        attempt = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        report = m.analyse({'version': 1, 'events': [
+            event('transport', 'started', route='photo_analysis', captureOperation='analyse', attemptId=attempt),
+            event('nutrition', 'calculated', route='photo_analysis', attemptId=attempt, knownNutrientCount=8),
+            event('capture_performance', 'result_ready', requestId=attempt, completeNutrition=True),
+            event('transport', 'started', route='photo_analysis', captureOperation='retry', attemptId=attempt),
+            event('http_response', 'received', route='photo_analysis', captureOperation='retry', attemptId=attempt, httpStatus=202)]})
+        self.assertEqual(report['latest_photo_attempt']['captureOperation'], 'retry')
+        self.assertEqual(report['latest_photo_attempt']['httpStatus'], 202)
+        self.assertIsNone(report['latest_photo_nutrition'])
+        self.assertNotIn('completeNutrition', report['latest_photo_attempt'])
+
+    def test_direct_chatgpt_retry_of_older_capture_is_latest_without_stale_results(self):
+        first = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        newer = 'd7a53a6b-49cb-410a-b900-fc6b82e294d6'
+        report = m.analyse({'version': 1, 'events': [
+            event('capture_performance', 'started', requestId=first, analyseToResultMs=100),
+            event('image_submission', 'started', route='chatgpt_photo_analysis', attemptId=first),
+            event('capture_performance', 'usage_received', route='chatgpt_photo_analysis', attemptId=first, outputTokens=400, httpStatus=200),
+            event('nutrition', 'calculated', route='photo_analysis', attemptId=first, knownNutrientCount=8),
+            event('capture_performance', 'result_ready', requestId=first, completeNutrition=True),
+            event('capture_performance', 'started', requestId=newer),
+            event('image_submission', 'started', route='chatgpt_photo_analysis', attemptId=newer),
+            event('nutrition', 'calculated', route='photo_analysis', attemptId=newer, knownNutrientCount=8),
+            event('capture_performance', 'result_ready', requestId=newer, completeNutrition=True),
+            event('capture_performance', 'started', requestId=first, analyseToResultMs=300, preparationMs=220),
+            event('image_submission', 'started', route='chatgpt_photo_analysis', attemptId=first),
+            event('response', 'chatgpt_limit', route='chatgpt_photo_analysis', attemptId=first)]})
+        latest = report['latest_photo_attempt']
+        self.assertEqual(latest['outcome'], 'chatgpt_limit')
+        self.assertEqual(latest['analyseToResultMs'], 300)
+        self.assertEqual(latest['preparationMs'], 220)
+        for stale in ['outputTokens', 'httpStatus', 'completeNutrition']:
+            self.assertNotIn(stale, latest)
+        self.assertIsNone(report['latest_photo_nutrition'])
+        self.assertFalse(latest['operationAmbiguous'])
+        for private in [first, newer]:
+            self.assertNotIn(private, json.dumps(report))
+
+    def test_legacy_transport_operation_is_ambiguous_not_guessed_from_payload(self):
+        scan = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        legacy = 'd7a53a6b-49cb-410a-b900-fc6b82e294d6'
+        report = m.analyse({'version': 1, 'events': [
+            event('image_submission', 'started', route='chatgpt_photo_analysis', attemptId=scan),
+            event('nutrition', 'calculated', route='photo_analysis', attemptId=scan, knownNutrientCount=8),
+            event('transport', 'started', route='photo_analysis', attemptId=legacy, payloadBytes=0),
+            event('http_response', 'received', route='photo_analysis', attemptId=legacy, payloadBytes=0, httpStatus=400)]})
+        self.assertTrue(report['latest_photo_attempt']['operationAmbiguous'])
+        self.assertNotIn('captureOperation', report['latest_photo_attempt'])
+        self.assertIsNone(report['latest_photo_nutrition'])
+        self.assertEqual(report['recent_capture_maintenance'], [])
+        self.assertTrue(any('does not establish a failed new scan' in f for f in report['findings']))
+
+    def test_legacy_timeout_does_not_claim_that_a_new_analysis_failed(self):
+        report = m.analyse({'version': 1, 'events': [
+            event('http_response', 'received', route='photo_analysis', httpStatus=504, payloadBytes=0),
+            event('transport', 'analysis_timeout', route='photo_analysis')]})
+        self.assertTrue(report['latest_photo_attempt']['operationAmbiguous'])
+        self.assertTrue(any('does not establish a failed new scan' in f for f in report['findings']))
+        self.assertFalse(any('HTTP 504 for photo analysis' in f or 'waiting for an analysis response' in f for f in report['findings']))
+
     def test_native_request_stages_join_their_own_transport_and_nutrition(self):
         attempt = 'a5835241-7290-49b8-babe-e1af5ead82df'
         report = m.analyse({'version': 1, 'events': [
@@ -126,6 +292,27 @@ class AppDiagnosticsTests(unittest.TestCase):
         self.assertNotIn('inputTokens',report['recent_capture_stages'][3])
         self.assertNotIn('private',json.dumps(report))
         self.assertEqual(m.metadata({'ocrMs':float('inf'),'inputTokens':True,'billingScope':'private'}),{})
+
+    def test_subject_rejection_retains_bounded_evidence_without_claiming_accepted_nutrition(self):
+        values = dict(observedType='meal', observedConsistency='uncertain', proposedNutrientCount=8,
+                      recoveryReason='subject_uncertain', promptVersion='photo-estimate-2026-10-21-v4')
+        self.assertEqual(m.metadata(values), values)
+        for invalid in [-1, True, 0.5, 9, float('inf'), 'private text']:
+            self.assertEqual(m.metadata({'proposedNutrientCount': invalid}), {})
+        self.assertEqual(m.metadata(dict(observedType='private food', observedConsistency='private note',
+                                         recoveryReason='private response', responseText='private')), {})
+        attempt = '0e375eaa-bc89-4f10-ab91-75add2faf68e'
+        report = m.analyse({'version':1,'events':[
+            event('image_submission','started',route='chatgpt_photo_analysis',attemptId=attempt),
+            event('structured_response','parsed',route='chatgpt_photo_analysis',attemptId=attempt,resultType='unknown',**values),
+            event('nutrition','incomplete',route='chatgpt_photo_analysis',attemptId=attempt,knownNutrientCount=0,missingNutrientCount=8),
+            event('capture_performance','label_unreadable',attemptId=attempt,analyseToResultMs=10656)]})
+        self.assertEqual(report['latest_photo_attempt']['proposedNutrientCount'], 8)
+        self.assertEqual(report['latest_photo_attempt']['recoveryReason'], 'subject_uncertain')
+        self.assertEqual(report['latest_photo_attempt']['resultType'], 'unknown')
+        self.assertEqual(report['latest_photo_nutrition']['knownNutrientCount'], 0)
+        self.assertEqual(report['latest_photo_nutrition']['missingNutrientCount'], 8)
+        self.assertNotIn('private', json.dumps(report))
 
     def test_direct_chatgpt_failure_is_correlated_without_account_content(self):
         attempt='11111111-1111-1111-1111-111111111111'
@@ -247,10 +434,23 @@ class AppDiagnosticsTests(unittest.TestCase):
         self.assertEqual(result['latest_photo_nutrition']['reason'], 'no_source_matches')
         self.assertEqual(result['latest_photo_nutrition']['partialNutrientCount'], 0)
         self.assertEqual(result['latest_nutrition_counts']['partialNutrientCount'], 4)
-        self.assertTrue(any('earlier attempt' in f for f in result['findings']))
+        self.assertTrue(any('earlier request' in f for f in result['findings']))
         self.assertTrue(any('no matched nutrition sources' in f for f in result['findings']))
         for private in [old, recent, 'private dish']:
             self.assertNotIn(private, json.dumps(result))
+
+    def test_complete_estimate_is_not_reported_as_missing_source_nutrition(self):
+        attempt = 'a5835241-7290-49b8-babe-e1af5ead82df'
+        for extras in [dict(componentCount=2, matchedComponentCount=0, missingAmountCount=2),
+                       dict(recipeStatus='needs_servings', recipeIngredientCount=5, recipeMissingAmountCount=2)]:
+            result = m.analyse({'version':1, 'events':[
+                event('image_submission','started',route='chatgpt_photo_analysis',attemptId=attempt),
+                event('nutrition','calculated',route='photo_analysis',attemptId=attempt,
+                      knownNutrientCount=8,missingNutrientCount=0,partialNutrientCount=0,**extras),
+                event('capture_performance','result_ready',requestId=attempt,completeNutrition=True,analyseToResultMs=10157)]})
+            self.assertEqual(result['latest_photo_nutrition']['reason'], 'complete_nutrients')
+            self.assertEqual(result['latest_photo_attempt']['analyseToResultMs'],10157)
+            self.assertFalse(any('no matched nutrition sources' in f or 'cannot yet be converted' in f for f in result['findings']))
 
     def test_new_attempt_does_not_borrow_previous_nutrients_even_if_previous_finishes_late(self):
         old = 'd7a53a6b-49cb-410a-b900-fc6b82e294d6'

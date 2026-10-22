@@ -2,8 +2,8 @@ import SwiftUI
 import PhotosUI
 import ImageIO
 
-/// Explicit camera-provider settings and a separate photo preview. Changing the
-/// camera setting does not reroute captures already submitted for analysis.
+/// One disclosed connection enables camera photos and the separate preview.
+/// Account/model changes only affect future captures, never submitted work.
 struct ChatGPTPreviewView: View {
     @ObservedObject private var connection = ChatGPTConnection.shared
     @Environment(\.dismiss) private var dismiss
@@ -13,7 +13,6 @@ struct ChatGPTPreviewView: View {
     @State private var loadingPhoto = false
     @State private var confirmSharing = false
     @State private var confirmDisconnect = false
-    @State private var confirmCamera = false
     @State private var cameraError: String?
 
     var body: some View {
@@ -22,8 +21,8 @@ struct ChatGPTPreviewView: View {
                 VStack(alignment: .leading, spacing: 22) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Your meal, with ChatGPT").font(.title2.bold())
-                        Text("Connect an eligible ChatGPT Plus or Pro plan to analyse camera photos or try a separate photo preview.")
-                        Text("Choose which account the camera uses below. The preview does not add food to your diary.")
+                        Text("Connect an eligible ChatGPT Plus or Pro plan once for camera photos and photo previews.")
+                        Text("Choose one account and model for camera photos and previews. A preview does not add food to your diary.")
                             .font(.footnote).foregroundStyle(.secondary)
                     }
                     account
@@ -66,15 +65,6 @@ struct ChatGPTPreviewView: View {
             } message: {
                 Text("This selected photo will be sent directly to OpenAI using \(connection.active?.label ?? "your selected account"). It consumes your existing plan allowance or enabled credits. No diary or voice notes are included.")
             }
-            .confirmationDialog("Use ChatGPT for camera photos?", isPresented: $confirmCamera, titleVisibility: .visible) {
-                Button("Use ChatGPT for camera photos") {
-                    do { try connection.enableCamera(); cameraError = nil }
-                    catch { showCameraError(error) }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("When you tap Analyse, selected camera photos, ingredient choices and portion details will go directly to OpenAI using \(connection.active?.label ?? "your selected account") and \(selectedModelName). This consumes your plan allowance or enabled credits. Captures with a voice note use Nudge’s service. Already queued captures keep their original service. Your diary and cycle details are not included.")
-            }
             .confirmationDialog("Disconnect ChatGPT?", isPresented: $confirmDisconnect, titleVisibility: .visible) {
                 Button("Disconnect", role: .destructive) { connection.disconnect() }
                 Button("Cancel", role: .cancel) {}
@@ -87,15 +77,19 @@ struct ChatGPTPreviewView: View {
         .tint(Color(uiColor: NudgeTheme.accent))
         .accessibilityIdentifier("chatgpt-preview")
     }
-    private var selectedModelName: String {
-        connection.models.first { $0.id == connection.selectedModel }?.name ?? "the selected model"
-    }
     private var modelSelection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if !connection.models.isEmpty {
-                Picker("Model", selection: $connection.selectedModel) {
+                Picker("Model", selection: Binding(get: { connection.selectedModel }, set: { connection.selectModel($0) })) {
+                    if !connection.models.contains(where: { $0.id == connection.selectedModel }) {
+                        Text("Choose an available model").tag(connection.selectedModel)
+                    }
                     ForEach(connection.models) { model in Text(model.name).tag(model.id) }
                 }.disabled(connection.busy)
+                if !connection.models.contains(where: { $0.id == connection.selectedModel }) {
+                    Text("Your saved model is unavailable. Choose a model for new photos and previews; already queued captures keep their original model.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             } else {
                 Button("Load available models") { connection.loadModels() }.disabled(connection.busy)
             }
@@ -120,11 +114,8 @@ struct ChatGPTPreviewView: View {
             } else {
                 Text("Camera photos use Nudge’s service.").font(.callout)
             }
-            if connection.active?.connected == true {
-                Button("Use ChatGPT for camera photos") { cameraError = nil; confirmCamera = true }
-                    .buttonStyle(NudgeButtonStyle()).disabled(!connection.canAnalyse)
-                    .accessibilityIdentifier("chatgpt-camera-enable")
-                Text("Uses the account and model selected above. Changing those selections only changes the preview until you choose this button again.")
+            if connection.cameraSelection != nil {
+                Text("Changing the account or model above applies to new camera photos and previews after the selection is ready.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Text("Captures with a voice note use Nudge’s service. Already queued captures keep their original service.")
@@ -149,16 +140,37 @@ struct ChatGPTPreviewView: View {
                     Spacer()
                     Button("Disconnect", role: .destructive) { confirmDisconnect = true }
                 }
-                Button("Connect another ChatGPT account") { connection.signIn(newAccount: true) }.disabled(connection.busy)
-                Button("Reconnect this account") { connection.signIn() }.disabled(connection.busy)
-            } else {
-                Button("Continue with ChatGPT") { connection.signIn() }
+            }
+            if !cameraReadyForSelectedAccount {
+                Text("Continue enables ChatGPT for new camera photos and previews. Photos, ingredient choices and portion details you submit go directly to OpenAI and use your plan allowance or enabled credits. Your diary and cycle details are not included. Captures with a voice note use Nudge’s service.")
+                    .font(.footnote).foregroundStyle(.secondary)
+                Button("Continue with ChatGPT") { cameraError = nil; connection.continueWithChatGPT() }
                     .buttonStyle(NudgeButtonStyle()).disabled(connection.busy).accessibilityIdentifier("chatgpt-sign-in")
+                if connection.active?.connected == true {
+                    Text("Uses your connected account; you do not need to sign in again.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+            }
+            if connection.active?.connected == true {
+                Button("Connect another ChatGPT account") {
+                    connection.signIn(newAccount: true, useForCamera: connection.cameraSelection != nil)
+                }.disabled(connection.busy)
+                Button("Reconnect this account") {
+                    connection.signIn(useForCamera: connection.cameraSelection != nil)
+                }.disabled(connection.busy)
+            } else {
                 if !connection.profiles.isEmpty {
-                    Button("Use a different ChatGPT account") { connection.signIn(newAccount: true) }.disabled(connection.busy)
+                    Button("Use a different ChatGPT account") {
+                        connection.signIn(newAccount: true, useForCamera: true)
+                    }.disabled(connection.busy)
                 }
             }
         }.padding().background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+    }
+    private var cameraReadyForSelectedAccount: Bool {
+        guard let binding = connection.cameraSelection else { return false }
+        return connection.isCaptureBindingCurrent(binding) && binding.profileID == connection.selectedID &&
+            binding.modelID == connection.selectedModel
     }
     private var photo: some View {
         VStack(alignment: .leading, spacing: 12) {

@@ -1,6 +1,6 @@
 // Local adapter for direct ChatGPT photo observations. No transport, credentials,
 // file access, diary writes or independent nutrition/scoring implementation.
-import { PublicError, extractionSchema, validateExtraction, extractionInstructions, recoverSourceMeal } from './photo-analysis-contract.js';
+import { PublicError, extractionSchema, nutrientKeys, validateExtraction, extractionInstructions, recoverSourceMeal } from './photo-analysis-contract.js';
 import { bindPhotoEvidence } from './photo-evidence.js';
 import { prepareRecipeCalculation, correctRecipeAttribution } from './recipe-evidence.js';
 import { validateMealHints, reconcileMealHints } from './meal-hints.js';
@@ -60,6 +60,19 @@ export function finish(input) {
   try { observation = JSON.parse(input.text); } catch { throw fail('output_json'); }
   if(isFastCapture(body))observation=expandCompactObservation(observation);
   currentShape(observation);
+  // Bounded technical evidence survives normalization without retaining the
+  // provider's text, food names, images or discarded nutrient values.
+  const proposed = observation.type === 'meal'
+    ? observation.meal?.nutrientEstimate?.nutrients : observation.nutrients;
+  const observationDiagnostics = {
+    observedType: ['meal','product','unknown'].includes(observation.type) ? observation.type : 'unknown',
+    observedConsistency: ['sameMeal','sameProduct','uncertain'].includes(observation.photoConsistency)
+      ? observation.photoConsistency : 'uncertain',
+    proposedNutrientCount: nutrientKeys.filter(key => {
+      const candidate = proposed?.[key], value = typeof candidate === 'number' ? candidate : candidate?.value;
+      return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+    }).length
+  };
   const issues = new Set(), report = issue => issues.add(issue);
   let extraction = validateExtraction(observation, true, true, report);
   extraction = recoverSourceMeal(extraction);
@@ -70,7 +83,12 @@ export function finish(input) {
   extraction = reconcileMealHints(extraction, body.mealHints);
   extraction.analysisVersion = VERSION;
   if (bytes(JSON.stringify(extraction)) > (extraction.type === 'meal' ? MAX_TEXT_BYTES : MAX_PRODUCT_BYTES)) throw fail('result_size', 'result_too_large');
-  return { extraction, diagnosticEnums: [...issues] };
+  const recoveryReason = extraction.type !== 'unknown' ? null
+    : observation.photoConsistency === 'uncertain' ? 'subject_uncertain'
+    : issues.has('subject_uncertain') ? 'identity_conflict'
+    : issues.has('subject_type_mismatch') ? 'subject_type_mismatch' : 'subject_unidentified';
+  return { extraction, diagnosticEnums: [...issues], observationDiagnostics,
+    ...(recoveryReason ? { recoveryReason } : {}) };
 }
 
 globalThis.NudgeChatGPTAnalysis = Object.freeze({ version: VERSION, request, finish });
