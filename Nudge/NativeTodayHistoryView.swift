@@ -10,6 +10,7 @@ struct NativeTodayView: View {
     @ObservedObject var store: NativeAppStore
     @Environment(\.scenePhase) private var scenePhase
     @State private var currentDay = NativeTrackingDisplay.dayKey(Date())
+    @State private var targetSection: ProfileSection?
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -60,13 +61,29 @@ struct NativeTodayView: View {
                         Button("My profile", action: store.showProfile).buttonStyle(NudgeButtonStyle())
                     }
                 }
-                HStack(alignment: .center) {
-                    Spacer(minLength: 10)
-                    Button(action: store.showProfile) {
-                        Label("Targets", systemImage: "slider.horizontal.3").font(.subheadline.weight(.semibold))
-                            .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+                if let setup = model["targetSetup"] as? [String: Any],
+                   let section = ProfileSection(rawValue: setup["section"] as? String ?? "") {
+                    Button { targetSection = section } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "slider.horizontal.3")
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(setup["title"] as? String ?? "Review your targets").font(.subheadline.weight(.semibold))
+                                Text(setup["detail"] as? String ?? "").font(.caption)
+                                    .foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                            }.fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                        }.frame(maxWidth: .infinity, minHeight: 48, alignment: .leading).contentShape(Rectangle())
+                    }.buttonStyle(.plain).trackingControl("today-target-setup")
+                } else {
+                    HStack(alignment: .center) {
+                        Spacer(minLength: 10)
+                        Button { targetSection = .tracking } label: {
+                            Label("Targets", systemImage: "slider.horizontal.3").font(.subheadline.weight(.semibold))
+                                .frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+                        }
+                            .trackingControl("today-targets")
                     }
-                        .trackingControl("today-targets")
                 }
                 if selectedDay == NativeTrackingDisplay.dayKey(Date()) { budgetNotice(NativeTrackingDisplay.object(model["budget"])) }
                 NativeDailyFoodList(store: store, day: selectedDay)
@@ -99,6 +116,7 @@ struct NativeTodayView: View {
         .foregroundStyle(Color(uiColor: NudgeTheme.ink))
         .tint(Color(uiColor: NudgeTheme.accent))
         .trackingControl("native-today")
+        .sheet(item: $targetSection) { NativeProfileEditor(store: store, section: $0) }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in currentDay = NativeTrackingDisplay.dayKey(Date()) }
         .onChange(of: scenePhase) { phase in if phase == .active { currentDay = NativeTrackingDisplay.dayKey(Date()) } }
     }

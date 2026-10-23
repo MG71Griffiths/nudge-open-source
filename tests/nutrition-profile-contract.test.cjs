@@ -113,3 +113,46 @@ test('missing reasons distinguish deliberate clears, zero, medical plans and una
   const earlier={...automatic,targetHistory:[{effectiveFrom:day,targets:{calories:null},targetModes:{calories:'automatic'}}]};
   assert.equal(n.effectiveTargets(earlier,day,'2026-10-06').targets.calories.reason,'Target not set for this date','Do not infer historical missing-input reasons from current details');
 });
+
+test('missing-target help routes to the actual required input without changing saved data',()=>{
+  const complete=n.saveDraft(profile(),n.clean(),day);
+  assert.equal(n.targetSetup(complete,day,day),null);
+  for(const field of ['activity','height','sex','weight','age']){
+    const p=freeze(n.saveDraft({...profile(),[field]:['activity','sex'].includes(field)?'unknown':null},n.clean(),day)),before=JSON.stringify(p);
+    const help=n.targetSetup(p,day,day);
+    assert.equal(help.section,field==='activity'?'activity':'stats');
+    assert.ok(help.missingFields.includes(field));
+    assert.equal(JSON.stringify(p),before,'Help is a pure projection');
+    if(field==='activity'){
+      assert.equal(help.title,'Choose activity');
+      assert.equal(help.detail,'To estimate energy, carbs and fat.');
+      assert.deepEqual(help.missingMetrics,['calories','carbs','fat']);
+    }
+  }
+  const both=n.saveDraft({...profile(),height:null,activity:'unknown'},n.clean(),day);
+  assert.deepEqual(n.targetSetup(both,day,day).missingFields,['height','activity']);
+  assert.equal(n.targetSetup(both,day,day).section,'stats');
+  const heightAdded=n.saveDraft({...both,height:185},both,day);
+  assert.equal(n.targetSetup(heightAdded,day,day).section,'activity','After details, only the remaining activity question is offered');
+  assert.equal(n.targetSetup(n.clean(),day,day).section,'stats');
+});
+
+test('missing-target help preserves explicit clears, agreed plans, zero targets and past dates',()=>{
+  const complete=n.saveDraft(profile(),n.clean(),day);
+  const manual=n.saveDraft({...complete,calorieTarget:null},complete,day),before=JSON.stringify(manual);
+  assert.equal(n.targetSetup(manual,day,day).section,'tracking');
+  assert.equal(n.targetSetup(manual,day,day).title,'Review your targets');
+  assert.equal(JSON.stringify(manual),before);
+  const manualEnergy=n.saveDraft({...profile(),activity:'unknown',calorieTarget:2100},n.clean(),day);
+  assert.equal(n.targetSetup(manualEnergy,day,day),null,'A supplied energy budget removes the need for activity');
+  assert.equal(manualEnergy.fatTarget,70);assert.equal(manualEnergy.carbTarget,243);
+  const zero=n.saveDraft({...complete,carbTarget:0,fatTarget:0},complete,day);
+  assert.equal(n.targetSetup(zero,day,day),null,'An intentional zero is not an unset target');
+  for(const care of ['clinical','glp1']){
+    const p=n.saveDraft({...profile(),care},n.clean(),day);
+    assert.equal(n.targetSetup(p,day,day).title,'Add agreed targets');
+    assert.equal(n.targetSetup(p,day,day).section,'tracking');
+    assert.ok(n.automaticMetrics.every(metric=>p[n.targetFields[metric]]===null));
+  }
+  assert.equal(n.targetSetup(manual,day,'2026-10-06'),null,'Do not offer a current-profile fix for historical targets');
+});

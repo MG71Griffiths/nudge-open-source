@@ -414,11 +414,13 @@ struct NativeProfileEditor: View {
         case .goals:
             ProfilePanel(title: "What matters to you?") { selections("goals", choices: ProfileValues.goals) }
         case .activity:
+            ProfilePanel(title: "Everyday activity") {
+                choice("activity", title: "Activity level", choices: ProfileValues.activity)
+                ProfileCaption(text: "Used to estimate energy, carbs and fat targets.")
+            }
             ProfilePanel(title: "Training") {
                 selections("trainingTypes", choices: ProfileValues.training)
                 numberField("sessions", label: "Sessions per week", bounds: "1–7", unit: "sessions")
-                choice("activity", title: "Everyday activity", choices: ProfileValues.activity)
-                ProfileCaption(text: "Choose everyday activity separately from your training.")
             }
         case .tracking: targets
         case .requirements:

@@ -173,11 +173,9 @@ struct NativeProductSearchView: View {
             : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
         return layout {
             Button { navigate("today") } label: {
-                HStack(spacing: 2) {
+                HStack(spacing: 6) {
                     Text("nudge").font(.system(.title, design: .default).weight(.heavy)).kerning(-1.5)
-                    NativeSearchBrandSprout()
-                        .stroke(style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-                        .frame(width: 24, height: 24)
+                    NudgeBrandMark()
                 }
                 .foregroundStyle(Color(uiColor: NudgeTheme.accent))
                 .frame(minHeight: 48)
@@ -1143,29 +1141,6 @@ struct NativeNudgeRatingBadge: View {
         .fixedSize(horizontal: false, vertical: true)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(value) percent Nudge rating, \(tone.label)")
-    }
-}
-
-/// The existing Web/index.html brand sprout, expressed as a native shape.
-struct NativeSearchBrandSprout: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        path.move(to: CGPoint(x: 14, y: 9.536))
-        path.addLine(to: CGPoint(x: 14, y: 7))
-        path.addCurve(to: CGPoint(x: 18, y: 3), control1: CGPoint(x: 14, y: 4.8), control2: CGPoint(x: 15.8, y: 3))
-        path.addLine(to: CGPoint(x: 19.5, y: 3))
-        path.addQuadCurve(to: CGPoint(x: 20, y: 3.5), control: CGPoint(x: 20, y: 3))
-        path.addLine(to: CGPoint(x: 20, y: 5))
-        path.addCurve(to: CGPoint(x: 16, y: 9), control1: CGPoint(x: 20, y: 7.2), control2: CGPoint(x: 18.2, y: 9))
-        path.addCurve(to: CGPoint(x: 12, y: 13), control1: CGPoint(x: 13.8, y: 9), control2: CGPoint(x: 12, y: 10.8))
-        path.addCurve(to: CGPoint(x: 13, y: 18), control1: CGPoint(x: 12, y: 15), control2: CGPoint(x: 13, y: 16))
-        path.addQuadCurve(to: CGPoint(x: 12, y: 21), control: CGPoint(x: 13, y: 20))
-        path.move(to: CGPoint(x: 4, y: 9))
-        path.addCurve(to: CGPoint(x: 12, y: 13), control1: CGPoint(x: 7.5, y: 6.9), control2: CGPoint(x: 11.4, y: 8.9))
-        path.addCurve(to: CGPoint(x: 4, y: 9), control1: CGPoint(x: 8.5, y: 15.1), control2: CGPoint(x: 4.6, y: 13.1))
-        path.move(to: CGPoint(x: 5, y: 21))
-        path.addLine(to: CGPoint(x: 14, y: 21))
-        return path.applying(CGAffineTransform(scaleX: rect.width / 24, y: rect.height / 24))
     }
 }
 

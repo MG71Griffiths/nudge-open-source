@@ -49,6 +49,7 @@
   const automaticTargetVersion='nudge_profile_targets_v2';
   const targetFields={protein:'target',calories:'calorieTarget',carbs:'carbTarget',fat:'fatTarget',fibre:'fibreTarget',plants:'weeklyPlantTarget',dailyPlants:'dailyPlantTarget'};
   const automaticMetrics=['protein','calories','carbs','fat','fibre','plants'];
+  const missingEnergyInputs=p=>[!p.weight&&'weight',!p.height&&'height',p.sex==='unknown'&&'sex',p.activity==='unknown'&&'activity'].filter(Boolean);
   const targetReferences={protein:'https://link.springer.com/article/10.1186/s12970-017-0177-8',adultProtein:'https://www.merseycare.nhs.uk/protein-packing',fibre:'https://www.nhs.uk/live-well/eat-well/digestive-health/how-to-get-more-fibre-into-your-diet/',calories:'https://pubmed.ncbi.nlm.nih.gov/2305711/',carbs:'https://www.gov.uk/government/publications/sacn-statement-on-expressing-fat-and-carbohydrate-recommendations/sacn-statement-on-expressing-energy-fat-and-carbohydrate-intakes-and-recommendations'};
   function automaticSuggestions(raw){
     const p=clean(raw),reason=!p.saved?'Save your personal details':!p.age?'Add your age':['glp1','clinical'].includes(p.care)?'Use your agreed nutrition plan':null;
@@ -99,6 +100,29 @@
     if(!raw?.saved)return {profile:raw,changed:false};
     const next=applyAutomaticTargets(raw),changed=JSON.stringify(next)!==JSON.stringify(raw);
     return {profile:changed?recordTargets(next,raw,day,'automatic profile targets'):raw,changed};
+  }
+  // A read-only route to the next useful question. Never supplies a default
+  // activity, changes an override, or applies today's answers to earlier days.
+  function targetSetup(raw,day,today,plantGoal=null){
+    if(day!==today)return null;
+    const p=clean(raw),targets=effectiveTargets(p,day,today,plantGoal).targets;
+    const missing=automaticMetrics.filter(metric=>targets[metric].value===null&&p[targetFields[metric]]!==0);
+    if(!missing.length)return null;
+    const names={protein:'protein',calories:'energy',carbs:'carbs',fat:'fat',fibre:'fibre',plants:'weekly plants'};
+    const joined=missing.map(metric=>names[metric]);
+    const list=joined.length===1?joined[0]:joined.slice(0,-1).join(', ')+' and '+joined.at(-1);
+    const result=(section,title,detail,fields=[])=>({section,title,detail,missingMetrics:missing,missingFields:fields});
+    if(['glp1','clinical'].includes(p.care))return result('tracking','Add agreed targets','Use the amounts from your nutrition plan.');
+    if(missing.some(metric=>p.targetModes?.[metric]==='manual'))return result('tracking','Review your targets','Some custom targets are unset.');
+    if(!p.saved||!p.age)return result('stats','Add personal details','To estimate '+list+'.',!p.age?['age']:[]);
+    const fields=new Set();
+    if(missing.includes('protein')&&!p.weight)fields.add('weight');
+    if(missing.some(metric=>['calories','carbs','fat'].includes(metric))&&p.calorieTarget===null){
+      for(const field of missingEnergyInputs(p))fields.add(field);
+    }
+    if(fields.size===1&&fields.has('activity'))return result('activity','Choose activity','To estimate '+list+'.',['activity']);
+    if(fields.size)return result('stats','Complete personal details','To estimate '+list+'.',[...fields]);
+    return result('tracking','Review your targets','Some targets are still unset.');
   }
   function saveDraft(raw,previous,day){
     if(!dayValid(day))throw new Error('Choose a valid local save date.');
@@ -190,7 +214,7 @@
     {id:'fitness',label:'Fitness data',selection:'actual connection state',source:'existing Apple Health unavailable state'}
   ]};
   function target(raw){const p=clean(raw);if(p.schemaVersion>=2)return {grams:p.saved?p.target:null,kind:p.targetModes?.protein==='automatic'?'automatic':['glp1','clinical'].includes(p.care)?'agreed':'saved',reason:p.target!==null?p.targetModes?.protein==='automatic'?'Automatic profile target':'Your saved target':p.targetSourceDetails?.protein?.reason||'Set a target',source:p.targetSources?.protein||'User-entered target'};if(!p.saved||!p.age)return {grams:null,reason:'Add your details'};if(p.care==='glp1'||p.care==='clinical')return {grams:p.target,kind:'agreed',reason:p.target?'Your agreed target':'Add your agreed protein target'};if(p.goal==='muscle'&&p.care==='none'&&p.weight)return {grams:Math.round(p.weight*1.6),low:Math.round(p.weight*1.4),high:Math.round(p.weight*2),kind:'guide',reason:'Daily protein target'};return {grams:null,reason:p.goal==='muscle'?'Finish your profile':'Choose a protein plan'};}
-  function calories(raw){const p=clean(raw);if(p.schemaVersion>=2)return {kcal:p.saved?p.calorieTarget:null,kind:p.targetModes?.calories==='automatic'?'automatic':['glp1','clinical'].includes(p.care)?'agreed':'saved',reason:p.calorieTarget!==null?p.targetModes?.calories==='automatic'?'Estimated maintenance energy':'Your saved target':p.targetSourceDetails?.calories?.reason||'Set a target',source:p.targetSources?.calories||'User-entered target',resting:p.targetSourceDetails?.calories?.inputs?.restingKcal,factor:p.targetSourceDetails?.calories?.inputs?.activityFactor};if(!p.saved||!p.age)return {kcal:null,reason:'Add your details'};if(p.care==='glp1'||p.care==='clinical')return {kcal:p.calorieTarget,kind:'agreed',reason:p.calorieTarget?'Your agreed target':'Add your agreed calorie target'};if(p.care!=='none')return {kcal:null,reason:'Confirm your nutrition needs'};const missing=[!p.weight&&'weight',!p.height&&'height',p.sex==='unknown'&&'sex',p.activity==='unknown'&&'activity'].filter(Boolean);if(missing.length)return {kcal:null,reason:'Add '+missing.join(', ')};const resting=9.99*p.weight+6.25*p.height-4.92*p.age+(p.sex==='male'?5:-161),factor={light:1.4,moderate:1.6,high:1.8}[p.activity],kcal=Math.round(resting*factor/50)*50;return kcal<1200||kcal>6000?{kcal:null,reason:'Use a personalised nutrition plan'}:{kcal,resting:Math.round(resting),factor,kind:'estimate',reason:'Estimated daily energy'};}
+  function calories(raw){const p=clean(raw);if(p.schemaVersion>=2)return {kcal:p.saved?p.calorieTarget:null,kind:p.targetModes?.calories==='automatic'?'automatic':['glp1','clinical'].includes(p.care)?'agreed':'saved',reason:p.calorieTarget!==null?p.targetModes?.calories==='automatic'?'Estimated maintenance energy':'Your saved target':p.targetSourceDetails?.calories?.reason||'Set a target',source:p.targetSources?.calories||'User-entered target',resting:p.targetSourceDetails?.calories?.inputs?.restingKcal,factor:p.targetSourceDetails?.calories?.inputs?.activityFactor};if(!p.saved||!p.age)return {kcal:null,reason:'Add your details'};if(p.care==='glp1'||p.care==='clinical')return {kcal:p.calorieTarget,kind:'agreed',reason:p.calorieTarget?'Your agreed target':'Add your agreed calorie target'};if(p.care!=='none')return {kcal:null,reason:'Confirm your nutrition needs'};const missing=missingEnergyInputs(p);if(missing.length)return {kcal:null,reason:'Add '+missing.join(', ')};const resting=9.99*p.weight+6.25*p.height-4.92*p.age+(p.sex==='male'?5:-161),factor={light:1.4,moderate:1.6,high:1.8}[p.activity],kcal=Math.round(resting*factor/50)*50;return kcal<1200||kcal>6000?{kcal:null,reason:'Use a personalised nutrition plan'}:{kcal,resting:Math.round(resting),factor,kind:'estimate',reason:'Estimated daily energy'};}
   function carbs(raw){const p=clean(raw);return {grams:p.saved?p.carbTarget:null,kind:p.targetModes?.carbs==='automatic'?'automatic':'saved',reason:p.carbTarget!==null?p.targetModes?.carbs==='automatic'?'Automatic starting guide':'Your saved target':p.targetSourceDetails?.carbs?.reason||'Set a target',source:p.targetSources?.carbs||'User-entered target'};}
   function fat(raw){const p=clean(raw);return {grams:p.saved?p.fatTarget:null,kind:p.targetModes?.fat==='automatic'?'automatic':'saved',reason:p.fatTarget!==null?p.targetModes?.fat==='automatic'?'Automatic starting guide':'Your saved target':p.targetSourceDetails?.fat?.reason||'Set a target',source:p.targetSources?.fat||'User-entered target'};}
   function macroBudget(raw){
@@ -200,5 +224,5 @@
   function summary(entries,day){const list=entries.filter(e=>e.day===day),known=list.filter(e=>typeof e.proteinPerPortion==='number'&&Number.isFinite(e.proteinPerPortion)),energy=list.filter(e=>typeof e.energyPerPortion==='number'&&Number.isFinite(e.energyPerPortion)),carbohydrates=list.filter(e=>e.nutritionSnapshot?.carbohydrate?.portionStatus==='calculated'&&typeof e.nutritionSnapshot?.carbohydrate?.portion==='number'&&Number.isFinite(e.nutritionSnapshot.carbohydrate.portion)&&e.nutritionSnapshot.carbohydrate.portion>=0);return {grams:Math.round(known.reduce((n,e)=>n+e.proteinPerPortion*e.portions,0)*10)/10,known:known.length,unknown:list.length-known.length,meals:list.length,calories:Math.round(energy.reduce((n,e)=>n+e.energyPerPortion*e.portions,0)),calorieKnown:energy.length,calorieUnknown:list.length-energy.length,carbs:Math.round(carbohydrates.reduce((n,e)=>n+e.nutritionSnapshot.carbohydrate.portion*e.portions,0)*10)/10,carbKnown:carbohydrates.length,carbUnknown:list.length-carbohydrates.length};}
   // A reviewable draft from the details shared in this conversation; never saved on page load.
   const preview=()=>clean({saved:true,goal:'muscle',age:55,weight:78,height:186,sex:'male',activity:'moderate',diet:'mixed',care:'none'});
-  return {clean,target,calories,carbs,fat,macroBudget,summary,goals,diets,care,activity,sexes,preview,choiceVersion,goalChoices,trainingChoices,habitChoices,trackingChoices,glutenChoices,allergyChoices,inventory,safetyProfile,draft,saveDraft,targetAt,targetReader,targetValues,effectiveTargets,suggested,healthStatus,automaticSuggestions,reconcileAutomaticTargets,automaticMetrics,targetFields,automaticTargetVersion,example:preview,glpExample:()=>clean({saved:true,goal:'preserve',age:55,weight:78,diet:'mixed',care:'glp1'})};
+  return {clean,target,calories,carbs,fat,macroBudget,summary,goals,diets,care,activity,sexes,preview,choiceVersion,goalChoices,trainingChoices,habitChoices,trackingChoices,glutenChoices,allergyChoices,inventory,safetyProfile,draft,saveDraft,targetAt,targetReader,targetValues,effectiveTargets,suggested,healthStatus,automaticSuggestions,reconcileAutomaticTargets,targetSetup,automaticMetrics,targetFields,automaticTargetVersion,example:preview,glpExample:()=>clean({saved:true,goal:'preserve',age:55,weight:78,diet:'mixed',care:'glp1'})};
 });

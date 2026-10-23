@@ -66,6 +66,12 @@ import SwiftUI
             .background(Color(uiColor: NudgeTheme.canvas).ignoresSafeArea())
             .navigationTitle("Your Nudge").navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                    HStack(spacing: 6) {
+                        NudgeBrandMark(size: 24)
+                        Text("Your Nudge").font(.headline)
+                    }.accessibilityElement(children: .combine)
+                }
                 if step > 1 {
                     ToolbarItem(placement: .navigationBarLeading) {
                         Button("Back") { cancelSetupConnection(); move(to: step - 1) }
@@ -192,7 +198,7 @@ import SwiftUI
                 ProfileCaption(text: "This helps tailor your protein starting point.")
             }
             errorMessage
-            Button("See my targets") { if saveRoutine() { move(to: 4) } }
+            Button((draft["activity"] as? String ?? "unknown") == "unknown" ? "Skip activity for now" : "See my targets") { if saveRoutine() { move(to: 4) } }
                 .buttonStyle(NudgeButtonStyle()).accessibilityIdentifier("onboarding-routine-continue")
         }
     }

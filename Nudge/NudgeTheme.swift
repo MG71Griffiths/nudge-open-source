@@ -1,6 +1,21 @@
 import SwiftUI
 import UIKit
 
+/// The selected three-leaf Cool Mix mark. Branding uses its original colours,
+/// independently of the semantic tint used by controls and nutrition values.
+struct NudgeBrandMark: View {
+    var size: CGFloat = 34
+
+    var body: some View {
+        Image("NudgeMark")
+            .renderingMode(.original)
+            .resizable()
+            .scaledToFit()
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}
+
 /// Positive Energy v3.1 semantic roles from the approved tokens.json.
 /// Camera scrims, system sheets and safety/score meanings remain independent.
 enum NudgeTheme {

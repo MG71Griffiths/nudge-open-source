@@ -98,7 +98,7 @@ html,body,.app-shell{background:var(--n-bg);}
 .app-shell{box-shadow:none;border:0;border-radius:0;margin:0 auto;padding-bottom:calc(90px + env(safe-area-inset-bottom));min-height:100dvh;}
 .app-header{padding:calc(10px + env(safe-area-inset-top)) 20px 10px;gap:12px;}
 .app-header .brand{font-size:1.875rem;letter-spacing:-1.5px;font-weight:750;min-height:44px;display:flex;align-items:center;gap:3px;color:var(--n-purple);}
-.brand-spark{transform:none;color:var(--n-purple);display:inline-flex;}.brand-spark svg{width:23px;height:23px;}
+.brand-spark{transform:none;display:inline-flex;margin-left:3px;}.brand-spark img{display:block;width:34px;height:34px;object-fit:contain;}
 .app-header .avatar,.app-header .n-icon-button{border:1px solid var(--n-line);border-radius:50%;background:var(--n-paper);color:var(--n-purple);min-width:44px;min-height:44px;display:grid;place-items:center;padding:0;}.app-header .avatar svg{width:19px;height:19px;}
 [hidden],.app-header [hidden]{display:none!important;}
 .approved-screen{padding:10px 20px 24px;color:var(--n-ink);overflow-wrap:anywhere;animation:none;}

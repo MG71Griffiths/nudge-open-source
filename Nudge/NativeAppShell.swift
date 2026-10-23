@@ -103,9 +103,9 @@ struct NativeAppShell: View {
     private var header: some View {
         HStack {
             Button { store.navigate("today") } label: {
-                HStack(spacing: 2) {
+                HStack(spacing: 6) {
                     Text("nudge").font(.system(.title, design: .default).weight(.heavy)).kerning(-1.5)
-                    NativeSearchBrandSprout().stroke(style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)).frame(width: 24,height: 24)
+                    NudgeBrandMark()
                 }.foregroundStyle(Color(uiColor: NudgeTheme.accent)).frame(minHeight: 48).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityLabel("Nudge home")
             Spacer()

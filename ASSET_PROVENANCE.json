@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "sourceRelease": "0.1.1-build46",
+  "sourceRelease": "0.1.1-build47",
   "licenceScope": "Original generated artwork: MIT. Lucide/Feather: preserved separate notices. Product marks: no trademark grant.",
   "generated": [
     {
@@ -50,22 +50,36 @@
     },
     {
       "path": "Nudge/Assets.xcassets/AppIcon.appiconset/NudgeIcon.png",
-      "evidence": "Generated from original Nudge mascot; app-icon composition prompt in project targeted tidy notes, October 2026.",
-      "sha256": "201440fa39411bc629da6235014350d0860a76bba4bc808343109993c3a890b6"
-    }
-  ],
-  "legacyMonograms": [
+      "evidence": "User-selected 04 / Cool Mix three-leaf reference, built-in image_gen edit, 23 October 2026. Native CoreGraphics packaging of the same master with 12% uniform canvas padding, opaque white background and required output size. No artwork retouching.",
+      "sha256": "621fd0bb2768db4e05328379c5e4ef722b6d4b82c86ec4fa6107488515785789",
+      "sourceMasterSHA256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974"
+    },
+    {
+      "path": "Nudge/Assets.xcassets/NudgeMark.imageset/NudgeMark.png",
+      "evidence": "User-selected 04 / Cool Mix three-leaf reference, built-in image_gen edit, 23 October 2026. Unmodified transparent generated master.",
+      "sha256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974",
+      "sourceMasterSHA256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974"
+    },
+    {
+      "path": "Web/assets/nudge-logo.png",
+      "evidence": "User-selected 04 / Cool Mix three-leaf reference, built-in image_gen edit, 23 October 2026. Unmodified transparent generated master.",
+      "sha256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974",
+      "sourceMasterSHA256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974"
+    },
     {
       "path": "Web/assets/app-icon.png",
-      "evidence": "Simple Nudge n monogram; retained application icon.",
-      "sha256": "c637f7caaedf81cf98ddbdac92ba60539d64da6749b2f26c1c6cc0927b12b754"
+      "evidence": "User-selected 04 / Cool Mix three-leaf reference, built-in image_gen edit, 23 October 2026. Native CoreGraphics packaging of the same master with 12% uniform canvas padding, opaque white background and required output size. No artwork retouching.",
+      "sha256": "740974c1a83c4d9a24829c0f4e01372df5f56cd649a3679c0442a70db1c322e7",
+      "sourceMasterSHA256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974"
     },
     {
       "path": "Web/assets/app-icon-512.png",
-      "evidence": "Simple Nudge n monogram; visually checked during export audit.",
-      "sha256": "5854547ea3204e898bf925043e5d8654e65624fffc19c8d907c1bac3a6c3d8c7"
+      "evidence": "User-selected 04 / Cool Mix three-leaf reference, built-in image_gen edit, 23 October 2026. Native CoreGraphics packaging of the same master with 12% uniform canvas padding, opaque white background and required output size. No artwork retouching.",
+      "sha256": "f3f95193cb20bd8a59b9f5083276478980fc04cce23afeefbfc332b452ec845c",
+      "sourceMasterSHA256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974"
     }
   ],
+  "legacyMonograms": [],
   "excluded": [
     {
       "path": "Web/assets/lindt-70.png",
@@ -75,5 +89,13 @@
       "path": "Web/assets/yuka-lindt-reference.png",
       "reason": "User-supplied third-party app screenshot; excluded from public source."
     }
-  ]
+  ],
+  "brandUpdate": {
+    "selection": "04 / Cool Mix from the user-supplied three-leaf colour exploration sheet",
+    "generationTool": "built-in image_gen",
+    "generatedMasterSHA256": "965e0b8bfb9b73256916c4d6db3e83329cb9d187978866658802ed19ac187974",
+    "note": "Generated artwork based on the supplied reference; not a claim of pixel-identical extraction. Other mascot artwork is unchanged.",
+    "prompt": "Use case: background-extraction / logo-brand. Edit the attached Nudge colour exploration sheet. Isolate ONLY the exact three-leaf mark above the label '04 / COOL MIX' (middle row, right column). Produce one clean square 1024 x 1024 production logo master on a genuinely transparent background, with the mark centered and occupying about 78% of the square width and height, enough equal breathing room for app use. Preserve the selected mark's exact silhouette, three lobes and white/transparent negative-space vein shapes: cobalt-blue left leaf and lower stem, purple upright top/central leaf, teal right leaf. Preserve these three discrete colour regions and their orientation, subtle shading only as in that specific reference, not the 06 gradient version. Remove all sheet paper texture, other marks and all text/numbers/labels. No border, tile, shadow, outline, extra leaf, lettering, watermark or new shape. Do not redesign or rotate the logo. Output the isolated selected mark only, sharp clean edges and transparent exterior and vein cutouts.",
+    "documentation": "Documentation/Cool-mix-logo-build-47.md"
+  }
 }

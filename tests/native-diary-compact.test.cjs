@@ -199,6 +199,8 @@ test('personal details without activity explain missing energy and macro targets
   const today=a.project('today');
   assert.equal(metric(today,'protein').target,120);assert.equal(metric(today,'fibre').target,30);
   assert.equal(metric(today,'energy').target,null);assert.equal(metric(today,'energy').targetReason,'Add activity');
+  assert.deepEqual(today.targetSetup,{section:'activity',title:'Choose activity',detail:'To estimate energy, carbs and fat.',missingMetrics:['calories','carbs','fat'],missingFields:['activity']});
+  assert.deepEqual(a.restart().project('today').targetSetup,today.targetSetup);
   for(const key of ['carbs','fat'])assert.equal(metric(today,key).targetReason,'Add activity to estimate energy');
   assert.equal(today.weekEnergy.days.find(x=>x.day==='2026-10-07').targetReason,'Add activity');
   a.perform('setReview',{kind:'product',product:complete,confirmationId:'review-targets'});
@@ -206,8 +208,37 @@ test('personal details without activity explain missing energy and macro targets
   a.advance(86400000);saveProfile(a,{...first,activity:'moderate'});
   assert.equal(metric(a.project('today'),'energy').target,2550);
   assert.equal(metric(a.project('today'),'energy').targetReason,null);
+  assert.equal(a.project('today').targetSetup,null);
+  assert.equal(a.project('diary',{day:'2026-10-07'}).targetSetup,null);
   assert.equal(metric(a.project('diary',{day:'2026-10-07'}),'energy').targetReason,'Add activity');
   assert.equal(metric(a.project('diary',{day:'2026-10-06'}),'energy').targetReason,'Historical target not recorded');
+});
+
+test('synthetic female setup retains energy and both macro targets through save, restart and current-day projections',()=>{
+  const a=boot();add(a,'existing-food','2026-10-07');
+  const before=copy(a.snapshot().state.foodLog);
+  // The production onboarding saves details and activity as separate steps,
+  // merging each into the latest saved profile without copying stale targets.
+  const details={...a.project('profile').profile,age:45,weight:65,height:165,sex:'female',care:'none'};
+  saveProfile(a,details);
+  assert.equal(a.project('today').targetSetup.section,'activity');
+  const pending=copy(a.snapshot().state.nutritionProfile.targetHistory);
+  const routine={...a.project('profile').profile,activity:'light',goals:['balance'],goal:'balance',trainingTypes:[]};
+  const saved=saveProfile(a,routine);
+  assert.deepEqual([saved.calorieTarget,saved.carbTarget,saved.fatTarget],[1800,266,60]);
+  assert.deepEqual(saved.targetHistory.slice(0,pending.length),pending);
+  for(const session of [a,a.restart()]){
+    const state=copy(session.snapshot().state),writes=session.writes.length;
+    for(const view of ['today','diary']){
+      const current=session.project(view,{day:'2026-10-07'});
+      assert.equal(current.targetSetup,null);
+      assert.deepEqual(['energy','carbs','fat'].map(key=>metric(current,key).target),[1800,266,60]);
+      assert.ok(['energy','carbs','fat'].every(key=>metric(current,key).percent>0));
+    }
+    assert.deepEqual(session.snapshot().state.foodLog,before);
+    assert.deepEqual(session.snapshot().state,state,'Target/help projections are read-only');
+    assert.equal(session.writes.length,writes);
+  }
 });
 
 test('photo reference cleaning rejects arbitrary paths and blobs while retaining only four valid private refs',()=>{
