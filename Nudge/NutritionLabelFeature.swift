@@ -746,6 +746,9 @@ struct NutritionLabelService {
         request.timeoutInterval = 6
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(configuration.token)", forHTTPHeaderField: "Authorization")
+        // Only clients with the typed community decoder may receive reviewed
+        // facts here; older clients interpret this endpoint as OFF-only.
+        request.setValue("reviewed-v1", forHTTPHeaderField: "X-Nudge-Catalogue-Source")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["barcode": barcode])
         let data: Data
         do {
@@ -765,6 +768,23 @@ struct NutritionLabelService {
               let product = payload["product"] as? [String: Any], product["code"] as? String == barcode else { throw ServiceError.invalidResponse }
         guard let fetched = result["fetchedAt"] as? NSNumber, CFGetTypeID(fetched) != CFBooleanGetTypeID(), fetched.doubleValue.isFinite else { throw ServiceError.invalidResponse }
         let retrievedAt = Date(timeIntervalSince1970: fetched.doubleValue / 1000)
+        if result["source"] as? String == "Nudge community" {
+            guard let metadata = result["reviewedMetadata"] as? [String: Any],
+                  metadata["sourceKind"] as? String == "nudge_community",
+                  let provenance = metadata["provenance"] as? [String: Any],
+                  provenance["verification"] as? String == "reviewed_packaging_photos",
+                  provenance["categoryReview"] as? String == "administrator_confirmed",
+                  provenance["photosPublic"] as? Bool == false,
+                  let reviewed = metadata["reviewedAt"] as? NSNumber, CFGetTypeID(reviewed) != CFBooleanGetTypeID(), reviewed == fetched,
+                  let expires = metadata["expiresAt"] as? NSNumber, CFGetTypeID(expires) != CFBooleanGetTypeID(), expires.doubleValue > date.timeIntervalSince1970 * 1000 else { throw ServiceError.invalidResponse }
+            let envelope: [String: Any] = ["version": "nudge-catalogue-index-v1", "products": [product], "ratings": [metadata]]
+            guard let bound = try NudgeCatalogueService.products(envelope, at: date, trustedBackendURL: backendURL).first,
+                  bound.sourceKind == "nudge_community", bound.hasTrustedCatalogueSource else { throw ServiceError.invalidResponse }
+            let object = try JSONSerialization.jsonObject(with: JSONEncoder().encode(bound))
+            return (try JSONSerialization.data(withJSONObject: ["nudgeCatalogueProduct": object]), retrievedAt)
+        }
+        if let source = result["source"] as? String, source != "Open Food Facts" { throw ServiceError.invalidResponse }
+        guard result["reviewedMetadata"] == nil else { throw ServiceError.invalidResponse }
         if let score = result["catalogueRating"] as? [String: Any], score["catalogueQualityHold"] != nil {
             let row: [String: Any] = ["barcode": barcode, "method": score["methodId"] ?? NSNull(), "version": score["version"] ?? NSNull(),
                 "classifierVersion": score["classifierVersion"] ?? NSNull(), "sourceRevision": product["last_modified_t"] ?? NSNull(),

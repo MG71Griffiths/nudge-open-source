@@ -81,7 +81,7 @@ export class FoodCatalogueIndex {
       try { body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(await request.arrayBuffer())); }
       catch { throw new CatalogueIndexError('Invalid catalogue JSON.',400,'catalogue_request_invalid'); }
       if(action==='/search'||action==='/batch'){
-        const result=action==='/search'?await searchCatalogue(this.db,body,{coverage:()=>this.searchCoverage()}):await batchCatalogue(this.db,body);
+        const result=action==='/search'?await searchCatalogue(this.db,body,{coverage:()=>this.searchCoverage()}):await batchCatalogue(this.db,body,{includeReviewed:request.headers.get('x-nudge-catalogue-source')!=='off-only'});
         const barcodes=result.ratings.filter(row=>row.score?.available!==true&&row.sourceKind!=='nudge_community').map(row=>row.barcode);
         if(barcodes.length&&this.ctx?.waitUntil)this.ctx.waitUntil(enqueueCatalogueEnrichment(this.db,{barcodes,reason:action==='/search'?'search':'scan'}).catch(()=>{
           console.error(JSON.stringify({event:'catalogue_enrichment_enqueue_failure',action}));

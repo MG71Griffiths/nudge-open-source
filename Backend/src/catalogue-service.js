@@ -1,5 +1,6 @@
 import { catalogueFetch, readCatalogue, writeCatalogue, validCatalogueBarcode, catalogueRecordFromPayload, CatalogueNotFoundError } from './food-catalogue.js';
 import { publicCatalogueQualityHoldMatches } from './catalogue-quality-hold.js';
+import { reviewedCatalogueRecord } from './reviewed-catalogue.js';
 
 // Each barcode has its own durable object. No user identifier, photo or diary is
 // retained. A failed public-source fetch is cooled down, not cached as a food.
@@ -32,12 +33,12 @@ export async function getCatalogue(env,barcode,signal,options) {
 // Fast trusted catalogue read for scoring: no OFF fallback or quota admission.
 export class CatalogueIndexUnavailableError extends Error {}
 class CatalogueIndexNotFoundError extends Error {}
-export async function getCatalogueFromIndex(env,barcode,signal,{classifyMissing=false}={}) {
+export async function getCatalogueFromIndex(env,barcode,signal,{classifyMissing=false,includeReviewed=true}={}) {
   if(!validCatalogueBarcode(barcode))return null;
   const index=env.FOOD_CATALOGUE_INDEX?.get(env.FOOD_CATALOGUE_INDEX.idFromName('uk-public-products-v1'),{locationHint:'weur'});
   const bounded=()=>signal?AbortSignal.any([signal,AbortSignal.timeout(1500)]):AbortSignal.timeout(1500);
   if(index)try {
-    const response=await index.fetch('https://catalogue-index/batch',{method:'POST',body:JSON.stringify({codes:[barcode]}),signal:bounded()});
+    const response=await index.fetch('https://catalogue-index/batch',{method:'POST',...(includeReviewed===false?{headers:{'x-nudge-catalogue-source':'off-only'}}:{}),body:JSON.stringify({codes:[barcode]}),signal:bounded()});
     if(!response.ok)throw new CatalogueIndexUnavailableError('Catalogue index unavailable');
     {
       const body=await response.json();
@@ -64,7 +65,11 @@ export async function getCatalogueFromIndex(env,barcode,signal,{classifyMissing=
             :score.status!=='unrated'||['value','grade','rawScore'].some(key=>score[key]!=null))
           ||hasHoldIndication&&!held)throw new CatalogueIndexUnavailableError('Unverified catalogue index response');
       }
-      if(p&&meta?.sourceKind!=='nudge_community'&&Number.isSafeInteger(meta?.fetchedAt)&&meta.fetchedAt<=Date.now()+60000&&(meta.expiresAt>Date.now()||held)){
+      if(p&&meta?.sourceKind==='nudge_community'){
+        if(includeReviewed===false)throw new CatalogueIndexUnavailableError('Unsupported catalogue source');
+        return await reviewedCatalogueRecord(p,meta,barcode);
+      }
+      if(p&&Number.isSafeInteger(meta?.fetchedAt)&&meta.fetchedAt<=Date.now()+60000&&(meta.expiresAt>Date.now()||held)){
         const record=catalogueRecordFromPayload({product:p},barcode,meta.fetchedAt);
         if(!record||record.barcode!==barcode||!record.product||!record.providerPayload)throw new CatalogueIndexUnavailableError('Unusable catalogue source');
         return {...record,...(meta.score?.catalogueEnrichment||held?{catalogueRating:meta.score,catalogueCalculatedAt:meta.calculatedAt,catalogueSourceFingerprint:meta.sourceFingerprint}: {})};
@@ -78,14 +83,14 @@ export async function getCatalogueFromIndex(env,barcode,signal,{classifyMissing=
   }
   return null;
 }
-export async function getCatalogueOutcome(env,barcode,signal,{skipIndex=false,allowSourceFetch=false}={}) {
+export async function getCatalogueOutcome(env,barcode,signal,{skipIndex=false,allowSourceFetch=false,includeReviewed=true}={}) {
   if(!validCatalogueBarcode(barcode))return {status:'unavailable'};
   // Foreground reads use only the cleaned, source-bound Nudge catalogue.
   // A missing index, expired/unusable source or outage is not a proven miss.
   // Background contribution processing must explicitly opt into source fetch.
   if(allowSourceFetch!==true){
     try{
-      const record=await getCatalogueFromIndex(env,barcode,signal,{classifyMissing:true});
+      const record=await getCatalogueFromIndex(env,barcode,signal,{classifyMissing:true,includeReviewed});
       return record?{status:'found',record}:{status:'unavailable',retryAfter:60};
     }catch(error){
       if(error instanceof CatalogueIndexNotFoundError)return {status:'not_found'};
@@ -94,7 +99,7 @@ export async function getCatalogueOutcome(env,barcode,signal,{skipIndex=false,al
     }
   }
   let known;
-  try{known=skipIndex?null:await getCatalogueFromIndex(env,barcode,signal);}
+  try{known=skipIndex?null:await getCatalogueFromIndex(env,barcode,signal,{includeReviewed});}
   catch(error){if(error instanceof CatalogueIndexUnavailableError)return {status:'unavailable',retryAfter:60};throw error;}
   if(known)return {status:'found',record:known};
   const index=env.FOOD_CATALOGUE_INDEX?.get(env.FOOD_CATALOGUE_INDEX.idFromName('uk-public-products-v1'),{locationHint:'weur'});

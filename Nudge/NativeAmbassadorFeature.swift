@@ -701,7 +701,7 @@ enum AmbassadorReportReason: String, CaseIterable, Identifiable {
             }
             Text(profile.leaderboardVisible ? "Reviewed contributions move you up the shared standings." : "Your row is just for you. Switch on sharing in name & privacy to join the shared standings.")
                 .font(.subheadline).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-            if profile.allTimePoints == 0 { Text("Get your first point: scan a product with missing details and tap “Help complete this product”. Points arrive after review.").font(.subheadline) }
+            if profile.allTimePoints == 0 { Text("Get your first point: open a scanned product, tap ⋯ → Suggest a correction, and share clear pack photos. Points arrive after useful facts pass review.").font(.subheadline) }
         }
     }
     private func points(_ count: Int, title: String) -> some View {
@@ -740,6 +740,7 @@ enum AmbassadorReportReason: String, CaseIterable, Identifiable {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Scan laps show your unique saved scans on this phone after joining. Repeated barcodes and retries of the same photos count once. They stay private and aren’t points.")
                 Text("Earn one shared point per product when a contribution you send adds useful, reviewed catalogue information. Repeat submissions, unchanged facts and rejected submissions don’t earn points.")
+                Text("Join before sending a contribution. Correcting your private food or diary doesn’t submit it: use Suggest a correction to share pack facts for review.")
                 Text("5 points: Helper · 25: Champion · 100: Trailblazer").font(.caption)
             }.font(.subheadline).padding(.top, 12)
         }.font(.headline)

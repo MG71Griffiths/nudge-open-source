@@ -1883,9 +1883,12 @@ struct ProductSearchQuery: Equatable {
         // Mode precedes a fixed namespace, so literal punctuation in a product
         // query cannot impersonate a prefix flag (for example “bread:prefix”).
         let mode = prefixMatch ? "prefix:v1:" : ""
-        if let category { return "\(mode)\(support)category:v3:\(scope)\(category.id):\(page):\(category.tags.joined(separator: "|")):\(text.lowercased())\(sort)" }
+        // Default browsing now ranks the entire category by Nudge score and
+        // spreads same-name ties. Do not replay older alphabetical pages.
+        let browse = text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && sortOrder == .relevance ? "rankedBrowse:v1:" : ""
+        if let category { return "\(browse)\(mode)\(support)category:v3:\(scope)\(category.id):\(page):\(category.tags.joined(separator: "|")):\(text.lowercased())\(sort)" }
         let normalized = text.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "en_GB"))
-        return "\(mode)\(support)\(isDiscovery ? "discovery:v3:" + scope : "")\(page):\(normalized)\(sort)"
+        return "\(browse)\(mode)\(support)\(isDiscovery ? "discovery:v3:" + scope : "")\(page):\(normalized)\(sort)"
     }
 
     func matchesScope(_ product: BarcodeProduct) -> Bool {

@@ -38,6 +38,16 @@ final class NativeAppStore: ObservableObject {
         set { if activeAnalysisCount != newValue { activeAnalysisCount = newValue } }
     }
     @Published var addFoodPresented = false
+    @Published var foodDescription = ""
+    @Published private(set) var describingFood = false
+    @Published private(set) var foodDescriptionError: String?
+    @Published private(set) var foodDescriptionNeedsSignIn = false
+    @Published private(set) var foodDescriptionNeedsPermission = false
+    private var foodDescriptionTask: Task<Void, Never>?
+    private var foodDescriptionGeneration = UUID()
+    private var foodDescriptionRequest = (text: "", id: UUID())
+    private var foodDescriptionResult: [String: Any]?
+    private let analyseDescription: (String, UUID) async throws -> [String: Any]
     @Published var ambassadorsPresented = false
     private var addFoodSource: String?
     @Published private var mealRefinementSubmissions: Set<String> = []
@@ -157,10 +167,12 @@ final class NativeAppStore: ObservableObject {
     }
 
     init(store: NudgeDataStore = .shared, bundle: Bundle = .main, now: @escaping () -> Date = Date.init,
-         lookupProduct: @escaping (String) async throws -> BarcodeProduct = { try await OpenFoodFactsService.catalogueConnected.lookup(barcode: $0) }) {
+         lookupProduct: @escaping (String) async throws -> BarcodeProduct = { try await OpenFoodFactsService.catalogueConnected.lookup(barcode: $0) },
+         analyseDescription: @escaping (String, UUID) async throws -> [String: Any] = { try await NativeFoodDescriptionService().analyse(description: $0, requestID: $1) }) {
         self.persistence = store
         self.now = now
         self.lookupProduct = lookupProduct
+        self.analyseDescription = analyseDescription
         self.diaryDay = Self.dayKey(now())
         self.loggingDay = Self.dayKey(now())
         load(bundle: bundle)
@@ -207,7 +219,7 @@ final class NativeAppStore: ObservableObject {
         runtime.setObject(timestamp, forKeyedSubscript: "nativeNow" as NSString)
         runtime.setObject(diagnostic, forKeyedSubscript: "nativeDiagnostic" as NSString)
         runtime.evaluateScript("var window=globalThis;var document={addEventListener:function(){},getElementById:function(){return null;}};var location={protocol:'native:'};")
-        let paths = ["streaks.js", "recipe-catalogue-data.js", "recipe-catalogue.js", "core/food-log.js", "core/diary.js", "core/nutrition-profile.js", "core/product-evidence.js", "core/nudge-score.js", "core/food-composition.js", "core/meal-recovery-data.js", "core/meal-recovery.js", "core/recipe-composition.js", "core/meal-score.js", "food-detail-model.js", "core/frequency-policy.js", "core/analysis-result.js", "core/chatgpt-analysis.js", "core/fast-food-capture.js", "scan-results.js", "today-goals.js", "cycle-support.js", "search-model.js", "diet.js", "scan-history.js", "repertoire.js", "native-review.js", "native-session.js", "food-catalogue.js"]
+        let paths = ["streaks.js", "recipe-catalogue-data.js", "recipe-catalogue.js", "core/food-log.js", "core/diary.js", "core/nutrition-profile.js", "core/product-evidence.js", "core/nudge-score.js", "core/food-composition.js", "core/meal-recovery-data.js", "core/meal-recovery.js", "core/recipe-composition.js", "core/meal-score.js", "core/text-food-analysis.js", "food-detail-model.js", "core/frequency-policy.js", "core/analysis-result.js", "core/chatgpt-analysis.js", "core/fast-food-capture.js", "scan-results.js", "today-goals.js", "cycle-support.js", "search-model.js", "diet.js", "scan-history.js", "repertoire.js", "native-review.js", "native-session.js", "food-catalogue.js"]
         for path in paths {
             guard let url = bundle.resourceURL?.appendingPathComponent("Web/" + path),
                   let script = try? String(contentsOf: url, encoding: .utf8) else {
@@ -407,6 +419,7 @@ final class NativeAppStore: ObservableObject {
     }
     @discardableResult
     func perform(_ operation: String, _ payload: [String: Any] = [:]) -> Bool {
+        let confirmingDescription = operation == "reviewConfirm" && (review["confirmationId"] as? String ?? "").hasPrefix("typed-food:")
         if operation == "showSaved" {
             if route != "diary" { setLoggingDestination() }
             route = "saved"; return true
@@ -427,6 +440,10 @@ final class NativeAppStore: ObservableObject {
         if ok && operation == "historyDelete", let id = payload["id"] as? String { capture.historyDeleted(id) }
         if ok && ["historyUndo", "historyDismissUndo"].contains(operation) { capture.resumePending() }
         if ok && operation == "reviewConfirm" {
+            if confirmingDescription {
+                foodDescription = ""; foodDescriptionResult = nil
+                foodDescriptionRequest = ("", UUID())
+            }
             let draft = project("reviewModel")["draft"] as? [String: Any] ?? [:]
             let destination = draft["day"] as? String ?? loggingDay
             cancelProductRecovery(); capture.complete(ifReviewEventID: review["eventId"] as? String)
@@ -441,7 +458,9 @@ final class NativeAppStore: ObservableObject {
     }
     func navigate(_ tab: String) {
         if tab == "camera" { startCamera(); return }
+        if tab == "describeFood" { showFoodDescription(); return }
         guard ["today","history","search","you"].contains(tab) else { return }
+        cancelFoodDescriptionAnalysis()
         cancelProductRecovery()
         openTask?.cancel(); openTask = nil; openGeneration = UUID(); loading = false
         route = nil; selectedTab = tab
@@ -478,7 +497,7 @@ final class NativeAppStore: ObservableObject {
         addFoodPresented = true
     }
     func chooseAddFood(_ source: String) {
-        guard ["camera", "favourites", "history"].contains(source), addFoodPresented else { return }
+        guard ["camera", "description", "favourites", "history"].contains(source), addFoodPresented else { return }
         addFoodSource = source
         addFoodPresented = false
     }
@@ -487,10 +506,79 @@ final class NativeAppStore: ObservableObject {
         guard let source = addFoodSource else { return }
         addFoodSource = nil
         if source == "camera" { startCamera(day: loggingDay, meal: loggingMeal) }
+        else if source == "description" { showFoodDescription(day: loggingDay) }
         else { showFoodLibrary(mode: source == "favourites" ? "favourites" : "recents", day: loggingDay, meal: loggingMeal) }
+    }
+    func showFoodDescription(day: String? = nil) {
+        cancelPendingReviewOpen(); cancelProductRecovery(); cancelFoodDescriptionAnalysis()
+        setLoggingDestination(day: day ?? (route == "diary" ? diaryDay : currentDay))
+        route = "foodDescription"
+        foodDescriptionError = nil; foodDescriptionNeedsSignIn = false; foodDescriptionNeedsPermission = false
+    }
+    func cancelFoodDescriptionAnalysis() {
+        foodDescriptionTask?.cancel(); foodDescriptionTask = nil
+        foodDescriptionGeneration = UUID(); describingFood = false
+    }
+    func analyseFoodDescription() {
+        guard route == "foodDescription", !describingFood else { return }
+        let text = foodDescription.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard NativeFoodDescriptionService.validDescription(text) else {
+            foodDescriptionError = NativeFoodDescriptionService.Failure.invalidDescription.localizedDescription; return
+        }
+        foodDescriptionError = nil; foodDescriptionNeedsSignIn = false; foodDescriptionNeedsPermission = false
+        if foodDescriptionRequest.text != text {
+            foodDescriptionRequest = (text, UUID()); foodDescriptionResult = nil
+        }
+        let requestID = foodDescriptionRequest.id
+        let payload: [String: Any] = ["description": text, "requestId": requestID.uuidString.lowercased()]
+        let day = loggingDay
+        if let cached = foodDescriptionResult {
+            openFoodDescriptionResult(cached, request: payload, day: day); return
+        }
+        let local = project("textFoodPreview", payload)
+        if local["entry"] is [String: Any] {
+            openFoodDescriptionResult(local, request: payload, day: day); return
+        }
+        guard PhotoAnalysisPermission().allowed else {
+            foodDescriptionNeedsPermission = true
+            foodDescriptionError = NativeFoodDescriptionService.Failure.permission.localizedDescription; return
+        }
+        let generation = UUID(); foodDescriptionGeneration = generation
+        let revision = NudgeAccountManager.shared.revision
+        describingFood = true
+        foodDescriptionTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let result = try await analyseDescription(text, requestID)
+                try Task.checkCancellation()
+                guard foodDescriptionGeneration == generation, route == "foodDescription",
+                      foodDescriptionRequest.text == text, NudgeAccountManager.shared.revision == revision,
+                      PhotoAnalysisPermission().allowed else { throw CancellationError() }
+                describingFood = false; foodDescriptionTask = nil
+                openFoodDescriptionResult(result, request: payload, day: day)
+            } catch {
+                guard foodDescriptionGeneration == generation else { return }
+                describingFood = false; foodDescriptionTask = nil
+                guard !(error is CancellationError), !Task.isCancelled, route == "foodDescription" else { return }
+                let failure = error as? NativeFoodDescriptionService.Failure ?? .unavailable
+                foodDescriptionNeedsSignIn = if case .signIn = failure { true } else { false }
+                foodDescriptionNeedsPermission = if case .permission = failure { true } else { false }
+                foodDescriptionError = failure.localizedDescription
+            }
+        }
+    }
+    private func openFoodDescriptionResult(_ result: [String: Any], request: [String: Any], day: String) {
+        let checked = project("textFoodValidate", ["result": result, "request": request])
+        guard var entry = checked["entry"] as? [String: Any], let id = request["requestId"] as? String else {
+            foodDescriptionError = NativeFoodDescriptionService.Failure.invalidResponse.localizedDescription; return
+        }
+        foodDescriptionResult = checked
+        entry["day"] = day; entry["slot"] = ""
+        setReview(["kind": "entry", "entry": entry, "day": day, "slot": "", "confirmationId": "typed-food:" + id])
     }
     func showAmbassadors() { ambassadorsPresented = true }
     func startCamera(repair: Bool = false, day: String? = nil, meal: String? = nil) {
+        cancelFoodDescriptionAnalysis()
         cancelPendingReviewOpen()
         if repair {
             let draft = project("reviewModel")["draft"] as? [String: Any] ?? [:]
@@ -624,6 +712,7 @@ final class NativeAppStore: ObservableObject {
         else { capture.cancelAnalysis() }
     }
     func dismissReview() {
+        cancelFoodDescriptionAnalysis()
         cancelProductRecovery(); route = route == "review" ? reviewReturnRoute : nil
         loading = false; openTask?.cancel(); openGeneration = UUID()
     }
@@ -851,11 +940,11 @@ final class NativeAppStore: ObservableObject {
         scoreTask?.cancel(); scoreTask = nil; scoreGeneration = UUID()
         recoveringProduct = false; productRecoveryMessage = nil
     }
-    func openProductContribution(barcode: String, productName: String? = nil) {
+    func openProductContribution(barcode: String, productName: String? = nil, isCorrection: Bool = false) {
         guard barcode.range(of: #"^[0-9]{4,18}$"#, options: .regularExpression) != nil else { return }
         analysisFailure = nil
         contributionContext = .init(barcode: barcode, productName: productName,
-                                    countryCode: search.market == .unitedKingdom ? "GB" : nil, store: search.store)
+                                    countryCode: search.market == .unitedKingdom ? "GB" : nil, store: search.store, isCorrection: isCorrection)
     }
 
     func retryProductRecovery() { recoverProductIfNeeded(retry: true) }

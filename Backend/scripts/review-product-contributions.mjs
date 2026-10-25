@@ -23,6 +23,7 @@ export const HELP=`Usage: node Backend/scripts/review-product-contributions.mjs 
   photos --snapshot PRIVATE_DIRECTORY/review.json --out PRIVATE_DIRECTORY/photos
   publish --snapshot PRIVATE_DIRECTORY/review.json --confirm-barcode BARCODE
           --confirm-category CATEGORY_OR_unknown --confirm-label-facts
+          [--confirm-correction] (required for proposed corrections)
   reject --snapshot PRIVATE_DIRECTORY/review.json
 
 Authentication: --token-file PRIVATE_FILE or --token-env VARIABLE_NAME
@@ -42,11 +43,11 @@ function parse(argv){
  const valued=new Set(['out','snapshot','token-file','token-env','base-url','confirm-barcode','confirm-category']);
  for(;i<argv.length;i++){
   const key=argv[i].startsWith('--')?argv[i].slice(2):'';
-  if(!valued.has(key)&&key!=='confirm-label-facts'||Object.hasOwn(options,key))throw new ReviewCLIError('Unknown or duplicate option. Tokens must come from a file or environment.');
-  options[key]=key==='confirm-label-facts'?true:argv[++i];
+  if(!valued.has(key)&&!['confirm-label-facts','confirm-correction'].includes(key)||Object.hasOwn(options,key))throw new ReviewCLIError('Unknown or duplicate option. Tokens must come from a file or environment.');
+  options[key]=['confirm-label-facts','confirm-correction'].includes(key)?true:argv[++i];
   if(options[key]===undefined||typeof options[key]==='string'&&options[key].startsWith('--'))throw new ReviewCLIError('An option value is missing.');
  }
- const allowed={list:[],show:['out'],photos:['snapshot','out'],publish:['snapshot','confirm-barcode','confirm-category','confirm-label-facts'],reject:['snapshot']}[command];
+ const allowed={list:[],show:['out'],photos:['snapshot','out'],publish:['snapshot','confirm-barcode','confirm-category','confirm-label-facts','confirm-correction'],reject:['snapshot']}[command];
  if(Object.keys(options).some(k=>!['command','id','token-file','token-env','base-url',...allowed].includes(k)))throw new ReviewCLIError('This option is not valid for the selected command.');
  for(const required of {list:[],show:['out'],photos:['snapshot','out'],publish:['snapshot','confirm-barcode','confirm-category','confirm-label-facts'],reject:['snapshot']}[command])if(!options[required])throw new ReviewCLIError('Required review options are missing. Use --help.');
  if(options['token-file']&&options['token-env'])throw new ReviewCLIError('Choose a token file or token environment variable.');
@@ -86,13 +87,15 @@ function summary(value){
  if(!c||!UUID.test(c.id||'')||!/^\d{4,18}$/.test(c.barcode||'')||!STATUSES.includes(c.status)||!Number.isSafeInteger(c.updatedAt)||!Number.isSafeInteger(c.expiresAt))throw new ReviewCLIError('Invalid review response.');
  return {id:c.id,barcode:c.barcode,status:c.status,updatedAt:c.updatedAt,expiresAt:c.expiresAt,
  category:typeof category==='string'&&/^en:[a-z0-9-]{1,100}$/.test(category)?category:'unknown',readyForReview:value.candidate?.readyForReview===true,
- missingPhotoRoles:(Array.isArray(c.missingPhotoRoles)?c.missingPhotoRoles:[]).filter(role=>ROLES.includes(role))};
+ missingPhotoRoles:(Array.isArray(c.missingPhotoRoles)?c.missingPhotoRoles:[]).filter(role=>ROLES.includes(role)),
+ ...(c.correction?{correctionProposed:true,correctionFields:c.correction.fields}:{}),...(Number.isInteger(c.pointsAwarded)?{pointsAwarded:c.pointsAwarded}:{})};
 }
 function validateDetail(value,expectedID){
  summary(value);
  const c=value?.contribution;
  if(!c||id(c.id)!==expectedID||!/^\d{4,18}$/.test(c.barcode||'')||!Number.isSafeInteger(c.updatedAt)||!Number.isSafeInteger(c.expiresAt)||!Array.isArray(value.photos)||value.photos.length>3
   ||new Set(value.photos.map(p=>p.role)).size!==value.photos.length||value.photos.some(p=>!ROLES.includes(p.role)||p.mime_type!=='image/jpeg'||!/^[a-f0-9]{64}$/.test(p.sha256)))throw new ReviewCLIError('Invalid review response.');
+ if(c.correction&&(!Array.isArray(c.correction.fields)||c.correction.fields.length>5||c.correction.fields.some(field=>!['identity','nutrition','ingredients','allergens','category'].includes(field))||typeof c.correction.note!=='string'||[...c.correction.note].length>600||Buffer.byteLength(c.correction.note)>1200||c.correction.source!=='user_proposed'))throw new ReviewCLIError('Invalid correction proposal.');
  return value;
 }
 export async function runReviewCLI(argv,{env=process.env,fetchImpl=fetch,write=value=>process.stdout.write(value),now=()=>Date.now()}={}){
@@ -129,9 +132,10 @@ export async function runReviewCLI(argv,{env=process.env,fetchImpl=fetch,write=v
  const publish=options.command==='publish';
  if(!['pending_review','needs_photos'].includes(c.status)||publish&&(c.status!=='pending_review'||detail.candidate?.readyForReview!==true))throw new ReviewCLIError('This snapshot cannot be published/rejected in its current state.');
  if(publish&&(options['confirm-barcode']!==c.barcode||options['confirm-category']!==(detail.candidate?.prediction?.category?.value||'unknown')||options['confirm-label-facts']!==true))throw new ReviewCLIError('Confirm the exact barcode, category and every label fact from the inspected evidence.');
+ if(publish&&c.correction&&options['confirm-correction']!==true)throw new ReviewCLIError('Read the private correction note, check it against the photos and published candidate, then use --confirm-correction.');
  const current=validateDetail(await request('/'+c.id),c.id);
  if(HASH(stable(current))!==HASH(stable(detail)))throw new ReviewCLIError('This submission changed. Save and inspect a new snapshot before deciding.');
- const body={decision:publish?'publish':'reject',expectedUpdatedAt:c.updatedAt,...(publish?{confirmBarcode:true,confirmCategory:true,confirmLabelFacts:true}:{})};
+ const body={decision:publish?'publish':'reject',expectedUpdatedAt:c.updatedAt,...(publish?{confirmBarcode:true,confirmCategory:true,confirmLabelFacts:true,...(c.correction?{confirmCorrection:true}:{})}:{})};
  const response=await request('/'+c.id+'/review',{method:'POST',body});
  if(response?.contribution?.id!==c.id||response.contribution.status!==(publish?'published':'rejected'))throw new ReviewCLIError('Review outcome is unknown; inspect current status before another command.');
  write(JSON.stringify(summary(response),null,2)+'\n');

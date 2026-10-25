@@ -366,6 +366,12 @@ window.NudgeNativeSession = (() => {
       return {rows:history.items().filter(row=>!row.legacy&&row.addToEaten===true&&row.captureOwnerKey===p.ownerKey&&row.loggingDay===p.day&&row.diaryAddState!=='cancelled'&&row.diaryAddState!=='added'&&!row.entry&&!Object.prototype.hasOwnProperty.call(claims,row.id)).map(row=>({id:row.id,name:row.name||'Your food',status:row.diaryAddState==='needsReview'||['unknown','failed'].includes(row.status)?'Check this food in History':'Analysing · will be added to eaten'}))};
     }
     if(operation==='captureState')return {deleted:history.isDeleted(p.id),event:history.find(p.id)||null};
+    if(operation==='textFoodPreview'){
+      try{return window.NudgeTextFood?.localTextFood(p)||{};}catch{return {};}
+    }
+    if(operation==='textFoodValidate'){
+      try{return window.NudgeTextFood?.validateResponse(p.result,p.request)||{};}catch{return {};}
+    }
     if(operation==='historyItem')return historyItem(p);
     if(operation==='historyScore')return {row:typeof p.id==='string'&&p.id?history?.nativeProjection('all',p.currentProducts,{id:p.id}).rows[0]||null:null};
     if(operation==='captureCachedProduct')return {product:history.productCandidates().find(product=>product.barcode===p.barcode)||null};

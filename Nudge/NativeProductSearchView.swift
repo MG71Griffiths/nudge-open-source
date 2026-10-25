@@ -96,6 +96,12 @@ struct NativeProductSearchView: View {
                     if !searchFocused && !showsResults && !showsRecipes { header }
                     searchField
                     if recipeSearch != nil { searchKindControl }
+                    if !showsRecipes && searchFocused {
+                        Button { searchFocused = false; onNavigate("describeFood") } label: {
+                            Label("Describe something you ate", systemImage: "text.bubble")
+                                .font(.subheadline).frame(minHeight: 44)
+                        }.accessibilityIdentifier("product-search-describe-food")
+                    }
                     if !showsRecipes && (!searchFocused || showsResults) { searchScope }
                 }
                 .frame(maxWidth: 600)
@@ -679,6 +685,7 @@ struct NativeProductSearchView: View {
                 LazyVStack(spacing: 0) {
                     ForEach(model.orderedProducts(rating: { ratings[$0.barcode] ?? productRating($0) }), id: \.barcode) { product in
                         productCard(product, resolvedRating: ratings[product.barcode]).frame(maxWidth: .infinity).id("product-" + product.barcode)
+                            .onAppear { model.loadMoreIfNeeded(appearing: product.barcode) }
                             .background { GeometryReader { geometry in Color.clear.preference(key: NativeSearchScrollAnchorKey.self, value: ["product-" + product.barcode: geometry.frame(in: .named("food-discovery-scroll"))]) } }
                     }
                 }

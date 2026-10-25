@@ -11,6 +11,31 @@ struct NativeProductContributionContext: Identifiable {
     var productName: String? = nil
     var countryCode: String? = nil
     var store: ProductSearchStore? = nil
+    var isCorrection: Bool = false
+}
+
+enum ProductCorrectionField: String, Codable, CaseIterable, Identifiable {
+    case identity, nutrition, ingredients, allergens, category
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .identity: "Name or brand"
+        case .nutrition: "Nutrition values"
+        case .ingredients: "Ingredients"
+        case .allergens: "Allergen wording"
+        case .category: "Food category"
+        }
+    }
+}
+
+struct ProductCorrection: Codable, Equatable {
+    var fields: [ProductCorrectionField] = []
+    var note: String = ""
+    var valid: Bool {
+        fields.count <= 5 && Set(fields).count == fields.count && note.unicodeScalars.count <= 600 && note.utf8.count <= 1200
+        && note.range(of: #"[\x00-\x08\x0b\x0c\x0e-\x1f<>]"#, options: .regularExpression) == nil
+        && (!fields.isEmpty || !note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+    }
 }
 
 enum ProductContributionPhotoRole: String, Codable, CaseIterable, Identifiable {
@@ -82,6 +107,8 @@ struct ProductContributionStatus: Codable, Equatable, Identifiable {
     let message: String
     let canRetry: Bool
     let canDelete: Bool
+    var correction: ProductCorrection? = nil
+    var pointsAwarded: Int? = nil
     var expired: Bool { Double(expiresAt) / 1000 <= Date().timeIntervalSince1970 }
 }
 
@@ -98,10 +125,11 @@ struct ProductContributionRecord: Codable, Identifiable {
     var consented = false
     var submissionAttempted = false
     var remote: ProductContributionStatus? = nil
+    var correction: ProductCorrection? = nil
 
     var isTerminalReceipt: Bool { photos.isEmpty && (remote?.status == .published || remote?.status == .rejected) }
     var editable: Bool { !submissionAttempted && remote == nil }
-    var canSubmit: Bool { Self.validBarcode(barcode) && !photos.isEmpty && consented && remote == nil }
+    var canSubmit: Bool { Self.validBarcode(barcode) && !photos.isEmpty && consented && remote == nil && (correction?.valid ?? true) }
     static func validBarcode(_ value: String) -> Bool { value.range(of: #"^[0-9]{4,18}$"#, options: .regularExpression) != nil }
     static func validOwner(_ value: String) -> Bool { value.range(of: #"^[a-f0-9]{64}$"#, options: .regularExpression) != nil }
 
@@ -113,10 +141,11 @@ struct ProductContributionRecord: Codable, Identifiable {
               storeID.map({ ProductSearchStore(rawValue: $0) != nil }) ?? true else { throw ProductContributionError.invalidDraft }
         // This allowlist deliberately excludes names, diary facts, voice notes,
         // private meal pictures and account credentials.
-        let body: [String: Any] = ["id": id.uuidString.lowercased(), "barcode": barcode,
+        var body: [String: Any] = ["id": id.uuidString.lowercased(), "barcode": barcode,
             "marketCountry": countryCode as Any? ?? NSNull(), "store": storeID as Any? ?? NSNull(),
             "consent": ["version": "product-contribution-v1", "shareProductFacts": true, "retainPhotosForReview": true],
             "photos": photos.map { ["role": $0.role.rawValue, "mimeType": "image/jpeg", "imageBase64": $0.data.base64EncodedString()] }]
+        if let correction { body["correction"] = ["fields": correction.fields.map(\.rawValue).sorted(), "note": correction.note] }
         return try JSONSerialization.data(withJSONObject: body, options: [.sortedKeys])
     }
 }
@@ -310,6 +339,7 @@ struct ProductContributionService {
         ProductContributionRecord.validBarcode(value.barcode) && value.createdAt > 0 && value.updatedAt >= value.createdAt
             && value.expiresAt > value.createdAt && value.message.utf8.count <= 1000 && (0...10).contains(value.attempts)
             && value.missingPhotoRoles.count <= 3 && ["found", "found_other_market", "not_found", "unavailable", "not_checked"].contains(value.sourceLookup)
+            && (value.correction?.valid ?? true) && (value.pointsAwarded.map { (0...1).contains($0) && value.status == .published } ?? true)
     }
     private func request(method: String, path: String, owner: String, body: Data? = nil) async throws -> Data {
         let began = Date()
@@ -392,14 +422,14 @@ final class ProductContributionModel: ObservableObject {
             guard await auth.isCurrent() else { throw ProductContributionError.accountChanged }
             records = try await outbox.records(owner: auth.ownerKey)
             owner = auth.ownerKey
-            current = records.first(where: { $0.barcode == context.barcode }) ?? newDraft(owner: auth.ownerKey)
+            current = records.first(where: { $0.barcode == context.barcode && !(context.isCorrection && $0.isTerminalReceipt) }) ?? newDraft(owner: auth.ownerKey)
             // Existing drafts remain usable if the owner-status read is offline.
             if let statuses = try? await service.list(owner: auth.ownerKey) {
                 for status in statuses.prefix(ProductContributionOutbox.maximumEntries + ProductContributionOutbox.maximumReceipts) {
                     var record = records.first(where: { $0.id == status.id }) ?? ProductContributionRecord(
                         id: status.id, ownerKey: auth.ownerKey, createdAt: Date(timeIntervalSince1970: Double(status.createdAt) / 1000),
                         updatedAt: Date(), barcode: status.barcode, productName: nil, countryCode: nil, storeID: nil)
-                    record.remote = status; record.submissionAttempted = true; record.photos = []; record.updatedAt = Date()
+                    record.remote = status; record.correction = status.correction ?? record.correction; record.submissionAttempted = true; record.photos = []; record.updatedAt = Date()
                     try? await outbox.save(record)
                 }
                 records = try await outbox.records(owner: auth.ownerKey)
@@ -410,14 +440,17 @@ final class ProductContributionModel: ObservableObject {
             self.error = error.localizedDescription
         }
     }
-    private func newDraft(owner: String, barcode: String? = nil) -> ProductContributionRecord {
-        ProductContributionRecord(id: UUID(), ownerKey: owner, createdAt: Date(), updatedAt: Date(),
+    private func newDraft(owner: String, barcode: String? = nil, isCorrection: Bool? = nil) -> ProductContributionRecord {
+        var record = ProductContributionRecord(id: UUID(), ownerKey: owner, createdAt: Date(), updatedAt: Date(),
             barcode: barcode ?? context.barcode, productName: context.productName.map { String($0.prefix(160)) },
             countryCode: context.countryCode, storeID: context.store?.rawValue)
+        record.correction = (isCorrection ?? context.isCorrection) ? ProductCorrection() : nil
+        return record
     }
     func startAnother() {
         guard let owner, !busy else { return }
-        current = newDraft(owner: owner, barcode: current?.barcode); error = nil; notice = nil; submissionRemoved = false
+        current = newDraft(owner: owner, barcode: current?.barcode, isCorrection: current?.correction != nil || current?.remote?.status == .published || context.isCorrection)
+        error = nil; notice = nil; submissionRemoved = false
     }
     func select(_ record: ProductContributionRecord) {
         guard !busy, record.ownerKey == owner else { return }
@@ -430,6 +463,17 @@ final class ProductContributionModel: ObservableObject {
         if let store { record.storeID = store }
         if let consent { record.consented = consent }
         record.updatedAt = Date(); current = record
+        Task { _ = await persist(record) }
+    }
+    func editCorrection(field: ProductCorrectionField? = nil, selected: Bool = false, note: String? = nil) {
+        guard var record = current, record.editable, !busy else { return }
+        var correction = record.correction ?? ProductCorrection()
+        if let field {
+            correction.fields.removeAll { $0 == field }
+            if selected { correction.fields.append(field) }
+        }
+        if let note { correction.note = String(note.prefix(600)) }
+        record.correction = correction; record.updatedAt = Date(); current = record
         Task { _ = await persist(record) }
     }
     func addPhoto(_ data: Data, role: ProductContributionPhotoRole, expectedID: UUID? = nil) async {
@@ -448,7 +492,7 @@ final class ProductContributionModel: ObservableObject {
     }
     @discardableResult private func persist(_ record: ProductContributionRecord) async -> Bool {
         do {
-            if record.photos.isEmpty && record.remote == nil && !record.submissionAttempted {
+            if record.photos.isEmpty && record.remote == nil && !record.submissionAttempted && record.correction?.valid != true {
                 try await outbox.remove(id: record.id, owner: record.ownerKey)
             } else { try await outbox.save(record) }
             records = try await outbox.records(owner: record.ownerKey)
@@ -508,7 +552,7 @@ final class ProductContributionModel: ObservableObject {
     }
     private func accept(_ status: ProductContributionStatus, original: ProductContributionRecord) async {
         var record = original
-        record.remote = status; record.submissionAttempted = true; record.photos = []; record.updatedAt = Date()
+        record.remote = status; record.correction = status.correction ?? record.correction; record.submissionAttempted = true; record.photos = []; record.updatedAt = Date()
         guard await persist(record) else { return }
         current = record; notice = "Submission saved. You can check its progress here."
     }
@@ -552,10 +596,10 @@ struct NativeProductContributionView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
-                    Text("Help complete this product").font(.largeTitle.bold())
-                    Text("Share clear pack photos so Nudge can check missing information and improve its shared product catalogue.")
+                    Text(model.current?.correction != nil ? "Suggest a correction" : "Help complete this product").font(.largeTitle.bold())
+                    Text("Share pack facts for Nudge’s catalogue. They appear for future scans after review; your diary stays unchanged.")
                         .foregroundStyle(Color(uiColor: NudgeTheme.muted))
-                    Text("Ambassadors earn points for useful, reviewed additions—not repeat scans. Join from My profile → Nudge ambassadors.")
+                    Text("Join Nudge ambassadors before sending to earn 1 point per useful, reviewed product. Repeat scans don’t earn points.")
                         .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
                     if model.loading { ProgressView("Opening your drafts…") }
                     if let error = model.error { Text(error).foregroundStyle(Color(uiColor: NudgeTheme.warningText)).accessibilityIdentifier("contribution-error") }
@@ -624,6 +668,21 @@ struct NativeProductContributionView: View {
     private func form(_ record: ProductContributionRecord) -> some View {
         VStack(alignment: .leading, spacing: 18) {
             if let name = record.productName { Text(name).font(.headline) }
+            if let correction = record.correction {
+                Text("What needs correcting?").font(.headline)
+                ForEach(ProductCorrectionField.allCases) { field in
+                    Toggle(field.title, isOn: Binding(get: { model.current?.correction?.fields.contains(field) == true }, set: { model.editCorrection(field: field, selected: $0) }))
+                        .accessibilityIdentifier("contribution-correction-" + field.rawValue)
+                }
+                TextField("e.g. The pack says 8.2 g protein per 100 g", text: Binding(get: { model.current?.correction?.note ?? "" }, set: { model.editCorrection(note: $0) }), axis: .vertical)
+                    .lineLimit(2...5).textFieldStyle(.roundedBorder).accessibilityIdentifier("contribution-correction-note")
+                Text("Optional · Product facts only, up to 600 characters. Add clear pack photos to support the correction.")
+                    .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                if correction.note.utf8.count > 1200 || correction.note.unicodeScalars.count > 600 { Text("Please shorten the note.").font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.warningText)) }
+            } else {
+                Button("Something is wrong? Suggest a correction") { model.editCorrection() }
+                    .font(.subheadline).accessibilityIdentifier("contribution-start-correction")
+            }
             TextField("Barcode", text: Binding(get: { model.current?.barcode ?? "" }, set: { model.edit(barcode: $0) }))
                 .keyboardType(.numberPad).textFieldStyle(.roundedBorder).accessibilityIdentifier("contribution-barcode")
             Picker("Found in", selection: Binding(get: { model.current?.countryCode ?? "" }, set: { model.edit(country: .some($0.isEmpty ? nil : $0)) })) {
@@ -635,17 +694,17 @@ struct NativeProductContributionView: View {
                 ForEach(ProductSearchStore.allCases) { Text($0.title).tag($0.rawValue) }
             }
             ForEach(ProductContributionPhotoRole.allCases) { role in photoCard(role, record: record) }
-            Toggle("Share these pack photos and extracted product facts with Nudge", isOn: Binding(get: { model.current?.consented == true }, set: { model.edit(consent: $0) }))
+            Toggle("Send these pack photos and proposed product facts for review", isOn: Binding(get: { model.current?.consented == true }, set: { model.edit(consent: $0) }))
                 .accessibilityIdentifier("contribution-consent")
             Text("Only share pack photos you took or have permission to use. Keep people, receipts and personal details out of the frame. You keep your rights and allow Nudge to use the selected photos for this review.")
                 .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
-            Text("Nudge sends these selected pack photos to OpenAI to read product information, then checks the extracted facts before publication. Photos stay private to this process and Nudge keeps them for up to 30 days. Approved product facts can be added to the shared catalogue. Your diary, voice notes and normal food-analysis photos are not included.")
+            Text("Nudge sends the selected pack photos to OpenAI to read the label. Your correction note is for Nudge’s reviewer. Photos and notes stay private for up to 30 days. Approved facts may appear in Nudge’s shared catalogue; this does not edit Open Food Facts. Your diary, voice notes and other photos are not included.")
                 .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             Text("Drafts stay on this phone for up to 30 days. Only tap Send for review when the photos show the product information you want to share.")
                 .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
             Button("Send for review") { Task { await model.send() } }.buttonStyle(NudgeButtonStyle())
                 .disabled(!record.canSubmit || !model.analysisAllowed || model.busy).accessibilityIdentifier("contribution-send")
-            if !record.photos.isEmpty { Button("Delete draft", role: .destructive) { deletePresented = true }.disabled(model.busy) }
+            if !record.photos.isEmpty || record.correction?.valid == true { Button("Delete draft", role: .destructive) { deletePresented = true }.disabled(model.busy) }
         }.disabled(model.busy)
     }
     private func photoCard(_ role: ProductContributionPhotoRole, record: ProductContributionRecord) -> some View {
@@ -682,6 +741,18 @@ struct NativeProductContributionView: View {
             if let status = record.remote {
                 Text(status.expired && status.status != .published ? "Retention period ended" : status.status.title).font(.title2.bold())
                 Text(status.message).font(.subheadline)
+                if let correction = status.correction ?? record.correction {
+                    if !correction.fields.isEmpty { Text(correction.fields.map(\.title).joined(separator: " · ")).font(.subheadline) }
+                    if !correction.note.isEmpty { Text(correction.note).font(.subheadline).textSelection(.enabled) }
+                }
+                if status.status == .published {
+                    if let points = status.pointsAwarded {
+                        Label(points == 1 ? "1 ambassador point earned" : "No ambassador point added", systemImage: points == 1 ? "star.fill" : "info.circle")
+                            .font(.headline).foregroundStyle(Color(uiColor: NudgeTheme.plantText))
+                        if points == 0 { Text("Points require joining before submission and useful new facts. Each product earns you at most one point.").font(.caption) }
+                    }
+                    Button("Suggest another correction") { model.startAnother() }.buttonStyle(NudgeButtonStyle(variant: .secondary))
+                }
                 if status.sourceLookup == "found_other_market" {
                     Text("Existing product information lists a different country. The review will check the pack you shared.")
                         .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))

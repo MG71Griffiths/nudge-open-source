@@ -3,7 +3,8 @@ import {captureSpendStop,captureReservationMicrousd,CAPTURE_PRICE_VERSION} from 
 // Called only on the private quota binding. One active quota lease bounds this
 // ledger to one pending call. Unsettled reservations remain charged when a worker
 // dies or its lease expires; a late reply cannot refund a newer call or UTC day.
-// Scope: photo analysis (including its explicit voice transcription), not public
+// Scope: photo analysis (including its explicit voice transcription) and typed
+// food analysis, not public
 // catalogue/scoring jobs or ChatGPT-plan requests. No monetary amount is enabled
 // by default. This price-versioned admission stop is not a provider invoice cap.
 export async function captureSpendAction(tx,env,action,body,now) {

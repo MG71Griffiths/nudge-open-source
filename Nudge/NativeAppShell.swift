@@ -127,6 +127,7 @@ struct NativeAppShell: View {
         switch store.presentationRoute {
         case "diary": NativeDiaryView(store: store)
         case "foodLibrary": NativeFoodLibraryView(store: store)
+        case "foodDescription": NativeFoodDescriptionView(store: store)
         case "saved": NativeMyFoodsView(store: store)
         case "cycle": NativeCycleView(store: store)
         case "profile": NativeProfileView(store: store)
@@ -165,6 +166,7 @@ struct NativeAddFoodChooser: View {
                     Text("What’s on the menu?").font(.largeTitle.bold())
                     Text("Choose how to add your food.").foregroundStyle(Color(uiColor: NudgeTheme.muted))
                     source("Camera", detail: "Scan a barcode or photograph your food", symbol: "camera", key: "camera")
+                    source("Describe food", detail: "Type what you ate", symbol: "text.bubble", key: "description")
                     source("Favourites", detail: "Pick something you’ve saved", symbol: "heart", key: "favourites")
                     source("History", detail: "Have something again", symbol: "clock.arrow.circlepath", key: "history")
                 }.padding(20).frame(maxWidth: 600).frame(maxWidth: .infinity)

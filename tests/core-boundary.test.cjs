@@ -12,7 +12,7 @@ const engines={
   'nutrition-profile.js':'NudgeNutrition','diary.js':'NudgeDiary','food-log.js':'NudgeFoodLog',
   'product-evidence.js':'NudgeProductEvidence'
 };
-const nativeEngines={'chatgpt-analysis.js':'NudgeChatGPTAnalysis','fast-food-capture.js':'NudgeFastCapture'};
+const nativeEngines={'chatgpt-analysis.js':'NudgeChatGPTAnalysis','fast-food-capture.js':'NudgeFastCapture','text-food-analysis.js':'NudgeTextFood'};
 const browserAPIs=['document','navigator','location','localStorage','sessionStorage','indexedDB','fetch','XMLHttpRequest','WebSocket'];
 function corePaths(entrypoint){
   if(entrypoint==='native'){
@@ -61,6 +61,9 @@ test('native core loads its photo adapter after shared engines without browser s
   for(const dependency of ['food-composition.js','meal-recovery-data.js','meal-recovery.js','recipe-composition.js','analysis-result.js'])assert.ok(paths.indexOf(dependency)<paths.indexOf('fast-food-capture.js'));
   assert.deepEqual(Object.keys(sandbox.NudgeFastCapture).sort(),['localCapture','recalculate','version']);
   assert.equal(sandbox.NudgeFastCapture.version,'nudge-fast-capture-v1');
+  for(const dependency of ['food-composition.js','meal-recovery-data.js','meal-recovery.js','meal-score.js'])assert.ok(paths.indexOf(dependency)<paths.indexOf('text-food-analysis.js'));
+  assert.deepEqual(Object.keys(sandbox.NudgeTextFood).sort(),['MAX_DESCRIPTION','VERSION','candidates','finish','localTextFood','validateRequest','validateResponse']);
+  assert.equal(sandbox.NudgeTextFood.VERSION,'nudge-text-food-v1');
 });
 
 test('core code has no direct platform or screen dependencies',()=>{
@@ -80,6 +83,10 @@ test('backend uses explicit shared-engine exports and agrees with offline arithm
   const {sandbox}=headless();
   const modules={ScoreCore:'NudgeScoreCore',Composition:'NudgeComposition',MealRecoveryData:'NudgeMealRecoveryData',MealRecovery:'NudgeMealRecovery',RecipeComposition:'NudgeRecipeComposition',MealScore:'NudgeMealScore'};
   for(const [name,globalName] of Object.entries(modules))assert.deepEqual(Object.keys(api[name]).sort(),Object.keys(sandbox[globalName]).sort(),name+' exposes the same engine');
+  const native=headless('native').sandbox;
+  assert.deepEqual(Object.keys(api.TextFood).sort(),Object.keys(native.NudgeTextFood).sort(),'TextFood exposes the same native/offline engine');
+  const textRequest={description:'sourdough cheese sandwich with chutney',requestId:'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'};
+  assert.equal(JSON.stringify(api.TextFood.localTextFood(textRequest)),JSON.stringify(native.NudgeTextFood.localTextFood(textRequest)),'Typed food facts and rating agree across backend and native');
   const components=[{amountGrams:75,nutrients:{protein:{value:12},carbohydrate:{value:20}},sourceRecord:{carbohydrateDefinition:'available'}},{amountGrams:25,nutrients:{protein:{value:8},carbohydrate:{value:null}},sourceRecord:{carbohydrateDefinition:'available'}}];
   const before=JSON.stringify(components),online=api.Composition.total(components),offline=sandbox.NudgeComposition.total(components);
   assert.equal(JSON.stringify(online),JSON.stringify(offline));

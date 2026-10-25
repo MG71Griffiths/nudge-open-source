@@ -242,6 +242,46 @@ export function catalogueSearchSQL(body, now=Date.now()) {
     rows={sql:`SELECT p.* FROM catalogue_products p WHERE p.rowid IN (SELECT p.rowid ${candidateBase} ORDER BY ${order} LIMIT ? OFFSET ?) ORDER BY ${order}`,
       values:[...values,...sortValues,q.pageSize,(q.page-1)*q.pageSize,...sortValues]};
   }
+  if(q.sort==='relevance'&&!q.words.length) {
+    // Browsing has no text relevance signal. Lead with the current Nudge score
+    // across the entire matching category, not alphabetical first-page rows.
+    // Spread identical normalized names only within an equal-score tier. Pack
+    // sizes/brands remain discoverable and no lower score jumps a higher one.
+    // Window ranking uses narrow indexed candidates; hydrate only this page.
+    const browseBase=filtered?base:`FROM catalogue_products p INDEXED BY catalogue_rating_candidates WHERE ${where.join(' AND ')}`;
+    const browseOrder='browse_rating IS NULL,browse_rating DESC,variant_rank,name_sort,barcode';
+    const offset=(q.page-1)*q.pageSize,prefix=offset+q.pageSize;
+    // If the highest score has enough distinct names for this page, its first
+    // variants are exactly the prefix of the full ranking. Walk the existing
+    // ordered rating index only until that prefix is full. Resolve source
+    // binding through its existing narrow index, never wide product payloads.
+    // Sparse categories, later variants and score-tier boundaries retain the
+    // complete window ranking below; no candidates are truncated or omitted.
+    const rankedBase=browseBase.replace(/INDEXED BY catalogue_(?:search|rating)_candidates/,'INDEXED BY catalogue_rating_candidates')
+      .replaceAll('p.source_fingerprint','(SELECT binding.source_fingerprint FROM catalogue_products binding INDEXED BY catalogue_discovery_sources WHERE binding.barcode=p.barcode)');
+    rows={sql:`WITH best_rating AS MATERIALIZED (
+      SELECT p.rating_value ${rankedBase} AND ${current} AND p.rating_value IS NOT NULL ORDER BY p.rating_value DESC LIMIT 1
+    ), first_names AS MATERIALIZED (
+      SELECT min(p.barcode) AS barcode,p.name_sort ${rankedBase} AND ${current} AND p.rating_value=(SELECT rating_value FROM best_rating)
+      GROUP BY p.name_sort ORDER BY p.name_sort LIMIT ?
+    ), fast_page AS (
+      SELECT p.rowid AS product_rowid,(SELECT rating_value FROM best_rating) AS browse_rating,1 AS variant_rank,n.name_sort,n.barcode
+      FROM first_names n CROSS JOIN catalogue_products p ON p.barcode=n.barcode
+      WHERE (SELECT count(*) FROM first_names)=? ORDER BY n.name_sort,n.barcode LIMIT ? OFFSET ?
+    ), score_candidates AS (
+      SELECT p.rowid AS product_rowid,p.name_sort,p.barcode,CASE WHEN ${current} THEN p.rating_value ELSE NULL END AS browse_rating ${browseBase}
+      AND (SELECT count(*) FROM first_names)<?
+    ), varied_candidates AS (
+      SELECT *,row_number() OVER(PARTITION BY browse_rating,name_sort ORDER BY barcode) AS variant_rank FROM score_candidates
+    ), slow_page AS (
+      SELECT product_rowid,browse_rating,variant_rank,name_sort,barcode FROM varied_candidates ORDER BY ${browseOrder} LIMIT ? OFFSET ?
+    ), page_candidates AS (
+      SELECT * FROM fast_page UNION ALL SELECT * FROM slow_page
+    ) SELECT p.* FROM page_candidates c CROSS JOIN catalogue_products p ON p.rowid=c.product_rowid
+      ORDER BY c.browse_rating IS NULL,c.browse_rating DESC,c.variant_rank,c.name_sort,c.barcode`,
+      values:[...values,...versions,...values,...versions,prefix,prefix,q.pageSize,offset,
+        ...versions,...values,prefix,q.pageSize,offset]};
+  }
   return {query:q,rows,count:{sql:`SELECT count(*) AS total ${base}`,values}};
 }
 function currentRatingRow(row,now) {
@@ -307,12 +347,12 @@ export async function searchCatalogue(db,body,{now=Date.now(),coverage=null}={})
     places:{selected:publicPlace(plan.query.placeID),...(includesCoverage?{coverage:status.places}:{}),evidence:page.places},
     discovery:{excludedDietary,...(includesCoverage?{coverage:status.discovery}:{}),evidence:page.discovery},...(includesCoverage?{support:status.support}:{}),supportTags:page.supportTags};
 }
-export async function batchCatalogue(db,body,{now=Date.now()}={}) {
+export async function batchCatalogue(db,body,{now=Date.now(),includeReviewed=true}={}) {
   if(!allowed(body,['codes'])||!Array.isArray(body.codes)||!body.codes.length||body.codes.length>20||body.codes.some(code=>!validCatalogueBarcode(code)))throw new CatalogueIndexError();
   const codes=[...new Set(body.codes)];
   const result=await db.prepare(`SELECT * FROM catalogue_products WHERE barcode IN (${codes.map(()=>'?').join(',')})`).bind(...codes).all();
   const rows=(result.results||[]).sort((a,b)=>codes.indexOf(a.barcode)-codes.indexOf(b.barcode));
-  const reviewed=await reviewedCatalogueBatch(db,codes,{now});
+  const reviewed=includeReviewed===false?{products:[],ratings:[]}:await reviewedCatalogueBatch(db,codes,{now});
   const community={products:[],ratings:[]};
   for(const product of reviewed.products){
     const meta=reviewed.ratings.find(r=>r.barcode===product.code),off=rows.find(row=>row.barcode===product.code);

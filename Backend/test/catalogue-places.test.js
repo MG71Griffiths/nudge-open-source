@@ -82,8 +82,41 @@ describe('source-bound UK place discovery',()=>{
   await patchCatalogueImages(db,{records:[{barcode:'5000000000001',sourceRevision:1700000000,imageFrontURL:'https://images.openfoodfacts.org/images/products/500/000/000/0001/front_en.2.400.jpg'}],sourceURL,retrievedAt:now},{now});
   const after=await searchCatalogue(db,{placeID:'greggs'},{now});assert.equal(after.total,1);assert.deepEqual(after.places.evidence[0].associations,before.places.evidence[0].associations);assert.notEqual(after.places.evidence[0].sourceFingerprint,before.places.evidence[0].sourceFingerprint);assert.equal(after.places.evidence[0].sourceFingerprint,after.ratings[0].sourceFingerprint);assert.equal(after.ratings[0].fetchedAt,before.ratings[0].fetchedAt);
  });
- it('uses an indexed candidate set and never scans provider JSON to filter places',async()=>{
-  const {sql}=fixture();const plan=catalogueSearchSQL({placeID:'greggs',nutrition:['protein']},now);const explain=sql.prepare('EXPLAIN QUERY PLAN '+plan.rows.sql).all(...plan.rows.values).map(row=>row.detail).join('\n');assert.match(explain,/catalogue_place_lookup/);assert.match(explain,/catalogue_place_binding/);assert.ok(!plan.rows.sql.includes('json_extract'));
+ it('uses indexed place candidates and inspects score JSON only for the stale overlay subset',async()=>{
+  const {sql,db}=fixture();
+  await load(db,Array.from({length:64},(_,i)=>food(String(5000000000001+i),{brands:'Greggs',product_name:'Beans '+String(i+1).padStart(2,'0')})));
+  sql.exec('UPDATE catalogue_products SET rating_value=100');
+  for(const row of sql.prepare('SELECT barcode,score_json FROM catalogue_products').all())
+   sql.prepare('UPDATE catalogue_products SET score_json=? WHERE barcode=?').run(JSON.stringify({...JSON.parse(row.score_json),testMarker:row.barcode}),row.barcode);
+  const direct='5000000000063',dependent='5000000000064';
+  // Retaining expired evidence must not suppress a later independent direct
+  // score. A live publication still dependent on that evidence is ineligible.
+  for(const code of [direct,dependent])sql.prepare(`INSERT INTO catalogue_enrichment_scores
+   (barcode,source_fingerprint,source_fetched_at,evidence_version,score_method,score_version,classifier_version,evidence_json,score_json,rating_value,calculated_at,expires_at)
+   SELECT barcode,source_fingerprint,fetched_at,'old',score_method,score_version,classifier_version,'{}',score_json,100,calculated_at,? FROM catalogue_products WHERE barcode=?`).run(now-1,code);
+  const stored=sql.prepare('SELECT score_json FROM catalogue_products WHERE barcode=?').get(dependent);
+  sql.prepare('UPDATE catalogue_products SET score_json=? WHERE barcode=?').run(JSON.stringify({...JSON.parse(stored.score_json),catalogueEnrichment:{version:'old'}}),dependent);
+  const allowedScoreJSON=new Set(sql.prepare('SELECT score_json FROM catalogue_products WHERE barcode IN (?,?)').all(direct,dependent).map(r=>r.score_json));
+  // Delegate JSON semantics to a separate SQLite connection while observing
+  // every JSON marker read in the real production query, not a copied query.
+  const jsonSQL=new DatabaseSync(':memory:'),reads=[];
+  for(const name of ['json_type','json_extract']){
+   const evaluate=jsonSQL.prepare(`SELECT ${name}(?,?) AS value`);
+   sql.function(name,(value,path)=>{reads.push({value,path});return evaluate.get(value,path).value;});
+  }
+  const plan=catalogueSearchSQL({placeID:'greggs',nutrition:['protein'],minimumRating:100,page:4},now);
+  const explain=sql.prepare('EXPLAIN QUERY PLAN '+plan.rows.sql).all(...plan.rows.values).map(row=>row.detail).join('\n');
+  assert.match(explain,/catalogue_place_lookup/);assert.match(explain,/catalogue_place_binding/);
+  assert.match(explain,/COVERING INDEX catalogue_search_candidates/);
+  assert.match(explain,/SEARCH p USING INTEGER PRIMARY KEY/);
+  assert.doesNotMatch(explain,/SCAN ep(?:$|\s)/m,'Overlay score markers use exact barcode lookups');
+  assert.doesNotMatch(plan.rows.sql,/(?:json_extract|json_type)\s*\(\s*[^,]*provider_json/i);
+  const rows=sql.prepare(plan.rows.sql).all(...plan.rows.values);
+  assert.deepEqual(rows.map(row=>row.barcode),['5000000000061','5000000000062',direct]);
+  assert.ok(reads.length>0&&reads.length<64,'Only the small retained-overlay subset needs score marker reads');
+  assert.ok(reads.every(read=>allowedScoreJSON.has(read.value)&&['$.catalogueEnrichment','$.catalogueEvidenceReplay.reused'].includes(read.path)),
+   'No source JSON or unrelated candidate score JSON is parsed to select the page');
+  jsonSQL.close();sql.close();
  });
  it('keeps admin backfill private and returns bounded validation errors',async()=>{
   let called=false;const response=await worker.fetch(new Request('https://example.com/v1/catalogue/place-index',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer app-token'},body:'{}'}),{PRIVATE_ACCESS_TOKEN_SHA256:createHash('sha256').update('app-token').digest('hex'),CATALOGUE_ADMIN_TOKEN_SHA256:createHash('sha256').update('admin-token').digest('hex'),FOOD_CATALOGUE_INDEX:{idFromName:()=>'',get:()=>({fetch:()=>{called=true;}})}});assert.equal(response.status,401);assert.equal(called,false);

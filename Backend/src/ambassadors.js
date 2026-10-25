@@ -175,6 +175,11 @@ export async function ambassadorPublicationStatements(db,old,published,now){
   AND NOT EXISTS(SELECT 1 FROM ambassador_restrictions r WHERE r.owner=ambassador_profiles.owner AND r.expires_at>?)
   AND NOT EXISTS(SELECT 1 FROM community_deletion_fences f WHERE f.owner=ambassador_profiles.owner AND f.expires_at>?)`)
   .bind(old.barcode,fingerprint,now,old.owner,old.created_at,unchanged?1:0,...guardValues,fingerprint,now,now),
+  // SQLite changes() refers to the immediately preceding guarded award INSERT.
+  // Save this actual outcome in the same transaction, never infer credit from
+  // an older award for this barcode or from a client claim.
+  db.prepare(`INSERT INTO product_contribution_details(contribution_id,points_awarded) SELECT ?,CASE WHEN changes()=1 THEN 1 ELSE 0 END WHERE ${guard}
+  ON CONFLICT(contribution_id) DO UPDATE SET points_awarded=excluded.points_awarded`).bind(old.id,...guardValues),
   // Record accepted facts even when no profile was eligible. Rejoining or a
   // different owner cannot earn credit for repeating that same publication.
   db.prepare(`INSERT OR IGNORE INTO ambassador_fact_receipts(fact_fingerprint) SELECT ? WHERE ${guard}`).bind(fingerprint,...guardValues)

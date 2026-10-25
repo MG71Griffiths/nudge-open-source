@@ -134,7 +134,18 @@ struct NativeFoodReviewView: View {
                     Button("Edit saved ingredient calculation") { change(["editSavedCalculation": true]) }
                         .buttonStyle(NudgeButtonStyle(variant: .secondary))
                 }
-                DisclosureGroup("Edit food details") { detailsEditor(model).padding(.top, 12) }
+                DisclosureGroup("Edit food details") {
+                    detailsEditor(model).padding(.top, 12)
+                    if NativeTrackingDisplay.imageBarcode(store.review) != nil {
+                        Text("Edits apply to your food. Use Suggest a correction to improve the shared catalogue.")
+                            .font(.caption).foregroundStyle(Color(uiColor: NudgeTheme.muted))
+                        Button("Suggest a correction") {
+                            if let barcode = NativeTrackingDisplay.imageBarcode(store.review) {
+                                store.openProductContribution(barcode: barcode, productName: string(model, "title"), isCorrection: true)
+                            }
+                        }.buttonStyle(NudgeButtonStyle(variant: .secondary))
+                    }
+                }
                 sources(model)
             }.padding(.top, 12)
         }.font(.subheadline.weight(.semibold)).reviewCard()
@@ -222,8 +233,8 @@ struct NativeFoodReviewView: View {
             Button { store.startCamera(repair: true) } label: { Label("Photograph label to update this food", systemImage: "camera") }
                 .accessibilityIdentifier("native-review-repair")
             if let barcode = NativeTrackingDisplay.imageBarcode(store.review) {
-                Button { store.openProductContribution(barcode: barcode, productName: string(model, "title")) } label: {
-                    Label("Help complete this product", systemImage: "square.and.pencil")
+                Button { store.openProductContribution(barcode: barcode, productName: string(model, "title"), isCorrection: true) } label: {
+                    Label("Suggest a correction", systemImage: "square.and.pencil")
                 }.accessibilityIdentifier("native-review-contribute")
             }
         } label: {

@@ -11,6 +11,10 @@ CREATE TABLE IF NOT EXISTS product_contributions (
 CREATE INDEX IF NOT EXISTS contributions_owner ON product_contributions(owner,created_at DESC);
 CREATE INDEX IF NOT EXISTS contributions_queue ON product_contributions(status,next_retry_at,lease_until);
 CREATE INDEX IF NOT EXISTS contributions_expiry ON product_contributions(expires_at);
+CREATE TABLE IF NOT EXISTS product_contribution_details (
+ contribution_id TEXT PRIMARY KEY REFERENCES product_contributions(id) ON DELETE CASCADE,
+ correction_json TEXT, points_awarded INTEGER CHECK(points_awarded IN(0,1))
+);
 CREATE TABLE IF NOT EXISTS product_contribution_photos (
  contribution_id TEXT NOT NULL REFERENCES product_contributions(id) ON DELETE CASCADE,
  role TEXT NOT NULL, mime_type TEXT NOT NULL, sha256 TEXT NOT NULL, image BLOB NOT NULL,

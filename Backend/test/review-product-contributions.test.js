@@ -46,6 +46,14 @@ it('rejects stale, cross-server and altered snapshots before a review write',asy
  await assert.rejects(()=>r.run(['reject','--snapshot',file]),/origin/);
  assert.equal(r.requests.filter(r=>r.init.method==='POST').length,0);
 });
+it('keeps product correction notes private and requires explicit review confirmation',async t=>{
+ const directory=await setup(t),detail=fixture();detail.contribution.correction={fields:['nutrition'],note:'Private proposed label fact',source:'user_proposed'};
+ const r=runner((_url,init)=>Response.json(init.method==='POST'?{contribution:{...detail.contribution,status:'published',pointsAwarded:1}}:detail));
+ await r.run(['show',ID,'--out',directory]);assert.ok(r.output.every(text=>!text.includes(detail.contribution.correction.note)));
+ const args=['publish','--snapshot',path.join(directory,'review.json'),'--confirm-barcode',BARCODE,'--confirm-category','en:baked-beans','--confirm-label-facts'];
+ await assert.rejects(()=>r.run(args),/confirm-correction/);assert.equal(r.requests.filter(r=>r.init.method==='POST').length,0);
+ await r.run([...args,'--confirm-correction']);assert.equal(JSON.parse(r.requests.at(-1).init.body).confirmCorrection,true);
+});
 it('rejects a submission through an explicit command without publication confirmations',async t=>{
  const directory=await setup(t),r=runner((_url,init)=>Response.json(init.method==='POST'?{contribution:{...fixture().contribution,status:'rejected'}}:fixture()));
  await r.run(['show',ID,'--out',directory]);await r.run(['reject','--snapshot',path.join(directory,'review.json')]);

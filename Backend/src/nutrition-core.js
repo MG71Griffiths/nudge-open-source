@@ -6,6 +6,7 @@ import MealRecoveryData from '../../Web/core/meal-recovery-data.js';
 import MealRecovery from '../../Web/core/meal-recovery.js';
 import RecipeComposition from '../../Web/core/recipe-composition.js';
 import MealScore from '../../Web/core/meal-score.js';
+import TextFood from '../../Web/core/text-food-analysis.js';
 
 const DirectionalScoreCore=ScoreCore.Directional;
-export { ScoreCore, DirectionalScoreCore, Composition, MealRecoveryData, MealRecovery, RecipeComposition, MealScore };
+export { ScoreCore, DirectionalScoreCore, Composition, MealRecoveryData, MealRecovery, RecipeComposition, MealScore, TextFood };

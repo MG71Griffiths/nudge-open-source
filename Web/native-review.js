@@ -40,6 +40,7 @@
       ||Array.isArray(c?.recipeChoice?.options)&&c.recipeChoice.options.length>0));
   }
   function mealBuilderEligible(r){
+    if(r.entry?.sourceMeta?.typedFood?.version===1)return false;
     return r.extraction?.type==='meal'&&!usableRecipe(r.extraction.meal?.recipeCalculation)||r.kind==='entry'&&!usableRecipe(r.entry?.sourceMeta?.mealRecipeCalculation)&&(r.entry?.sourceMeta?.nutritionEstimate==='photo'||Array.isArray(r.entry?.sourceMeta?.mealComposition));
   }
   // Search all bundled CoFID/USDA identities without copying their nutrients
@@ -261,7 +262,7 @@
   }
   function editSavedCalculation(r){
     const entry=r.entry,meta=entry?.sourceMeta,components=meta?.mealComposition;
-    if(r.kind!=='entry'||(!Array.isArray(components)&&meta?.nutritionEstimate!=='photo'))return r;
+    if(r.kind!=='entry'||meta?.typedFood?.version===1||(!Array.isArray(components)&&meta?.nutritionEstimate!=='photo'))return r;
     const scale=num(meta.photoPortions),baseScale=positive(scale)&&scale<=8?scale:1,amount=r.draft.amount*baseScale;
     // Meal ingredients were saved as a comma-separated list. Restore that
     // entire confirmed list, not just its botanical subset: choosing a recipe
@@ -562,12 +563,12 @@
       score,scoreStatus:score?.methodId==='nudge_nutrition_v0_4'&&score?.value!=null?'Nudge score':root.NudgeFrequency?.legacy(score)?'Historical rating':score?.status==='estimated_rough'?'Rough estimate':score?.estimated||/^estimated/.test(score?.status||'')?(/provisional/.test(score?.status||'')?'Estimated · provisional rating':'Estimated rating'):/provisional/.test(score?.status||'')?'Provisional rating':score?.value!=null?'Nudge nutrition rating':'Rating unavailable',
       // Use applied nutrient provenance, not the presence of an unused model
       // proposal or score availability. Saved entries keep their own snapshot.
-      nutritionEstimated:fields.some(([key])=>{const value=r.kind==='entry'?r.entry?.nutritionSnapshot?.[key]:snap[key];return known(snap[key]?.portion)&&value?.source==='model_photo_estimate'&&value?.estimated===true;}),
+      nutritionEstimated:fields.some(([key])=>{const value=r.kind==='entry'?r.entry?.nutritionSnapshot?.[key]:snap[key];return known(snap[key]?.portion)&&['model_photo_estimate','typed_food_estimate'].includes(value?.source)&&value?.estimated===true;}),
       planning:planning(r,score),
       allergies:detail().allergies(p||{ingredients:ingredientEvidence,ingredientsNeedsReview:r.extraction?.ingredients?.needsReview},profile(state),{avoidMilk:state.avoidMilk}),
-      evidenceWarnings:[...(p?.metadata?.conflicts||r.extraction?.metadata?.conflicts||[]).map(x=>x.description||x.reason),...(p?.sourceDifferences||[]).filter(x=>x.status==='unresolved_identity').map(x=>x.reason),...(r.extraction?.needsClearerPhoto?[r.extraction.message||'Some label details could not be read.']:[]),...((r.extraction?.meal?.components||[]).some(householdEvidence)?['Spoon sizes, brands and mixed ingredients are estimated. Review the ingredient amounts before saving.']:[])].filter(Boolean),
+      evidenceWarnings:[...(p?.metadata?.conflicts||r.extraction?.metadata?.conflicts||[]).map(x=>x.description||x.reason),...(p?.sourceDifferences||[]).filter(x=>x.status==='unresolved_identity').map(x=>x.reason),...(r.extraction?.needsClearerPhoto?[r.extraction.message||'Some label details could not be read.']:[]),...((r.extraction?.meal?.components||[]).some(householdEvidence)?['Spoon sizes, brands and mixed ingredients are estimated. Review the ingredient amounts before saving.']:[]),...(r.entry?.sourceMeta?.typedFood?.version===1?r.entry.sourceMeta.typedFood.assumptions||[]:[])].filter(Boolean),
       nutrients:fields.map(([key,title,unit])=>({key,title,unit,value:snap[key]?.portion??null,partial:snap[key]?.portionStatus==='partial',knownSubtotal:snap[key]?.knownPortionSubtotal??null,unknownContributions:snap[key]?.unknownContributions||0})),
-      nutritionExplanation:d.mealIngredients?.length&&fields.some(([key])=>!known(snap[key]?.portion))?'Ingredient identities are confirmed; their amounts are still unknown. Only known ingredient amounts contribute to the partial nutrition below.':recipe?.deferredReason?'Photo portion estimate. '+recipe.deferredReason:recipe?.applied&&fields.some(([key])=>!known(snap[key]?.portion))?(fields.some(([key])=>known(snap[key]?.portion)||known(snap[key]?.knownPortionSubtotal))?'Partial recipe nutrition: only ingredients with known amounts and matched sources are included. These are not whole-meal totals. Review the missing ingredients and amounts in Edit.':'Nutrition is not available yet. The recipe still needs ingredient choices, amounts or nutrition sources. Review the printed quantities in Edit.'):'',
+      nutritionExplanation:r.entry?.sourceMeta?.typedFood?.version===1?'Estimated from your description and generic food-composition records. Ingredients and amounts may differ from what you ate. Missing nutrient values stay unknown.':d.mealIngredients?.length&&fields.some(([key])=>!known(snap[key]?.portion))?'Ingredient identities are confirmed; their amounts are still unknown. Only known ingredient amounts contribute to the partial nutrition below.':recipe?.deferredReason?'Photo portion estimate. '+recipe.deferredReason:recipe?.applied&&fields.some(([key])=>!known(snap[key]?.portion))?(fields.some(([key])=>known(snap[key]?.portion)||known(snap[key]?.knownPortionSubtotal))?'Partial recipe nutrition: only ingredients with known amounts and matched sources are included. These are not whole-meal totals. Review the missing ingredients and amounts in Edit.':'Nutrition is not available yet. The recipe still needs ingredient choices, amounts or nutrition sources. Review the printed quantities in Edit.'):'',
       editableNutrients:fields.map(([key,title,unit])=>({key,title,unit,value:p?detail().value(p,key):r.extraction?r.extraction.nutrients?.[key]?.value??null:root.NudgeComposition.intakeNutrient(r.entry||{},key).partial?null:root.NudgeComposition.intakeNutrient(r.entry||{},key).value})),
       nutritionEditBasis:p?'per 100 '+(p.basisUnit||'g'):entry?'per saved portion':meal?'per analysed portion':r.extraction?.basis||'unknown',
       basis:p?.basisUnit||r.extraction?.basis||'',nutritionPreparation:p?.nutritionPreparation||r.extraction?.nutritionPreparation||'unknown',servingSize:r.extraction?.servingSize||null,
@@ -579,7 +580,7 @@
       recipeOptions:recipe?.applied&&!recipe.userEdited&&(!r.entryId||r.editingSavedCalculation===true)?(recipe.recipeOptions||[]).map(o=>({id:o.id,title:o.title,evidence:o.evidence,selected:o.selected===true,side:o.side===true})):[],
       recipeChoices:recipe?.applied&&!recipe.userEdited&&(!r.entryId||r.editingSavedCalculation===true)?(recipe.batchComponents||[]).flatMap(c=>c.recipeChoice?[{id:c.recipeChoice.id,title:c.recipeChoice.title,evidence:c.recipeChoice.evidence,selected:c.recipeChoice.selected||'',options:c.recipeChoice.options.map(o=>({id:o.id,title:o.title}))}]:[]):[],
       isMeal:meal||entry,isComposition:meal&&Array.isArray(r.extraction.meal?.components)&&r.extraction.meal.components.length>0,
-      canEditSavedCalculation:entry&&Array.isArray(r.entry?.sourceMeta?.mealComposition)&&r.entry.sourceMeta.mealComposition.length>0,
+      canEditSavedCalculation:entry&&r.entry?.sourceMeta?.typedFood?.version!==1&&Array.isArray(r.entry?.sourceMeta?.mealComposition)&&r.entry.sourceMeta.mealComposition.length>0,
       isDrink:detail().isDrink({name:d.name}),ingredients:ingredientText,plants,
       plantChoices:r.extraction?.ingredients?.plants?.map((plant,index)=>({index,name:plant.name,selected:plant.selected!==false,supported:analysis().supportedPlant(r.extraction,plant)}))||[],
       components:(r.extraction?.meal?.components||[]).map((c,index)=>({index,name:c.name,amountGrams:c.amountGrams??null,recordId:c.recordId||'',source:c.sourceRecord?[c.sourceRecord.source,c.sourceRecord.code,c.sourceRecord.name].filter(Boolean).join(' · '):'',candidates:[c.sourceRecord,...(c.candidates||[])].filter((x,i,all)=>x&&x.id&&all.findIndex(y=>y?.id===x.id)===i).map(x=>({id:x.id,name:x.name})),estimated:c.amountSource!=='confirmed',

@@ -10,6 +10,7 @@ export const CONTRIBUTION_MAX_BYTES=3_010_000;
 const TTL=30*86400000,LEASE=120000,MAX_ATTEMPTS=3;
 const UUID=/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 const ROLES=['front','ingredients','nutrition'];
+const CORRECTION_FIELDS=['identity','nutrition','ingredients','allergens','category'];
 const STORES=['tesco','sainsburys','asda','morrisons','aldi','lidl','waitrose','marksAndSpencer','coOp','ocado','iceland'];
 const COUNTRY_TAGS={GB:'en:united-kingdom',FR:'en:france',US:'en:united-states',IE:'en:ireland',DE:'en:germany',ES:'en:spain',IT:'en:italy',NL:'en:netherlands',BE:'en:belgium',PT:'en:portugal',AU:'en:australia',NZ:'en:new-zealand',CA:'en:canada'};
 // A mismatch describes source metadata, never exclusive retail availability.
@@ -26,6 +27,13 @@ export class ContributionError extends Error {
 }
 function ownerID(owner){if(owner!=='private-owner'&&!/^[a-f0-9]{64}$/.test(owner||''))throw new ContributionError('Authentication required.',401,'authentication_required');return owner;}
 function contributionID(id){if(typeof id!=='string'||!UUID.test(id)||/^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(id))throw new ContributionError();return id.toLowerCase();}
+function correctionProposal(value){
+ if(value===undefined)return null;
+ if(!keys(value,['fields','note'])||!Array.isArray(value.fields)||value.fields.length>5||value.fields.some(field=>!CORRECTION_FIELDS.includes(field))||new Set(value.fields).size!==value.fields.length
+ ||typeof value.note!=='string'||[...value.note].length>600||new TextEncoder().encode(value.note).length>1200||/[\u0000-\u0008\u000b\u000c\u000e-\u001f<>]/.test(value.note))throw new ContributionError('Choose product details and keep the correction note to 600 characters.',400,'contribution_correction_invalid');
+ const note=value.note.trim();if(!value.fields.length&&!note)throw new ContributionError('Choose what needs correcting or describe the product fact.');
+ return {fields:[...value.fields].sort(),note,source:'user_proposed'};
+}
 function jpegBytes(photo){
  if(!keys(photo,['role','mimeType','imageBase64'])||!ROLES.includes(photo.role)||photo.mimeType!=='image/jpeg'||typeof photo.imageBase64!=='string')throw new ContributionError();
  const encoded=photo.imageBase64;
@@ -47,14 +55,16 @@ function jpegBytes(photo){
 }
 async function purgeExpired(db,now){
  await purgeAmbassadorModeration(db,now);
- await db.batch([db.prepare('DELETE FROM product_contribution_photos WHERE contribution_id IN(SELECT id FROM product_contributions WHERE expires_at<=?)').bind(now),db.prepare('DELETE FROM product_contributions WHERE expires_at<=?').bind(now)]);
+ await db.batch([db.prepare('DELETE FROM product_contribution_details WHERE contribution_id IN(SELECT id FROM product_contributions WHERE expires_at<=?)').bind(now),db.prepare('DELETE FROM product_contribution_photos WHERE contribution_id IN(SELECT id FROM product_contributions WHERE expires_at<=?)').bind(now),db.prepare('DELETE FROM product_contributions WHERE expires_at<=?').bind(now)]);
 }
-function statusView(row,now){
+async function statusView(db,row,now){
+ const details=await db.prepare('SELECT correction_json,points_awarded FROM product_contribution_details WHERE contribution_id=?').bind(row.id).first();
  const candidate=row.candidate_json?JSON.parse(row.candidate_json):null;
  const messages={queued:'Saved privately and queued for analysis.',processing:'Reading the packaging photos.',pending_review:'Packaging details are awaiting Nudge review.',needs_photos:'More readable packaging photos are needed.',retryable_error:row.attempts>=MAX_ATTEMPTS?'Analysis could not finish. You can submit clearer photos.':'Analysis is temporarily unavailable. Your photos are saved for retry.',published:'Reviewed product facts are available for future scans.',rejected:'This submission could not be added to the shared catalogue.'};
  return {id:row.id,barcode:row.barcode,status:row.status,createdAt:row.created_at,updatedAt:row.updated_at,expiresAt:row.expires_at,attempts:row.attempts,nextRetryAt:row.next_retry_at,
   missingPhotoRoles:candidate?.missingPhotoRoles?.filter(role=>ROLES.includes(role))||[],sourceLookup:row.source_lookup,message:messages[row.status]||'Submission saved.',
-  canRetry:row.status==='retryable_error'&&row.attempts<MAX_ATTEMPTS&&(row.next_retry_at||0)<=now,canDelete:row.status!=='published'};
+  canRetry:row.status==='retryable_error'&&row.attempts<MAX_ATTEMPTS&&(row.next_retry_at||0)<=now,canDelete:row.status!=='published',
+  ...(details?.correction_json?{correction:JSON.parse(details.correction_json)}:{}),...(row.status==='published'&&[0,1].includes(details?.points_awarded)?{pointsAwarded:details.points_awarded}:{})};
 }
 async function rowFor(db,id,owner,admin=false){
  const row=await db.prepare(admin?"SELECT * FROM product_contributions WHERE id=? AND status!='deleted'":"SELECT * FROM product_contributions WHERE id=? AND owner=? AND status!='deleted'").bind(...(admin?[contributionID(id)]:[contributionID(id),ownerID(owner)])).first();
@@ -62,26 +72,27 @@ async function rowFor(db,id,owner,admin=false){
 }
 export async function submitContribution(db,owner,body,{now=Date.now(),deadline=Date.now()+60_000}={}){
  ownerID(owner);
- if(!keys(body,['id','barcode','marketCountry','store','consent','photos'])||!validCatalogueBarcode(body.barcode)||!Array.isArray(body.photos)||body.photos.length<1||body.photos.length>3)throw new ContributionError();
+ if(!keys(body,['id','barcode','marketCountry','store','consent','photos','correction'])||!validCatalogueBarcode(body.barcode)||!Array.isArray(body.photos)||body.photos.length<1||body.photos.length>3)throw new ContributionError();
+ const correction=correctionProposal(body.correction);
  const id=contributionID(body.id),country=body.marketCountry??null,store=body.store??null;
  if(country!==null&&!/^[A-Z]{2}$/.test(country)||store!==null&&!STORES.includes(store))throw new ContributionError();
  if(!keys(body.consent,['version','shareProductFacts','retainPhotosForReview'])||body.consent.version!==CONTRIBUTION_VERSION||body.consent.shareProductFacts!==true||body.consent.retainPhotosForReview!==true)throw new ContributionError('Consent to private photo review and sharing reviewed product facts is required.',400,'contribution_consent_required');
  if(new Set(body.photos.map(p=>p.role)).size!==body.photos.length)throw new ContributionError('Use one photo for each packaging role.');
  const photos=[];for(const photo of body.photos){const bytes=jpegBytes(photo);photos.push({role:photo.role,bytes,sha:await hash(bytes)});}
- const fingerprint=await hash(stableStringify({id,barcode:body.barcode,country,store,consent:body.consent,photos:photos.map(p=>({role:p.role,sha:p.sha})).sort((a,b)=>a.role.localeCompare(b.role))}));
+ const fingerprint=await hash(stableStringify({id,barcode:body.barcode,country,store,consent:body.consent,photos:photos.map(p=>({role:p.role,sha:p.sha})).sort((a,b)=>a.role.localeCompare(b.role)),...(correction?{correction}:{})}));
  await purgeExpired(db,now);
  const old=await db.prepare('SELECT * FROM product_contributions WHERE id=?').bind(id).first();
- if(old){if(old.owner!==owner||old.request_hash!==fingerprint)throw new ContributionError('This submission identifier already has different content.',409,'contribution_idempotency_conflict');if(old.status==='deleted')throw new ContributionError('This submission was withdrawn.',410,'contribution_deleted');return {contribution:statusView(old,now),replayed:true};}
+ if(old){if(old.owner!==owner||old.request_hash!==fingerprint)throw new ContributionError('This submission identifier already has different content.',409,'contribution_idempotency_conflict');if(old.status==='deleted')throw new ContributionError('This submission was withdrawn.',410,'contribution_deleted');return {contribution:await statusView(db,old,now),replayed:true};}
  const count=await db.prepare("SELECT count(*) AS total,sum(CASE WHEN owner=? THEN 1 ELSE 0 END) AS owned FROM product_contributions WHERE status NOT IN('published','rejected','deleted')").bind(owner).first();
  if(Number(count?.owned)>=20||Number(count?.total)>=1000)throw new ContributionError('The review queue is full. Try again later.',429,'contribution_queue_full');
  // Guard quotas again inside the atomic write: hashing yields, so concurrent
  // requests must not bypass the initial cheap count or overwrite an existing ID.
  const insert=db.prepare(`INSERT OR IGNORE INTO product_contributions(id,owner,barcode,market_country,store,consent_version,request_hash,status,created_at,updated_at,expires_at) SELECT ?,?,?,?,?,?,?,'queued',?,?,? WHERE (SELECT count(*) FROM product_contributions WHERE owner=? AND status NOT IN('published','rejected','deleted'))<20 AND (SELECT count(*) FROM product_contributions WHERE status NOT IN('published','rejected','deleted'))<1000 AND NOT EXISTS(SELECT 1 FROM community_deletion_fences WHERE owner=? AND expires_at>?) AND CAST(strftime('%s','now') AS INTEGER)*1000<=?`).bind(id,owner,body.barcode,country,store,CONTRIBUTION_VERSION,fingerprint,now,now,now+TTL,owner,owner,now,deadline);
- await db.batch([insert,...photos.map(photo=>db.prepare("INSERT OR IGNORE INTO product_contribution_photos(contribution_id,role,mime_type,sha256,image) SELECT ?,?,'image/jpeg',?,? WHERE EXISTS(SELECT 1 FROM product_contributions WHERE id=? AND owner=? AND request_hash=? AND status='queued')").bind(id,photo.role,photo.sha,photo.bytes,id,owner,fingerprint))]);
+ await db.batch([insert,db.prepare("INSERT OR IGNORE INTO product_contribution_details(contribution_id,correction_json) SELECT ?,? WHERE EXISTS(SELECT 1 FROM product_contributions WHERE id=? AND owner=? AND request_hash=? AND status='queued')").bind(id,correction?JSON.stringify(correction):null,id,owner,fingerprint),...photos.map(photo=>db.prepare("INSERT OR IGNORE INTO product_contribution_photos(contribution_id,role,mime_type,sha256,image) SELECT ?,?,'image/jpeg',?,? WHERE EXISTS(SELECT 1 FROM product_contributions WHERE id=? AND owner=? AND request_hash=? AND status='queued')").bind(id,photo.role,photo.sha,photo.bytes,id,owner,fingerprint))]);
  const row=await db.prepare('SELECT * FROM product_contributions WHERE id=?').bind(id).first();
  if(!row)throw new ContributionError('The review queue is full. Try again later.',429,'contribution_queue_full');
  if(row.owner!==owner||row.request_hash!==fingerprint)throw new ContributionError('This submission identifier already has different content.',409,'contribution_idempotency_conflict');
- return {contribution:statusView(row,now),replayed:false};
+ return {contribution:await statusView(db,row,now),replayed:false};
 }
 export async function claimContribution(db,{now=Date.now()}={}){
  await purgeExpired(db,now);
@@ -111,13 +122,16 @@ export async function completeContribution(db,body,{now=Date.now()}={}){
  return {completed:!!result.results?.length};
 }
 export async function reviewContribution(db,id,body,{now=Date.now()}={}){
- if(!keys(body,['decision','expectedUpdatedAt','confirmBarcode','confirmLabelFacts','confirmCategory'])||!['publish','reject'].includes(body.decision)||!Number.isSafeInteger(body.expectedUpdatedAt))throw new ContributionError();
+ if(!keys(body,['decision','expectedUpdatedAt','confirmBarcode','confirmLabelFacts','confirmCategory','confirmCorrection'])||!['publish','reject'].includes(body.decision)||!Number.isSafeInteger(body.expectedUpdatedAt))throw new ContributionError();
  const old=await rowFor(db,id,null,true);
  if(old.updated_at!==body.expectedUpdatedAt||old.expires_at<=now||!['pending_review','needs_photos'].includes(old.status))throw new ContributionError('This submission changed. Reload it before reviewing.',409,'contribution_review_conflict');
  let published;
+ const detail=await db.prepare('SELECT correction_json FROM product_contribution_details WHERE contribution_id=?').bind(old.id).first();
+ const correction=detail?.correction_json?JSON.parse(detail.correction_json):null;
  if(body.decision==='publish'){
   if(body.confirmBarcode!==true||body.confirmLabelFacts!==true||body.confirmCategory!==true||old.status!=='pending_review')throw new ContributionError('Confirm the barcode, food category and every published label fact against the packaging.');
-  published=await reviewedProductRow(JSON.parse(old.candidate_json),old.barcode,{observedAt:old.created_at,reviewedAt:now});
+  if(correction&&body.confirmCorrection!==true)throw new ContributionError('Check the proposed correction against the photos and proposed published facts before confirming it.');
+  published=await reviewedProductRow(JSON.parse(old.candidate_json),old.barcode,{observedAt:old.created_at,reviewedAt:now,correctionReviewed:!!correction});
  }
  // The guard protects against owner deletion or a competing reviewer while the
  // fact fingerprint is computed. All publication/photos/status changes commit together.
@@ -135,7 +149,7 @@ export async function reviewContribution(db,id,body,{now=Date.now()}={}){
  statements.push(db.prepare(`UPDATE product_contributions SET status=?,reviewed_at=?,published_at=?,updated_at=?,candidate_json=NULL WHERE id=? AND updated_at=? AND status=? AND expires_at>? RETURNING *`).bind(published?'published':'rejected',now,published?now:null,now,old.id,old.updated_at,old.status,now));
  const result=await db.batch(statements),updated=result.at(-1)?.results?.[0];
  if(!updated)throw new ContributionError('This submission changed. Reload it before reviewing.',409,'contribution_review_conflict');
- return {contribution:statusView(updated,now)};
+ return {contribution:await statusView(db,updated,now)};
 }
 async function boundedBytes(request,maximum=CONTRIBUTION_MAX_BYTES){
  if(Number(request.headers.get('content-length'))>maximum)throw new ContributionError('Contribution upload is too large.',413,'contribution_too_large');
@@ -156,7 +170,7 @@ export async function handleContributionStoreRequest(db,request,{now=Date.now()}
    const purgeToken=crypto.randomUUID();
    // Account erasure removes the private queue, photos, predictions and status
    // history. Independently reviewed public facts have no owner identifier.
-   const result=await db.batch([db.prepare('INSERT INTO community_deletion_fences(owner,expires_at,recovery_token) VALUES(?,?,?) ON CONFLICT(owner) DO UPDATE SET expires_at=excluded.expires_at,recovery_token=excluded.recovery_token').bind(owner,now+600_000,purgeToken),...(owner==='private-owner'?[]:[...ambassadorRemovalStatements(db,owner),db.prepare('DELETE FROM ambassador_restrictions WHERE owner=?').bind(owner),db.prepare('DELETE FROM ambassador_report_limits WHERE owner=?').bind(owner)]),db.prepare('DELETE FROM product_contribution_photos WHERE contribution_id IN(SELECT id FROM product_contributions WHERE owner=?)').bind(owner),db.prepare('DELETE FROM product_contributions WHERE owner=? RETURNING id').bind(owner)]);
+   const result=await db.batch([db.prepare('INSERT INTO community_deletion_fences(owner,expires_at,recovery_token) VALUES(?,?,?) ON CONFLICT(owner) DO UPDATE SET expires_at=excluded.expires_at,recovery_token=excluded.recovery_token').bind(owner,now+600_000,purgeToken),...(owner==='private-owner'?[]:[...ambassadorRemovalStatements(db,owner),db.prepare('DELETE FROM ambassador_restrictions WHERE owner=?').bind(owner),db.prepare('DELETE FROM ambassador_report_limits WHERE owner=?').bind(owner)]),db.prepare('DELETE FROM product_contribution_details WHERE contribution_id IN(SELECT id FROM product_contributions WHERE owner=?)').bind(owner),db.prepare('DELETE FROM product_contribution_photos WHERE contribution_id IN(SELECT id FROM product_contributions WHERE owner=?)').bind(owner),db.prepare('DELETE FROM product_contributions WHERE owner=? RETURNING id').bind(owner)]);
    return Response.json({deleted:true,removed:result.at(-1)?.results?.length||0,purgeToken});
   }
   if(action==='reactivate-owner'&&internal){
@@ -177,21 +191,21 @@ export async function handleContributionStoreRequest(db,request,{now=Date.now()}
   }
   if(action==='list'){
    const rows=(await db.prepare(admin?"SELECT * FROM product_contributions WHERE status!='deleted' ORDER BY created_at DESC LIMIT 50":"SELECT * FROM product_contributions WHERE owner=? AND status!='deleted' ORDER BY created_at DESC LIMIT 50").bind(...(admin?[]:[owner])).all()).results||[];
-   return Response.json({contributions:rows.map(row=>statusView(row,now))});
+   return Response.json({contributions:await Promise.all(rows.map(row=>statusView(db,row,now)))});
   }
   const row=await rowFor(db,id,owner,admin);
-  if(action==='status')return Response.json({contribution:statusView(row,now),...(admin?{candidate:row.candidate_json?JSON.parse(row.candidate_json):null,observedMarket:{country:row.market_country,store:row.store,verification:'user_observation'},photos:(await db.prepare('SELECT role,sha256,mime_type FROM product_contribution_photos WHERE contribution_id=?').bind(row.id).all()).results||[]}: {})});
+  if(action==='status')return Response.json({contribution:await statusView(db,row,now),...(admin?{candidate:row.candidate_json?JSON.parse(row.candidate_json):null,observedMarket:{country:row.market_country,store:row.store,verification:'user_observation'},photos:(await db.prepare('SELECT role,sha256,mime_type FROM product_contribution_photos WHERE contribution_id=?').bind(row.id).all()).results||[]}: {})});
   if(action==='photo'&&admin){const role=url.searchParams.get('role');if(!ROLES.includes(role))throw new ContributionError();const photo=await db.prepare('SELECT image FROM product_contribution_photos WHERE contribution_id=? AND role=?').bind(row.id,role).first();if(!photo)throw new ContributionError('Photo is no longer available.',404,'contribution_not_found');return new Response(photo.image,{headers:{'content-type':'image/jpeg','cache-control':'no-store','x-content-type-options':'nosniff','content-disposition':'inline'}});}
   if(action==='review'&&admin)return Response.json(await reviewContribution(db,row.id,body,{now}));
   if(action==='delete'&&!admin){
    if(row.status==='published')throw new ContributionError('Reviewed shared product facts cannot be withdrawn through a pending submission.',409,'contribution_already_published');
-   const result=await db.batch([db.prepare("DELETE FROM product_contribution_photos WHERE contribution_id=? AND EXISTS(SELECT 1 FROM product_contributions WHERE id=? AND owner=? AND status!='published')").bind(row.id,row.id,owner),db.prepare("UPDATE product_contributions SET status='deleted',barcode='',market_country=NULL,store=NULL,candidate_json=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=? AND owner=? AND status!='published' RETURNING id").bind(now,row.id,owner)]);
+   const result=await db.batch([db.prepare("DELETE FROM product_contribution_details WHERE contribution_id=? AND EXISTS(SELECT 1 FROM product_contributions WHERE id=? AND owner=? AND status!='published')").bind(row.id,row.id,owner),db.prepare("DELETE FROM product_contribution_photos WHERE contribution_id=? AND EXISTS(SELECT 1 FROM product_contributions WHERE id=? AND owner=? AND status!='published')").bind(row.id,row.id,owner),db.prepare("UPDATE product_contributions SET status='deleted',barcode='',market_country=NULL,store=NULL,candidate_json=NULL,lease_token=NULL,lease_until=NULL,updated_at=? WHERE id=? AND owner=? AND status!='published' RETURNING id").bind(now,row.id,owner)]);
    if(!result.at(-1)?.results?.length)throw new ContributionError('This contribution was already published.',409,'contribution_already_published');
    return Response.json({deleted:true,id:row.id});
   }
   if(action==='retry'&&!admin){
-   if(!statusView(row,now).canRetry)throw new ContributionError('This submission cannot be retried yet.',409,'contribution_retry_unavailable');
-   await db.prepare("UPDATE product_contributions SET status='queued',updated_at=?,next_retry_at=NULL WHERE id=? AND owner=? AND status='retryable_error' AND attempts<? AND next_retry_at<=?").bind(now,row.id,owner,MAX_ATTEMPTS,now).run();return Response.json({contribution:statusView(await rowFor(db,row.id,owner),now)});
+   if(!(await statusView(db,row,now)).canRetry)throw new ContributionError('This submission cannot be retried yet.',409,'contribution_retry_unavailable');
+   await db.prepare("UPDATE product_contributions SET status='queued',updated_at=?,next_retry_at=NULL WHERE id=? AND owner=? AND status='retryable_error' AND attempts<? AND next_retry_at<=?").bind(now,row.id,owner,MAX_ATTEMPTS,now).run();return Response.json({contribution:await statusView(db,await rowFor(db,row.id,owner),now)});
   }
   throw new ContributionError('Not found.',404,'route_not_found');
  }catch(error){if(error instanceof ContributionError)return Response.json({code:error.code,message:error.message},{status:error.status});throw error;}

@@ -31,7 +31,7 @@ enum CameraHapticAudioPolicy {
 struct PhotoAnalysisPermission {
     static let key = "nudge-photo-ai-permission-v1"
     static let title = "AI food analysis"
-    static let explanation = "Nudge’s service sends chosen photos, optional voice notes and public product facts to its server and OpenAI to read labels, explain ratings and estimate meals. If you enable ChatGPT for camera photos, selected photos, ingredient choices and portion details go directly to OpenAI using your plan. Captures with a voice note use Nudge’s service. The analysis action shows which service will be used."
+    static let explanation = "Nudge’s service sends chosen photos, optional voice notes, food descriptions and public product facts to its server and OpenAI to read labels, explain ratings and estimate meals. If you enable ChatGPT for camera photos, selected photos, ingredient choices and portion details go directly to OpenAI using your plan. Voice notes and online food descriptions use Nudge’s service. The analysis action shows which service will be used."
     static let allowTitle = "Allow AI analysis"
     let defaults: UserDefaults
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }

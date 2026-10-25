@@ -9,8 +9,20 @@ const words=value=>String(value||'').normalize('NFKC').toLowerCase().replace(/[^
 // private predictions into OFF or erase conflicting identity/allergen evidence.
 export function compatibleReviewedReplacement(offRow,product,metadata,{now=Date.now()}={}){
  try{
-  if(!product||metadata?.sourceKind!=='nudge_community'||metadata.expiresAt<=now||metadata.reviewedAt<offRow.fetched_at)return false;
+  if(!product||metadata?.sourceKind!=='nudge_community'||metadata.expiresAt<=now)return false;
   const off=JSON.parse(offRow.provider_json),a=catalogueRecordFromPayload({product:off},offRow.barcode,offRow.fetched_at).product,b=catalogueRecordFromPayload({product},offRow.barcode,metadata.reviewedAt).product;
+  if(metadata.provenance?.correctionReview==='administrator_confirmed'){
+   // A correction is a separately sourced, complete record whose barcode and
+   // every label fact were independently checked, including the user's proposal.
+   // Selecting it does not mutate OFF or splice a prediction into another source.
+   const sourceTime=Number.isSafeInteger(offRow.source_revision)&&offRow.source_revision>0?offRow.source_revision*1000:offRow.fetched_at;
+   return metadata.provenance.verification==='reviewed_packaging_photos'&&metadata.provenance.categoryReview==='administrator_confirmed'
+    &&metadata.provenance.photosPublic===false&&product.code===offRow.barcode&&metadata.reviewedAt>=sourceTime
+    &&Boolean(words(b.name)&&words(b.ingredients)&&['g','ml'].includes(b.basisUnit)&&['as_sold','prepared'].includes(b.nutritionPreparation))
+    &&['protein','carbohydrate','sugars','fat','saturatedFat','salt'].every(key=>Number.isFinite(b.nutrients[key]?.value))
+    &&Boolean(Number.isFinite(b.nutrients.energyKcal?.value)||Number.isFinite(b.energyKj?.value))&&ScoreCore.calculateScore(b).available;
+  }
+  if(metadata.reviewedAt<offRow.fetched_at)return false;
   if(!words(a.name)||words(a.name)!==words(b.name)||!words(a.brand)||words(a.brand)!==words(b.brand))return false;
   if(['on','true','1'].includes(String(off.no_nutrition_data).toLowerCase()))return false;
   if(off.nutrition_data_prepared==='on'&&off.nutrition_data!=='on'&&!off.nutrition?.aggregated_set)return false;
@@ -33,13 +45,30 @@ export function compatibleReviewedReplacement(offRow,product,metadata,{now=Date.
   return true;
  }catch{return false;}
 }
+export async function reviewedCatalogueRecord(product,metadata,barcode,{now=Date.now()}={}){
+ if(product?.code!==barcode||metadata?.barcode!==barcode||metadata.sourceKind!=='nudge_community'||metadata.sourceName!=='Nudge community'
+  ||metadata.sourceURL!==reviewedSourceURL(barcode)||metadata.provenance?.sourceURL!==reviewedSourceURL(barcode)
+  ||metadata.provenance?.sourceKind!=='nudge_community'||metadata.provenance.verification!=='reviewed_packaging_photos'
+  ||metadata.provenance.categoryReview!=='administrator_confirmed'||metadata.provenance.photosPublic!==false
+  ||!Number.isSafeInteger(metadata.observedAt)||metadata.observedAt<=0||!Number.isSafeInteger(metadata.reviewedAt)||metadata.reviewedAt<metadata.observedAt
+  ||metadata.reviewedAt!==metadata.fetchedAt||metadata.reviewedAt>now+60000||metadata.expiresAt<=now
+  ||metadata.provenance.observedAt!==metadata.observedAt||metadata.provenance.reviewedAt!==metadata.reviewedAt)throw new Error('Unverified reviewed catalogue source');
+ const fingerprint=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(stableStringify(product)))),n=>n.toString(16).padStart(2,'0')).join('');
+ if(fingerprint!==metadata.sourceFingerprint)throw new Error('Reviewed catalogue fingerprint mismatch');
+ const record=catalogueRecordFromPayload({product},barcode,metadata.reviewedAt);
+ record.source='Nudge community';record.verification='reviewed_packaging_photos';record.licenceURL=null;record.expiresAt=metadata.expiresAt;
+ Object.assign(record.product,{sourceKind:'nudge_community',sourceName:'Nudge community',sourceURL:reviewedSourceURL(barcode),ingredientsNeedsReview:false,
+  nutrientSources:Object.fromEntries(Object.keys(record.product.nutrientSources).map(key=>[key,'Nudge community: reviewed packaging photograph']))});
+ delete record.product.providerNutriScore;
+ return {...record,catalogueRating:metadata.score,catalogueCalculatedAt:metadata.calculatedAt,catalogueSourceFingerprint:metadata.sourceFingerprint,reviewedMetadata:metadata};
+}
 function reviewedScore(record){
  const facts={...record.product,sourceName:'Nudge community',sourceURL:reviewedSourceURL(record.barcode),countriesTags:[],ingredientsNeedsReview:false,
   nutrientSources:Object.fromEntries(Object.keys(record.product.nutrientSources).map(key=>[key,'Nudge community: reviewed packaging photograph']))};
  delete facts.providerNutriScore;
  return scorePackagedProduct(facts);
 }
-export async function reviewedProductRow(candidate,barcode,{observedAt,reviewedAt}={}) {
+export async function reviewedProductRow(candidate,barcode,{observedAt,reviewedAt,correctionReviewed=false}={}) {
  if(!validCatalogueBarcode(barcode)||candidate?.readyForReview!==true||candidate.product?.code!==barcode)throw new Error('Reviewable product evidence required');
  // Reuse the strict food-field sanitizer, but assign our own provenance. This
  // wire shape is compatible with the app; the facts are not supplied by OFF.
@@ -54,7 +83,7 @@ export async function reviewedProductRow(candidate,barcode,{observedAt,reviewedA
  return {barcode,providerJSON:JSON.stringify(product),scoreJSON:JSON.stringify(score),fingerprint,sourceRevision:Math.floor(reviewedAt/1000),observedAt,reviewedAt,
   expiresAt:reviewedAt+30*86400000,method:ScoreCore.SCORE_METHOD,version:ScoreCore.SCORE_VERSION,classifierVersion:ScoreCore.CLASSIFIER_VERSION,
   provenanceJSON:JSON.stringify({sourceKind:'nudge_community',sourceName:'Nudge community',sourceURL:reviewedSourceURL(barcode),verification:'reviewed_packaging_photos',observedAt,reviewedAt,photosPublic:false,
-    engineVersion:typeof candidate.engineVersion==='string'?candidate.engineVersion.slice(0,100):null,categoryReview:'administrator_confirmed',
+    engineVersion:typeof candidate.engineVersion==='string'?candidate.engineVersion.slice(0,100):null,categoryReview:'administrator_confirmed',...(correctionReviewed?{correctionReview:'administrator_confirmed'}:{}),
     evidence:(candidate.prediction?.evidence||[]).slice(0,24).filter(e=>/^[a-f0-9]{64}$/.test(e.photoSHA256||'')).map(e=>({id:String(e.id||'').slice(0,32),field:String(e.field||'').slice(0,40),photoSHA256:e.photoSHA256})),
     fieldEvidence:candidate.prediction?.fieldEvidence||{},allergenWording:candidate.prediction?.allergens||{contains:null,mayContain:null,factoryHandling:null}})};
 }

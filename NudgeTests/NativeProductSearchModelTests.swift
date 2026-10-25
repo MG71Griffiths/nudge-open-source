@@ -330,6 +330,101 @@ struct NativeProductSearchDomainTests {
 
 @MainActor
 struct NativeProductSearchModelTests {
+    // Build 48 browse delivery regressions; exercised by the host harness too.
+    @Test
+    func rankedBrowseCacheCannotReuseAlphabeticalPagesOrLiteralNamespaces() throws {
+        let category = try #require(ProductSearchCategory.all.first)
+        let browse = try ProductSearchQuery(category: category)
+        #expect(browse.key.hasPrefix("rankedBrowse:v1:"))
+        #expect(try ProductSearchQuery(discoveryText: "").key.hasPrefix("rankedBrowse:v1:"))
+        #expect(try ProductSearchQuery(supportContext: .luteal).key.hasPrefix("rankedBrowse:v1:"))
+        let literal = try ProductSearchQuery(literalText: "rankedBrowse:v1:")
+        #expect(!literal.key.hasPrefix("rankedBrowse:v1:"))
+        var explicit = browse; explicit.sortOrder = .ratingHighest
+        #expect(!explicit.key.hasPrefix("rankedBrowse:v1:") && explicit.key != browse.key)
+    }
+
+    @Test
+    func categoryRevisitPaintsImmediatelyWhileRefreshingAndScopesNeverLeak() async throws {
+        let harness = SearchHarness(), model = harness.model()
+        let category = try #require(ProductSearchCategory.all.first), product = try searchProduct("10000001")
+        model.select(category)
+        await eventually { harness.queries.count == 1 }
+        harness.succeed(0, products: [product], hasMore: true)
+        await eventually { !model.loading }
+        model.showCategories(); model.select(category)
+        // No yield: cached first paint is synchronous, independent of HTTP,
+        // image loading, disk reads and per-product rating requests.
+        #expect(model.products == [product] && model.loading)
+        await eventually { harness.queries.count == 2 }
+        model.setNutrition([.iron])
+        #expect(model.products.isEmpty)
+        await eventually { harness.queries.count == 3 }
+        harness.succeed(1, products: [product]); harness.succeed(2, products: [])
+        await eventually { !model.loading }
+        #expect(model.products.isEmpty && harness.queries[2].nutrition == [.iron])
+    }
+
+    @Test
+    func immediatePreviewExpiresAndDoesNotExtendExpiredSourceEvidence() async throws {
+        for expiresSource in [false, true] {
+            let harness = SearchHarness(), model = harness.model()
+            let category = try #require(ProductSearchCategory.all.first)
+            var product = try searchProduct("10000001")
+            if expiresSource { product.catalogueSourceExpiresAt = harness.now.addingTimeInterval(1) }
+            model.select(category); await eventually { harness.queries.count == 1 }
+            harness.succeed(0, products: [product]); await eventually { !model.loading }
+            harness.now = harness.now.addingTimeInterval(expiresSource ? 2 : 301)
+            model.showCategories(); model.select(category)
+            #expect(model.products.isEmpty)
+            await eventually { harness.queries.count == 2 }
+            harness.succeed(1, products: []); await eventually { !model.loading }
+        }
+    }
+
+    @Test
+    func immediatePreviewKeepsOnlyTwelveRecentExactScopes() async throws {
+        let harness = SearchHarness(), model = harness.model(), product = try searchProduct("10000001")
+        let categories = Array(ProductSearchCategory.all.prefix(13))
+        #expect(categories.count == 13)
+        for (index, category) in categories.enumerated() {
+            model.select(category); await eventually { harness.queries.count == index + 1 }
+            harness.succeed(index, products: [product]); await eventually { !model.loading }
+        }
+        model.select(categories[0]); #expect(model.products.isEmpty)
+        await eventually { harness.queries.count == 14 }
+        harness.succeed(13, products: []); await eventually { !model.loading }
+        model.select(categories[12]); #expect(model.products == [product])
+        await eventually { harness.queries.count == 15 }
+        harness.succeed(14, products: [product]); await eventually { !model.loading }
+    }
+
+    @Test
+    func lazyBrowseLoadsOnlyNearEndAndNeverStartsDuplicatePages() async throws {
+        let harness = SearchHarness(), model = harness.model()
+        let category = try #require(ProductSearchCategory.all.first)
+        let first = try (1...20).map { try searchProduct(String(10_000_000 + $0)) }
+        let second = try (21...25).map { try searchProduct(String(10_000_000 + $0)) }
+        model.select(category); await eventually { harness.queries.count == 1 }
+        harness.succeed(0, products: first, hasMore: true); await eventually { !model.loading }
+        model.loadMoreIfNeeded(appearing: first[0].barcode)
+        #expect(!model.loading && harness.queries.count == 1)
+        model.loadMoreIfNeeded(appearing: first[16].barcode)
+        model.loadMoreIfNeeded(appearing: first[19].barcode)
+        await eventually { harness.queries.count == 2 }
+        #expect(harness.queries[1].page == 2 && model.products == first)
+        harness.fail(1, error: ProductSearchError.unavailable); await eventually { !model.loading }
+        model.loadMoreIfNeeded(appearing: first[19].barcode)
+        #expect(!model.loading && harness.queries.count == 2, "Scrolling cannot loop a failed page")
+        model.retry(); await eventually { harness.queries.count == 3 }
+        #expect(harness.queries[2].page == 2)
+        harness.succeed(2, products: second); await eventually { !model.loading }
+        model.loadMoreIfNeeded(appearing: second[4].barcode)
+        #expect(!model.loading && harness.queries.count == 3)
+        #expect(model.products == first + second)
+    }
+
+    // End build 48 browse delivery regressions.
     @Test
     func liveTypingDebouncesLatestPrefixAndIgnoresCancelledResponses() async throws {
         let harness = SearchHarness(), delay = SearchDebounceHarness()

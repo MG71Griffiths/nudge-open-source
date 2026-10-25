@@ -234,6 +234,16 @@ final class NativeProductSearchModel: ObservableObject {
     }
     private var orderedCache: OrderedCache?
     private var productSuggestionTerms: [ProductSearchAutocomplete.Term] = []
+    private struct FirstPagePreview {
+        let page: ProductSearchPage
+        let receivedAt: Date
+        var lastUse: Int
+    }
+    // Public product pages only, bounded to twelve exact filter/query scopes.
+    // Reopening a category can paint synchronously while HTTP refreshes it.
+    private var firstPagePreviews: [String: FirstPagePreview] = [:]
+    private var previewUse = 0
+
 
     convenience init(service: OpenFoodFactsService = .catalogueConnected) {
         self.init(service: service, preferences: .shared)
@@ -344,8 +354,22 @@ final class NativeProductSearchModel: ObservableObject {
     /// delay HTTP, nor overwrite a newer delivered response after it completes.
     private func startCachePreview(page: Int, owner: Int) {
         previewTask?.cancel(); previewTask = nil
-        guard page == 1, let cachedSearch, let target,
+        guard page == 1, let target,
               let query = try? query(for: target, page: page, market: market, store: store) else { return }
+        if var cached = firstPagePreviews[query.key] {
+            let age = now().timeIntervalSince(cached.receivedAt)
+            let freshProducts = cached.page.products.allSatisfy { $0.catalogueSourceExpiresAt.map { $0 > now() } ?? true }
+            if cached.page.query == query, age >= 0, age < query.freshLifetime, freshProducts {
+                previewUse += 1; cached.lastUse = previewUse
+                firstPagePreviews[query.key] = cached
+                var result = cached.page; result.cached = true
+                accept(result, page: page, refreshing: true)
+                record(stage: "search_delivery", outcome: "cached", metadata: ["sourceRoute": "phone_cache"])
+                return
+            }
+            firstPagePreviews.removeValue(forKey: query.key)
+        }
+        guard let cachedSearch else { return }
         previewTask = Task { [weak self] in
             let cached = await cachedSearch(query)
             guard let self, !Task.isCancelled, owner == generation, let cached else { return }
@@ -604,6 +628,13 @@ final class NativeProductSearchModel: ObservableObject {
         run(page: pendingPage ?? loadedPage + 1)
     }
 
+    /// Visible rows request the next page near the end, without preloading all
+    /// categories or issuing one request per product/rating.
+    func loadMoreIfNeeded(appearing barcode: String) {
+        guard loadedPage > 0, errorMessage == nil, products.suffix(4).contains(where: { $0.barcode == barcode }) else { return }
+        loadMore()
+    }
+
     func retry() {
         guard !loading, target != nil, retrySeconds == 0 else { return }
         run(page: pendingPage ?? max(1, loadedPage))
@@ -741,6 +772,14 @@ final class NativeProductSearchModel: ObservableObject {
     }
 
     private func accept(_ result: ProductSearchPage, page: Int, refreshing: Bool = false) {
+        if page == 1, !refreshing, !result.stale, !result.cached,
+           result.products.count <= ProductSearchQuery.pageSize {
+            previewUse += 1
+            firstPagePreviews[result.query.key] = FirstPagePreview(page: result, receivedAt: now(), lastUse: previewUse)
+            if firstPagePreviews.count > 12, let oldest = firstPagePreviews.min(by: { $0.value.lastUse < $1.value.lastUse })?.key {
+                firstPagePreviews.removeValue(forKey: oldest)
+            }
+        }
         isRefinementPreview = false
         if page == 1 { pageProducts = [:]; usingCatalogue = result.catalogueCoverage != nil }
         if page == 1 { supportTags = [:] }

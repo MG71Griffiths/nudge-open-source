@@ -14,6 +14,7 @@ export { ProductImageWarmRunner } from './product-image-warm-runner.js';
 import { catalogueEnrichmentRunnerStub } from './catalogue-enrichment-runner.js';
 export { CatalogueEnrichmentRunner } from './catalogue-enrichment-runner.js';
 import { handleContributionRequest, processContributionQueue } from './product-contributions.js';
+import { TEXT_FOOD_MAX_BODY, TextFoodError, validateTextFoodRequest, localTextFood, analyseTextFood } from './text-food-analysis.js';
 export { FoodCatalogueIndex } from './catalogue-index-object.js';
 import { supplementProduct, validCatalogueBarcode } from './food-catalogue.js';
 import { RECOVERY_PROMPT, RECOVERY_VERSION, recoverySchema, buildRecoveryContext, applyRecoveryChoice } from './food-recovery.js';
@@ -1017,6 +1018,46 @@ async function quotaWrappedContributionAnalyse(body, env, signal, {owner} = {}) 
   finally {try{await quota.fetch('https://quota/release',{method:'POST',body:JSON.stringify({lease})});}catch{/* A lease expires safely. */}}
 }
 
+async function analyseFoodDescription(request,env){
+  if(new URL(request.url).search)throw new PublicError('Invalid food description request.',400,'request_invalid');
+  const principal=await authenticate(request,env);
+  if(!/^application\/json(?:\s*;|$)/i.test(request.headers.get('content-type')||''))throw new PublicError('JSON upload required.',415,'upload_invalid');
+  const body=validateTextFoodRequest(await readBoundedJSON(request,TEXT_FOOD_MAX_BODY,request.signal));
+  request.signal.throwIfAborted();
+  const local=localTextFood(body);if(local)return json(local);
+  if(!env.OPENAI_API_KEY||!env.OPENAI_MODEL||!env.LABEL_QUOTA)throw new TextFoodError('server_not_configured',503);
+  const quota=env.LABEL_QUOTA.get(env.LABEL_QUOTA.idFromName('private-owner')),lease=crypto.randomUUID();
+  const response=await quota.fetch('https://quota/acquire',{method:'POST',body:JSON.stringify({lease,subject:principal.subject})});
+  if(!response.ok)throw new PublicError('Food analysis is temporarily unavailable.',503,'quota_unavailable');
+  const decision=await response.json();
+  if(decision.allowed!==true)return json({message:decision.busy?'Another food is being analysed. Please wait.':'Food analysis limit reached. Try again later.',code:decision.busy?'quota_busy':'quota_exceeded'},429,{'retry-after':String(decision.retryAfter||60)});
+  const callID=crypto.randomUUID();let reserved=false,costMicrousd=null,admissionFailure;
+  try{
+    const result=await analyseTextFood(body,env,request.signal,{
+      beforeProviderCall:async({model,maxOutputTokens})=>{
+        try{
+          request.signal.throwIfAborted();
+          let stop;try{stop=captureSpendStop(env);}catch{throw new PublicError('Food analysis spending controls need configuration.',503,'capture_spend_configuration');}
+          if(stop===null)return;
+          const response=await quota.fetch('https://quota/capture-spend-reserve',{method:'POST',body:JSON.stringify({lease,callID,kind:'observation',model,maxOutputTokens})});
+          if(!response.ok)throw new PublicError('Food analysis spending controls are unavailable.',503,'capture_spend_unavailable');
+          const outcome=await response.json();
+          if(outcome.allowed!==true)throw new PublicError('Food analysis is paused by its spending controls. Try again later.',outcome.code==='capture_spend_limit'?429:503,['capture_spend_limit','capture_spend_configuration','capture_spend_unpriced'].includes(outcome.code)?outcome.code:'capture_spend_unavailable');
+          reserved=outcome.enabled===true;
+        }catch(error){admissionFailure=error;throw error;}
+      },
+      afterProviderResponse:({usage,model})=>{const known=responseUsage(usage);if(known)costMicrousd=usageCostMicrousd(model,known);}
+    });
+    return json(result);
+  }catch(error){throw admissionFailure||error;}
+  finally{
+    // A missing/ambiguous provider usage report conservatively keeps the reserved
+    // spend. No typed food, proposed facts, credentials or owner data are logged.
+    if(reserved)try{await quota.fetch('https://quota/capture-spend-settle',{method:'POST',body:JSON.stringify({lease,callID,costMicrousd})});}catch{/* Reservation remains charged. */}
+    try{await quota.fetch('https://quota/release',{method:'POST',body:JSON.stringify({lease})});}catch{/* Lease expires safely. */}
+  }
+}
+
 function scoreResponse(value, calculatedAt=value.calculatedAt) {
   const {recovery,calculatedAt:storedCalculationTime,...score}=value;
   // Cache reads retain the original calculation time. Old cache records with
@@ -1087,6 +1128,7 @@ export default {
       :request.method==='GET'&&url.pathname==='/v1/catalogue/export'?'export':null;
     const ambassadorRoute=/^\/v1\/(?:admin\/)?ambassadors(?:\/|$)/.test(url.pathname);
     const contributionRoute=/^\/v1\/(?:admin\/)?product-contributions(?:\/|$)/.test(url.pathname);
+    const textFoodRoute=request.method==='POST'&&url.pathname==='/v1/food-description/analyse';
     const reviewedBarcode=request.method==='GET'?/^\/v1\/products\/reviewed\/([0-9]{4,18})$/.exec(url.pathname)?.[1]:null;
     const reviewedExport=request.method==='GET'&&url.pathname==='/v1/catalogue/reviewed-export';
     const configRoute = url.pathname === '/v1/account/config' && request.method === 'GET';
@@ -1095,13 +1137,14 @@ export default {
     const catalogueRoute = url.pathname === '/v1/products/lookup' && request.method === 'POST';
     const accountOperation = url.pathname === '/v1/account/logout' && request.method === 'POST' ? 'logout'
       : url.pathname === '/v1/account' && request.method === 'DELETE' ? 'delete' : null;
-    if (!captureExpiry && !sourceArchive && !captureJobID && !captureRetryID && !scoringAction && !enrichmentAction && !imageRoute && !imageManifest && !imageStatus && !imageWarm && !ambassadorRoute && !contributionRoute && !reviewedBarcode && !reviewedExport && !indexAction && !configRoute && !usageRoute && !accountOperation && !scoreRoute && !catalogueRoute && (url.pathname !== endpoint || request.method !== 'POST')) return json({ message: 'Not found.', code: 'route_not_found' }, 404);
+    if (!captureExpiry && !sourceArchive && !captureJobID && !captureRetryID && !scoringAction && !enrichmentAction && !imageRoute && !imageManifest && !imageStatus && !imageWarm && !ambassadorRoute && !contributionRoute && !textFoodRoute && !reviewedBarcode && !reviewedExport && !indexAction && !configRoute && !usageRoute && !accountOperation && !scoreRoute && !catalogueRoute && (url.pathname !== endpoint || request.method !== 'POST')) return json({ message: 'Not found.', code: 'route_not_found' }, 404);
     if (url.protocol !== 'https:') return json({ message: 'HTTPS is required.', code: 'request_invalid' }, 400);
     if (configRoute) {
       const config = accountConfiguration(env);
       return json(config ? { enabled: true, provider: 'supabase', ...config, analysisLimits: quotaLimits(env) } : { enabled: false });
     }
     try {
+      if(textFoodRoute)return await analyseFoodDescription(request,env);
       if(captureExpiry){
         await authenticateCatalogueAdmin(request,env);
         if(url.search)throw new PublicError('Invalid retention request.',400,'request_invalid');
@@ -1274,8 +1317,12 @@ export default {
       const body = await readBoundedJSON(request, catalogueRoute ? 1024 : scoreRoute ? SCORE_MAX_BODY : MAX_VOICE_BODY_BYTES, request.signal);
       if(catalogueRoute){
         if(!exactKeys(body,['barcode'])||!validCatalogueBarcode(body.barcode))return json({code:'request_invalid',message:'A barcode is required.'},400);
-        const outcome=await getCatalogueOutcome(env,body.barcode,request.signal),record=outcome.record;
+        // Older apps interpret this endpoint as OFF-only. Reviewed facts require
+        // a client that validates and displays their separate source provenance.
+        const includeReviewed=request.headers.get('x-nudge-catalogue-source')==='reviewed-v1';
+        const outcome=await getCatalogueOutcome(env,body.barcode,request.signal,{includeReviewed}),record=outcome.record;
         return record?json({providerPayload:record.providerPayload,fetchedAt:record.fetchedAt,expiresAt:record.expiresAt,source:record.source,
+          ...(record.reviewedMetadata?{reviewedMetadata:record.reviewedMetadata}:{}),
           ...(publicCatalogueQualityHoldMatches(record.catalogueRating,{barcode:body.barcode,sourceFingerprint:record.catalogueSourceFingerprint})?
             {catalogueRating:record.catalogueRating,catalogueSourceFingerprint:record.catalogueSourceFingerprint,catalogueCalculatedAt:record.catalogueCalculatedAt}: {})})
           :outcome.status==='not_found'?json({code:'product_not_found',message:'This barcode is not in the Nudge catalogue yet.'},404)
@@ -1315,7 +1362,7 @@ export default {
         // the supplied label/manual facts; public-source ingestion runs only
         // in the separate background catalogue/contribution workflows.
         catalogueChecked=hasBarcode;
-        if(record){
+        if(record&&!record.reviewedMetadata){
           const supplement=supplementProduct(product,record);
           if(!supplement.conflicts.length)product=supplement.product;
           if(supplement.addedFields.length||supplement.conflicts.length)sourceRecovery={version:'food-recovery-v1',
@@ -1376,7 +1423,7 @@ export default {
         try { await quota.fetch('https://quota/release', { method: 'POST', body: JSON.stringify({ lease }) }); } catch { /* lease expiry */ }
       }
     } catch (error) {
-      const known = error instanceof PublicError || error instanceof ScoreError || error instanceof VoiceError || error instanceof MealHintsError;
+      const known = error instanceof PublicError || error instanceof ScoreError || error instanceof VoiceError || error instanceof MealHintsError || error instanceof TextFoodError;
       return json({ message: known ? error.message : 'Analysis is temporarily unavailable.', code: known ? error.code : 'server_unavailable',
         ...(known && error.trace ? { trace: error.trace } : {}) }, known ? error.status : 503);
     }

@@ -68,6 +68,85 @@ final class NativeProductContributionTests: XCTestCase {
         record = draft(); record.photos = []; XCTAssertThrowsError(try record.body())
     }
 
+    func testCorrectionRequiresEvidenceConsentAndBoundedExplicitProductFacts() throws {
+        var record = draft()
+        record.correction = ProductCorrection()
+        XCTAssertFalse(record.canSubmit)
+        record.correction = .init(fields: [.nutrition], note: "Pack says 8.2 g protein per 100 g")
+        let body = try XCTUnwrap(JSONSerialization.jsonObject(with: record.body()) as? [String: Any])
+        let proposal = try XCTUnwrap(body["correction"] as? [String: Any])
+        XCTAssertEqual(Set(proposal.keys), ["fields", "note"])
+        XCTAssertEqual(proposal["fields"] as? [String], ["nutrition"])
+        XCTAssertNil(body["nutrients"]); XCTAssertNil(body["points"])
+        record.consented = false; XCTAssertThrowsError(try record.body())
+        record.consented = true; record.photos = []; XCTAssertThrowsError(try record.body())
+        for proposal in [ProductCorrection(fields: [.nutrition, .nutrition]), .init(fields: [.nutrition], note: String(repeating: "x", count: 601)), .init(fields: [.nutrition], note: String(repeating: "界", count: 401)), .init(fields: [.nutrition], note: "<script>")] {
+            XCTAssertFalse(proposal.valid)
+        }
+    }
+
+    func testLegacyDraftAndStatusDecodeWithoutNewCorrectionOrPointsFields() throws {
+        var record = draft()
+        record.correction = nil
+        var payload = try XCTUnwrap(JSONSerialization.jsonObject(with: JSONEncoder().encode(record)) as? [String: Any])
+        payload.removeValue(forKey: "correction")
+        let restored = try JSONDecoder().decode(ProductContributionRecord.self, from: JSONSerialization.data(withJSONObject: payload))
+        XCTAssertNil(restored.correction); XCTAssertEqual(restored.photos, record.photos)
+        let status = ProductContributionStatus(id: record.id, barcode: record.barcode, status: .published,
+            createdAt: 1_800_000_000_000, updatedAt: 1_800_000_000_001, expiresAt: 1_802_592_000_000,
+            attempts: 1, nextRetryAt: nil, missingPhotoRoles: [], sourceLookup: "found", message: "Published", canRetry: false, canDelete: false)
+        let decoded = try JSONDecoder().decode(ProductContributionStatus.self, from: JSONEncoder().encode(status))
+        XCTAssertNil(decoded.pointsAwarded); XCTAssertNil(decoded.correction)
+        XCTAssertTrue(ProductContributionService.validStatus(decoded))
+        var invalid = decoded; invalid.pointsAwarded = 99
+        XCTAssertFalse(ProductContributionService.validStatus(invalid))
+    }
+
+    func testCorrectionContextStartsFreshAfterPublishedReceiptAndRetainsOldPhotosFreeReceipt() async throws {
+        ContributionFixtureProtocol.state.reset()
+        let directory = directory(); defer { try? FileManager.default.removeItem(at: directory) }
+        let outbox = ProductContributionOutbox(directory: directory), service = service()
+        defer { service.session.invalidateAndCancel() }
+        var published = draft(); published.photos = []; published.submissionAttempted = true
+        let now = Int64(Date().timeIntervalSince1970 * 1000)
+        published.remote = .init(id: published.id, barcode: published.barcode, status: .published,
+            createdAt: now, updatedAt: now, expiresAt: now + 30 * 86_400_000, attempts: 1, nextRetryAt: nil,
+            missingPhotoRoles: [], sourceLookup: "found", message: "Published", canRetry: false, canDelete: false, pointsAwarded: 1)
+        try await outbox.save(published)
+        let model = ProductContributionModel(context: .init(barcode: published.barcode, isCorrection: true), service: service, outbox: outbox)
+        await model.load()
+        XCTAssertNotEqual(model.current?.id, published.id); XCTAssertNotNil(model.current?.correction)
+        XCTAssertTrue(model.current?.editable == true)
+        let retained = try await outbox.records(owner: owner)
+        XCTAssertEqual(retained.map(\.id), [published.id]); XCTAssertEqual(retained[0].remote?.pointsAwarded, 1)
+    }
+
+    func testReviewedLookupUsesCommunityProvenanceAndRejectsMissingOrCrossOriginProof() throws {
+        let backend = URL(string: "https://nudge.example")!, barcode = "5060003830306", now = Date(timeIntervalSince1970: 1_800_000_000)
+        let milliseconds = now.timeIntervalSince1970 * 1000
+        let product: [String: Any] = ["code": barcode, "product_name": "Test pack", "brands": "Fixture", "last_modified_t": Int(now.timeIntervalSince1970),
+            "nutrition_data_per": "100g", "ingredients_text": "Rice, water", "nutriments": ["proteins_100g": 8.2, "energy-kcal_100g": 120]]
+        let metadata: [String: Any] = ["barcode": barcode, "sourceKind": "nudge_community", "sourceName": "Nudge community",
+            "sourceURL": "https://nudge.example/v1/products/reviewed/" + barcode, "discoveryScope": "barcode_only",
+            "sourceRevision": Int(now.timeIntervalSince1970), "observedAt": milliseconds - 1000, "reviewedAt": milliseconds,
+            "fetchedAt": milliseconds, "expiresAt": milliseconds + 30 * 86_400_000,
+            "provenance": ["verification": "reviewed_packaging_photos", "categoryReview": "administrator_confirmed", "photosPublic": false]]
+        let response: [String: Any] = ["providerPayload": ["product": product], "fetchedAt": milliseconds,
+            "source": "Nudge community", "reviewedMetadata": metadata]
+        let decoded = try NutritionLabelService.decodedCatalogueProductData(response, barcode: barcode, backendURL: backend, at: now)
+        let wrapper = try XCTUnwrap(JSONSerialization.jsonObject(with: decoded.data) as? [String: Any])
+        let typed = try JSONDecoder().decode(BarcodeProduct.self, from: JSONSerialization.data(withJSONObject: wrapper["nudgeCatalogueProduct"]!))
+        XCTAssertEqual(typed.sourceName, "Nudge community"); XCTAssertTrue(typed.hasTrustedCatalogueSource)
+        XCTAssertEqual(typed.nutrients["protein"]?.value, 8.2)
+        XCTAssertNil(typed.providerNutriScore); XCTAssertEqual(typed.licenceURL, "")
+        var missing = response; missing.removeValue(forKey: "reviewedMetadata")
+        XCTAssertThrowsError(try NutritionLabelService.decodedCatalogueProductData(missing, barcode: barcode, backendURL: backend, at: now))
+        XCTAssertThrowsError(try NutritionLabelService.decodedCatalogueProductData(response, barcode: barcode, backendURL: URL(string: "https://other.example")!, at: now))
+        var wrongSource = response; wrongSource["source"] = "Open Food Facts"
+        XCTAssertThrowsError(try NutritionLabelService.decodedCatalogueProductData(wrongSource, barcode: barcode, backendURL: backend, at: now))
+        XCTAssertThrowsError(try NutritionLabelService.decodedCatalogueProductData(response, barcode: barcode, backendURL: backend, at: now.addingTimeInterval(31 * 86_400)))
+    }
+
     func testPhotoPreparationStripsLocationAndMetadataAndBoundsJPEG() throws {
         let source = try XCTUnwrap(CGImageSourceCreateWithData(image() as CFData, nil))
         let original = try XCTUnwrap(CGImageSourceCreateImageAtIndex(source, 0, nil))

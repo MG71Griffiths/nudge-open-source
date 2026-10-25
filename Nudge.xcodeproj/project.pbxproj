@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D48000000000000000000001 /* NativeFoodDescription.swift in Sources */ = {isa = PBXBuildFile; fileRef = D48000000000000000000002; };
 		D04400000000000000000001 /* NativeOnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04400000000000000000002 /* NativeOnboardingView.swift */; };
 		A5233475A789EF5A98D9354C /* ChatGPTPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */; };
 		F6CF27D47F6A53DE1E16C734 /* ChatGPTConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */; };
@@ -87,6 +88,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		D48000000000000000000002 /* NativeFoodDescription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeFoodDescription.swift; sourceTree = "<group>"; };
 		D04400000000000000000002 /* NativeOnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeOnboardingView.swift; sourceTree = "<group>"; };
 		E1409C400AA21C2FC4314A32 /* ChatGPTPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTPreviewView.swift; sourceTree = "<group>"; };
 		0F8530BFD2D9F542C8C6594B /* ChatGPTConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTConnection.swift; sourceTree = "<group>"; };
@@ -215,6 +217,7 @@
 				ADDD00000000000000000001 /* NativeProductContribution.swift */,
 				AB1100000000000000000001 /* NativeAmbassadorFeature.swift */,
 				D1579B4CC8000258B0D3B30A /* NativeFoodReviewView.swift */,
+				D48000000000000000000002 /* NativeFoodDescription.swift */,
 				12CAFE0012CAFE0012CAFE02 /* NativeMealIngredientPicker.swift */,
 				C76326F90B536E317C8B6BD6 /* NativeProfileCycleView.swift */,
 				D04400000000000000000002 /* NativeOnboardingView.swift */,
@@ -413,6 +416,7 @@
 				ADDD00000000000000000002 /* NativeProductContribution.swift in Sources */,
 				AB1100000000000000000002 /* NativeAmbassadorFeature.swift in Sources */,
 				E9678B65D71AF2104DEB692C /* NativeFoodReviewView.swift in Sources */,
+				D48000000000000000000001 /* NativeFoodDescription.swift in Sources */,
 				12CAFE0012CAFE0012CAFE01 /* NativeMealIngredientPicker.swift in Sources */,
 				403D4EE009114FABDA035336 /* NativeProfileCycleView.swift in Sources */,
 				D04400000000000000000001 /* NativeOnboardingView.swift in Sources */,
@@ -517,7 +521,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 47;
+				CURRENT_PROJECT_VERSION = 48;
 				DEVELOPMENT_TEAM = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -560,7 +564,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 47;
+				CURRENT_PROJECT_VERSION = 48;
 				DEVELOPMENT_TEAM = "";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				GENERATE_INFOPLIST_FILE = NO;
